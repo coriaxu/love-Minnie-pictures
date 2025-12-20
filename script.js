@@ -40,17 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     // Welcome Page Logic
     // ============================================================
-    // Check if user has already entered (skip welcome page)
-    const hasEntered = localStorage.getItem('minnieGardenEntered');
-    if (hasEntered && welcomeOverlay) {
-        welcomeOverlay.classList.add('hidden');
-    }
+    // Always show welcome page on each visit (removed localStorage skip logic)
 
     // Enter button click handler
     if (enterBtn && welcomeOverlay) {
         enterBtn.addEventListener('click', () => {
             welcomeOverlay.classList.add('hidden');
-            localStorage.setItem('minnieGardenEntered', 'true');
         });
     }
 
