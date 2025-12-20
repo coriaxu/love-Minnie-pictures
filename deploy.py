@@ -13,7 +13,7 @@ def run_cmd(args):
 run_cmd(['git', 'add', '.'])
 
 # Commit
-run_cmd(['git', 'commit', '-m', 'Cleanup: remove temp files, fix duplicate code'])
+run_cmd(['git', 'commit', '-m', 'Major redesign: Rothko + Dieter Rams inspired dark premium aesthetic'])
 
 # Push
 run_cmd(['git', 'push', 'origin', 'main'])

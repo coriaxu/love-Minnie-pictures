@@ -1,43 +1,51 @@
 /* ============================================================
-   MONET-INSPIRED THEME: "Garden of Giverny"
-   Warm, natural, impressionist aesthetic
+   ROTHKO + DIETER RAMS EDITION: "The Breathing Frame"
+   Emotional depth meets functional precision
+   Inspired by: Mark Rothko (Spirit) + Dieter Rams (Structure)
    ============================================================ */
 
-/* === CSS VARIABLES === */
+/* === CSS VARIABLES (Refined Palette) === */
 :root {
-    /* Monet Palette - Inspired by Water Lilies & Giverny Gardens */
-    --bg-cream: #FDF8F3;
-    /* Warm canvas cream */
-    --bg-lavender: #F0EBF4;
-    /* Soft lavender mist */
-    --surface-white: #FFFFFF;
-    --surface-glass: rgba(255, 255, 255, 0.85);
+    /* Rothko-inspired Deep Tones */
+    --bg-deep: #1a1a1a;
+    --bg-warm: #2d2420;
+    --bg-rothko-1: #3d2f2f;
+    --bg-rothko-2: #2a3d4d;
+    --bg-rothko-3: #4a3d2d;
 
-    --text-primary: #3D3D3D;
-    /* Warm charcoal */
-    --text-secondary: #6B6B6B;
-    --text-muted: #A0A0A0;
+    /* Rams-inspired Neutral Surface */
+    --surface-glass: rgba(255, 255, 255, 0.08);
+    --surface-glass-hover: rgba(255, 255, 255, 0.12);
+    --surface-matte: rgba(40, 40, 40, 0.95);
 
-    --accent-green: #7CB342;
-    /* Fresh leaf green */
-    --accent-pink: #E57373;
-    /* Water lily pink */
-    --accent-gold: #FFB74D;
-    /* Warm sunset gold */
-    --accent-lavender: #9575CD;
-    /* Monet purple */
+    /* Typography - High Contrast */
+    --text-primary: #FFFFFF;
+    --text-secondary: rgba(255, 255, 255, 0.75);
+    --text-muted: rgba(255, 255, 255, 0.45);
 
-    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
-    --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.12);
+    /* Accent Colors - Muted & Sophisticated */
+    --accent-green: #8FBC8F;
+    --accent-gold: #D4A574;
+    --accent-rose: #C9A9A6;
+    --accent-lavender: #A89EC9;
 
-    --radius-sm: 12px;
-    --radius-md: 20px;
-    --radius-lg: 28px;
+    /* Shadows - Deeper, More Atmospheric */
+    --shadow-soft: 0 8px 40px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 60px rgba(212, 165, 116, 0.15);
 
+    /* Rams-style Precision Radii */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+
+    /* Typography */
     --font-serif: 'Cormorant Garamond', Georgia, serif;
     --font-sans: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
 
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Smooth Transitions (Damped Spring Feel) */
+    --transition-smooth: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --transition-slow: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* === RESET & BASE === */
@@ -54,14 +62,66 @@ html {
     scroll-behavior: smooth;
 }
 
+/* === ROTHKO BREATHING BACKGROUND === */
 body {
     font-family: var(--font-sans);
-    background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-lavender) 100%);
-    background-attachment: fixed;
+    background: var(--bg-deep);
     color: var(--text-primary);
     min-height: 100vh;
-    line-height: 1.6;
+    line-height: 1.7;
     -webkit-font-smoothing: antialiased;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Rothko-style Animated Gradient Overlay */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(ellipse at 20% 30%, var(--bg-rothko-1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, var(--bg-rothko-2) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, var(--bg-rothko-3) 0%, transparent 60%);
+    animation: rothkoBreath 12s ease-in-out infinite;
+    z-index: -1;
+    opacity: 0.8;
+}
+
+@keyframes rothkoBreath {
+
+    0%,
+    100% {
+        transform: scale(1) translate(0, 0);
+        opacity: 0.7;
+    }
+
+    33% {
+        transform: scale(1.05) translate(-2%, 1%);
+        opacity: 0.85;
+    }
+
+    66% {
+        transform: scale(1.02) translate(1%, -1%);
+        opacity: 0.75;
+    }
+}
+
+/* Subtle Film Grain Texture */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    z-index: -1;
+    pointer-events: none;
 }
 
 /* === TYPOGRAPHY === */
@@ -74,53 +134,60 @@ h3 {
 }
 
 /* ============================================================
-   HEADER
+   HEADER (Dieter Rams: Unobtrusive, Precise)
    ============================================================ */
 .app-header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 70px;
-    background: var(--surface-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    height: 64px;
+    background: rgba(26, 26, 26, 0.85);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 30px;
+    padding: 0 40px;
     z-index: 100;
 }
 
 .logo {
-    font-size: 1.6rem;
-    font-weight: 600;
+    font-size: 1.4rem;
+    font-weight: 300;
     color: var(--text-primary);
-    letter-spacing: -0.5px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.9;
 }
 
 .month-nav {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
 }
 
+/* Rams-style Matte Buttons */
 .nav-btn {
-    width: 40px;
-    height: 40px;
-    border: none;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     background: transparent;
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: 0.85rem;
     cursor: pointer;
     border-radius: 50%;
     transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--surface-glass-hover);
     color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .month-label {
@@ -167,22 +234,23 @@ h3 {
 }
 
 /* ============================================================
-   CALENDAR SIDEBAR (Floating Overlay)
+   CALENDAR SIDEBAR (Dark Glass - Rams Precision)
    ============================================================ */
 .calendar-sidebar {
     position: fixed;
-    top: 90px;
+    top: 80px;
     left: 20px;
     width: 300px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
     padding: 24px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
     z-index: 50;
     transform: translateX(-120%);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .calendar-sidebar.open {
@@ -228,7 +296,7 @@ h3 {
 }
 
 .day-cell:hover:not(.empty):not(.future) {
-    background: rgba(0, 0, 0, 0.04);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .day-cell.empty {
@@ -498,7 +566,7 @@ h3 {
     transform: scale(1.05);
 }
 
-/* Empty State - Full Screen */
+/* Empty State - Full Screen (Rothko Atmosphere) */
 .empty-state {
     position: absolute;
     top: 0;
@@ -510,7 +578,7 @@ h3 {
     align-items: center;
     justify-content: center;
     text-align: center;
-    background: linear-gradient(135deg, var(--bg-cream) 0%, var(--bg-lavender) 100%);
+    background: var(--bg-deep);
 }
 
 .empty-icon {
@@ -547,7 +615,7 @@ h3 {
 }
 
 /* ============================================================
-   TIMELINE STRIP
+   TIMELINE STRIP (Dark Glass - Rothko Subtle)
    ============================================================ */
 .timeline-strip {
     position: fixed;
@@ -555,47 +623,51 @@ h3 {
     left: 0;
     right: 0;
     height: 100px;
-    background: var(--surface-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    background: rgba(20, 20, 20, 0.9);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 24px;
     z-index: 90;
-    transform: translateY(92%);
-    /* Hide most of timeline, leaving a small trigger strip */
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    transform: translateY(88%);
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .timeline-strip:hover {
     transform: translateY(0);
-    /* Slide up on hover */
 }
 
+/* Rams-style Nav Buttons */
 .timeline-nav-btn {
-    width: 36px;
-    height: 36px;
-    border: none;
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: var(--text-muted);
     border-radius: 50%;
     cursor: pointer;
     transition: var(--transition-smooth);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
 }
 
 .timeline-nav-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--surface-glass-hover);
     color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .timeline-container {
     flex: 1;
     display: flex;
-    gap: 12px;
+    gap: 16px;
     overflow-x: auto;
-    padding: 10px 16px;
+    padding: 12px 20px;
     scroll-behavior: smooth;
     scrollbar-width: none;
 }
@@ -604,17 +676,18 @@ h3 {
     display: none;
 }
 
-/* Timeline Thumbnail */
+/* Timeline Thumbnail (Rothko Soft Edges) */
 .timeline-thumb {
     flex-shrink: 0;
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     border-radius: var(--radius-sm);
     overflow: hidden;
     cursor: pointer;
     transition: var(--transition-smooth);
     position: relative;
-    border: 3px solid transparent;
+    border: 2px solid transparent;
+    opacity: 0.7;
 }
 
 .timeline-thumb img {
@@ -624,23 +697,26 @@ h3 {
 }
 
 .timeline-thumb:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow: var(--shadow-glow);
 }
 
 .timeline-thumb.selected {
     border-color: var(--accent-gold);
-    transform: scale(1.15);
-    box-shadow: 0 4px 16px rgba(255, 183, 77, 0.4);
+    opacity: 1;
+    transform: scale(1.12);
+    box-shadow: 0 0 30px rgba(212, 165, 116, 0.3);
 }
 
 .timeline-thumb.future {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-muted);
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    opacity: 0.5;
 }
 
 /* ============================================================
