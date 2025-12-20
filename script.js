@@ -29,9 +29,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const letterDate = document.getElementById('letter-date');
     const letterContent = document.getElementById('letter-content');
 
+    // Welcome Page Elements
+    const welcomeOverlay = document.getElementById('welcome-overlay');
+    const enterBtn = document.getElementById('enter-btn');
+
     const timelineContainer = document.getElementById('timeline-container');
     const timelinePrev = document.getElementById('timeline-prev');
     const timelineNext = document.getElementById('timeline-next');
+
+    // ============================================================
+    // Welcome Page Logic
+    // ============================================================
+    // Check if user has already entered (skip welcome page)
+    const hasEntered = localStorage.getItem('minnieGardenEntered');
+    if (hasEntered && welcomeOverlay) {
+        welcomeOverlay.classList.add('hidden');
+    }
+
+    // Enter button click handler
+    if (enterBtn && welcomeOverlay) {
+        enterBtn.addEventListener('click', () => {
+            welcomeOverlay.classList.add('hidden');
+            localStorage.setItem('minnieGardenEntered', 'true');
+        });
+    }
 
     // ============================================================
     // State
