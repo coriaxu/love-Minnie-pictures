@@ -38,15 +38,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const timelineNext = document.getElementById('timeline-next');
 
     // ============================================================
-    // Welcome Page Logic
+    // ROSE TORCH CURSOR LOGIC
     // ============================================================
-    // Always show welcome page on each visit (removed localStorage skip logic)
+    const torch = document.getElementById('torch');
+    const dot = document.getElementById('dot');
 
-    // Enter button click handler
-    if (enterBtn && welcomeOverlay) {
-        enterBtn.addEventListener('click', () => {
-            welcomeOverlay.classList.add('hidden');
+    // Only initialize if cursor elements exist
+    if (torch && dot) {
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+
+        function animateCursor() {
+            torch.style.left = mouseX + 'px';
+            torch.style.top = mouseY + 'px';
+            dot.style.left = mouseX + 'px';
+            dot.style.top = mouseY + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
         });
+
+        // Add interactive hover effects for the card
+        if (dayCard) {
+            dayCard.addEventListener('mouseenter', () => {
+                torch.style.width = "600px";
+                torch.style.height = "600px";
+                torch.style.background = "radial-gradient(circle, rgba(255, 140, 110, 0.2) 0%, rgba(255, 100, 120, 0.1) 50%, transparent 70%)";
+            });
+
+            dayCard.addEventListener('mouseleave', () => {
+                torch.style.width = "400px";
+                torch.style.height = "400px";
+                torch.style.background = "radial-gradient(circle, rgba(255, 180, 195, 0.12) 0%, rgba(255, 120, 100, 0.05) 50%, transparent 70%)";
+            });
+        }
     }
 
     // ============================================================
