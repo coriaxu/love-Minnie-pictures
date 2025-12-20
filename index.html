@@ -60,20 +60,42 @@
 
         <!-- === Content Area === -->
         <section class="content-area">
-            <!-- Day Card -->
+            <!-- Day Card with Flip Feature -->
             <article id="day-card" class="day-card">
-                <div class="card-image-wrapper">
-                    <div id="card-bg-blur" class="card-bg-blur"></div>
-                    <img id="card-image" class="card-image" src="" alt="Artwork">
-                </div>
-                <div class="card-info">
-                    <h2 id="card-title" class="card-title">Loading...</h2>
-                    <div class="card-meta">
-                        <span id="card-date" class="card-date">Jan 1, 2026</span>
-                        <span class="divider">·</span>
-                        <span id="card-number" class="card-number">No. 001</span>
+                <!-- Flip Container -->
+                <div class="flip-container">
+                    <div class="flip-card" id="flip-card">
+
+                        <!-- FRONT: Photo Side -->
+                        <div class="flip-front">
+                            <div class="card-image-wrapper">
+                                <div id="card-bg-blur" class="card-bg-blur"></div>
+                                <img id="card-image" class="card-image" src="" alt="Artwork">
+                            </div>
+                        </div>
+
+                        <!-- BACK: Love Letter Side -->
+                        <div class="flip-back">
+                            <div class="letter-container">
+                                <div class="letter-header">
+                                    <span class="letter-date" id="letter-date">Jan 1, 2026</span>
+                                    <h2 class="letter-title">💌 给你的悄悄话</h2>
+                                </div>
+                                <div class="letter-content" id="letter-content">
+                                    <p>这里是写给你的秘密话语...</p>
+                                </div>
+                                <div class="letter-signature">
+                                    <span>— 永远爱你的人</span>
+                                </div>
+                            </div>
+                            <!-- Flip Back Hint -->
+                            <div class="flip-hint flip-hint-back">
+                                <i class="fa-solid fa-image"></i>
+                                <span>点击返回照片</span>
+                            </div>
+                        </div>
+
                     </div>
-                    <p id="card-description" class="card-description"></p>
                 </div>
             </article>
 

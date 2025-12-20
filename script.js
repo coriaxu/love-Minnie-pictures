@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const cardDescription = document.getElementById('card-description');
     const emptyDateText = document.getElementById('empty-date-text');
 
+    // Flip Card Elements
+    const flipCard = document.getElementById('flip-card');
+    const letterDate = document.getElementById('letter-date');
+    const letterContent = document.getElementById('letter-content');
+
     const timelineContainer = document.getElementById('timeline-container');
     const timelinePrev = document.getElementById('timeline-prev');
     const timelineNext = document.getElementById('timeline-next');
@@ -119,8 +124,22 @@ document.addEventListener('DOMContentLoaded', () => {
             navigateDay(-1);
         } else if (e.key === 'ArrowRight') {
             navigateDay(1);
+        } else if (e.key === 'Escape') {
+            // Reset flip on Escape
+            if (flipCard) flipCard.classList.remove('flipped');
         }
     });
+
+    // Flip Card Click Event
+    if (flipCard) {
+        flipCard.addEventListener('click', (e) => {
+            // Don't flip if clicking on timeline navigation elements
+            if (e.target.closest('.timeline-strip') || e.target.closest('.app-header')) {
+                return;
+            }
+            flipCard.classList.toggle('flipped');
+        });
+    }
 
     // ============================================================
     // Calendar Rendering
@@ -281,14 +300,30 @@ document.addEventListener('DOMContentLoaded', () => {
         emptyState.style.display = 'none';
         dayCard.style.display = 'block';
 
-        const imgSrc = `images/${item.filename}`;
-        cardImage.src = imgSrc;
-        cardBgBlur.style.backgroundImage = `url('${imgSrc}')`;
+        // Reset flip state when changing photos
+        if (flipCard) {
+            flipCard.classList.remove('flipped');
+        }
 
-        cardTitle.textContent = item.title || 'Untitled';
-        cardDate.textContent = formatDateDisplay(new Date(item.date));
-        cardNumber.textContent = `No. ${String(galleryData.indexOf(item) + 1).padStart(3, '0')}`;
-        cardDescription.textContent = item.description || 'A beautiful moment captured in time.';
+        const imgSrc = `images/${item.filename}`;
+        if (cardImage) cardImage.src = imgSrc;
+        if (cardBgBlur) cardBgBlur.style.backgroundImage = `url('${imgSrc}')`;
+
+        // Update these only if they exist (they might have been removed from front)
+        if (cardTitle) cardTitle.textContent = item.title || 'Untitled';
+        if (cardDate) cardDate.textContent = formatDateDisplay(new Date(item.date));
+        if (cardNumber) cardNumber.textContent = `No. ${String(galleryData.indexOf(item) + 1).padStart(3, '0')}`;
+        if (cardDescription) cardDescription.textContent = item.description || 'A beautiful moment captured in time.';
+
+        // Populate Love Letter (Back Side)
+        if (letterDate) {
+            letterDate.textContent = formatDateDisplay(new Date(item.date));
+        }
+        if (letterContent) {
+            const loveLetterText = item.loveLetter || '这是一个特别的日子，值得被永远铭记。💕';
+            // Convert \n to <br> for line breaks
+            letterContent.innerHTML = `<p>${loveLetterText.replace(/\n/g, '<br>')}</p>`;
+        }
 
         // Animate in
         const imgObj = new Image();
