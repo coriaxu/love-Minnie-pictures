@@ -236,20 +236,27 @@ h3 {
 
 /* === CALENDAR SIDEBAR (Glass Panel) === */
 .calendar-sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
     width: 380px;
     padding: 30px;
-    background: rgba(10, 5, 6, 0.6);
-    /* Semi-transparent void */
-    backdrop-filter: blur(10px);
+    background: rgba(10, 5, 6, 0.9);
+    backdrop-filter: blur(20px);
     border-right: 1px solid var(--grid-line);
     display: flex;
     flex-direction: column;
     z-index: 50;
+    transform: translateX(-100%);
+    /* Default Hidden */
     transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .calendar-sidebar.open {
     transform: translateX(0);
+    /* Show */
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
 }
 
 .calendar-grid {
