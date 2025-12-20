@@ -5,15 +5,16 @@
 
 :root {
     /* 背景 (The Void)：深夜里最柔软的绒布，极深炭色带微量紫暖调 */
-    --bg-color: #0a0506;
+    /* 背景 (The Void)：极深炭色带微量紫暖调 -> Deep Void #050203 */
+    --bg-color: #050203;
 
     /* --- 爱意星云配色方案 --- */
-    /* 光核 (The Heart)：玫瑰石英粉，温柔无条件 */
-    --love-core: rgba(247, 190, 200, 0.4);
+    /* 光核 (The Heart)：玫瑰石英粉，更清透 */
+    --love-core: rgba(255, 42, 109, 0.6);
     /* 光晕 (The Aura)：扩散出的温暖珊瑚橘 */
-    --love-glow: rgba(255, 140, 110, 0.18);
-    /* 边缘 (The Mist)：深邃的紫罗兰雾气，暧昧流动 */
-    --love-mist: rgba(80, 30, 60, 0.15);
+    --love-glow: rgba(255, 140, 110, 0.3);
+    /* 边缘 (The Mist)：深邃的紫罗兰雾气 */
+    --love-mist: rgba(80, 30, 60, 0.2);
 
     /* 辅助色 */
     --grid-line: rgba(255, 235, 240, 0.15);
@@ -154,7 +155,7 @@ h3 {
     height: 80px;
     background: transparent;
     /* Let the nebula show through */
-    border-bottom: 1px solid var(--grid-line);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -242,9 +243,10 @@ h3 {
     left: 0;
     width: 380px;
     padding: 30px;
-    background: rgba(10, 5, 6, 0.9);
-    backdrop-filter: blur(20px);
-    border-right: 1px solid var(--grid-line);
+    background: transparent;
+    /* Totally transparent */
+    /* border-right: 1px solid var(--grid-line); Removed border */
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.8), transparent);
     display: flex;
     flex-direction: column;
     z-index: 50;
@@ -451,7 +453,7 @@ h3 {
 }
 
 .flip-front {
-    background: #000;
+    background: transparent;
     z-index: 2;
 }
 
@@ -466,7 +468,7 @@ h3 {
     height: 100%;
     object-fit: contain;
     /* Keep original aspect ratio */
-    background: #0a0506;
+    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
 }
 
 .flip-back {
