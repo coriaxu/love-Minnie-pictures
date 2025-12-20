@@ -592,7 +592,7 @@ h3 {
     }
 }
 
-/* Full-Screen Image Background */
+/* Full-Screen Image Background - Now Centered */
 .card-image-wrapper {
     position: absolute;
     top: 0;
@@ -606,9 +606,7 @@ h3 {
     justify-content: center;
     overflow: hidden;
     background: #1a1a1a;
-    /* Shift image slightly to left for landscape to avoid text overlap */
-    padding-right: 15%;
-    /* Use padding instead of transform to keep it within flex container logic */
+    /* Image is now perfectly centered */
 }
 
 .card-bg-blur {
