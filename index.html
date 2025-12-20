@@ -291,9 +291,9 @@
         <header class="w-full">
             <div class="heavy-rule"></div>
             <div class="flex justify-between mt-4 fade-in">
-                <span class="typography-swiss">Project No. 001</span>
+                <span class="typography-swiss" id="project-no">Project No. 001</span>
                 <span class="typography-swiss">For My Bear Wife</span>
-                <span class="typography-swiss text-right">Est. 2025</span>
+                <span class="typography-swiss text-right">Est. 2026</span>
             </div>
         </header>
 
@@ -304,7 +304,7 @@
             </h1>
 
             <div class="absolute right-0 bottom-0 pointer-events-none mix-blend-screen">
-                <span class="counter-bg">365</span>
+                <span class="counter-bg" id="day-counter">001</span>
             </div>
         </main>
 
@@ -323,7 +323,7 @@
                 </div>
 
                 <button onclick="enterGallery()" class="btn-minimal group">
-                    <span class="relative z-10">Unwrap Day 001</span>
+                    <span class="relative z-10" id="unwrap-btn">Unwrap Day 001</span>
                 </button>
             </div>
         </footer>
@@ -338,6 +338,31 @@
 
         let mouseX = window.innerWidth / 2;
         let mouseY = window.innerHeight / 2;
+
+        // ============================================================
+        // 动态日期计算：从2026年1月1日开始计算天数
+        // ============================================================
+        function calculateDayNumber() {
+            const startDate = new Date('2026-01-01T00:00:00');
+            const today = new Date();
+            // 映射到2026年：使用当前的月和日
+            const todayIn2026 = new Date(2026, today.getMonth(), today.getDate());
+
+            // 计算距离起始日的天数差（+1是因为1月1日是第1天）
+            const diffTime = todayIn2026 - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+            // 确保至少是第1天，最多365天
+            return Math.max(1, Math.min(diffDays, 365));
+        }
+
+        // 更新页面上的动态数字
+        const dayNum = calculateDayNumber();
+        const dayStr = String(dayNum).padStart(3, '0');
+
+        document.getElementById('project-no').textContent = `Project No. ${dayStr}`;
+        document.getElementById('day-counter').textContent = dayStr;
+        document.getElementById('unwrap-btn').textContent = `Unwrap Day ${dayStr}`;
 
         // 使用 rAF 优化光标跟随，增加一点点惯性延迟感
         function animateCursor() {
