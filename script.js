@@ -153,6 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleCalendarBtn.addEventListener('click', () => {
         calendarSidebar.classList.toggle('open');
         toggleCalendarBtn.classList.toggle('active');
+        // Toggle body class for date-capsule visibility
+        document.body.classList.toggle('sidebar-closed', !calendarSidebar.classList.contains('open'));
     });
 
     timelinePrev.addEventListener('click', () => {
@@ -353,6 +355,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgSrc = `images/${item.filename}`;
         if (cardImage) cardImage.src = imgSrc;
         if (cardBgBlur) cardBgBlur.style.backgroundImage = `url('${imgSrc}')`;
+
+        // === NEW: Dynamic Blur Background ===
+        const bgBlur = document.getElementById('bg-blur');
+        if (bgBlur) {
+            bgBlur.style.backgroundImage = `url('${imgSrc}')`;
+        }
+
+        // === NEW: Update Date Capsule ===
+        const dateCapsule = document.getElementById('date-capsule');
+        if (dateCapsule && item.date) {
+            const d = new Date(item.date);
+            const dayNum = Math.floor((d - new Date('2026-01-01')) / (1000 * 60 * 60 * 24)) + 1;
+            const shortMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
+            dateCapsule.textContent = `Day ${dayNum} · ${shortMonth} ${d.getDate()}`;
+        }
 
         // Update these only if they exist (they might have been removed from front)
         if (cardTitle) cardTitle.textContent = item.title || 'Untitled';

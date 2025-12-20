@@ -63,23 +63,62 @@ body {
     transition: background-color 1.5s ease;
 }
 
-/* --- 1. 氛围光场 (The Romantic Nebula) --- */
+/* --- 1. 氛围光场 (Subtle, not competing) --- */
 .ambient-light {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 160vw;
-    height: 160vw;
+    width: 120vw;
+    height: 120vw;
     background: radial-gradient(circle at center,
-            var(--love-core) 0%,
-            var(--love-glow) 35%,
-            var(--love-mist) 65%,
-            var(--bg-color) 85%);
+            rgba(255, 42, 109, 0.08) 0%,
+            rgba(255, 140, 110, 0.04) 40%,
+            transparent 70%);
     z-index: -2;
-    animation: pulse 15s ease-in-out infinite alternate;
     pointer-events: none;
     mix-blend-mode: screen;
+    /* Removed animation to reduce distraction */
+}
+
+/* --- Dynamic Blur Background (From Artwork) --- */
+.bg-blur {
+    position: fixed;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(80px) brightness(0.35) saturate(1.2);
+    transform: scale(1.2);
+    z-index: -3;
+    pointer-events: none;
+    transition: background-image 0.8s ease;
+}
+
+/* --- Date Capsule (Context Anchor) --- */
+.date-capsule {
+    position: fixed;
+    top: 100px;
+    left: 30px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.05em;
+    z-index: 60;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+}
+
+/* Show date capsule when sidebar is closed */
+body.sidebar-closed .date-capsule {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 @keyframes pulse {
@@ -425,13 +464,13 @@ h3 {
 }
 
 .flip-card {
-    width: auto;
-    height: 80vh;
-    aspect-ratio: 3/4;
+    width: 100%;
+    height: 95vh;
+    /* Larger - dominate viewport */
+    max-width: 95vw;
     position: relative;
     transform-style: preserve-3d;
     transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
-    /* No custom cursor here, global cursor: none applies */
 }
 
 .flip-card.flipped {
@@ -467,8 +506,8 @@ h3 {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    /* Keep original aspect ratio */
-    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
+    /* No background - let blur show through */
+    filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.7));
 }
 
 .flip-back {
