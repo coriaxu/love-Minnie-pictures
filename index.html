@@ -4,137 +4,399 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minnie's 2026 · Garden of Memories</title>
-
-    <!-- Google Fonts: Elegant Serif + Clean Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>Minnie's Gallery - The Eternal Rose</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,900;1,6..96,400&family=Inter:wght@300;400;600&display=swap"
         rel="stylesheet">
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 核心设计：Vignelli 的骨架 + 玫瑰石英星云 (The Rose Quartz Nebula) --- */
 
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="style.css">
+        :root {
+            /* 背景 (The Void)：深夜里最柔软的绒布，极深炭色带微量紫暖调 */
+            --bg-color: #0a0506;
+
+            /* --- 爱意星云配色方案 --- */
+            /* 光核 (The Heart)：玫瑰石英粉，温柔无条件 */
+            --love-core: rgba(247, 190, 200, 0.4);
+            /* 光晕 (The Aura)：扩散出的温暖珊瑚橘 */
+            --love-glow: rgba(255, 140, 110, 0.18);
+            /* 边缘 (The Mist)：深邃的紫罗兰雾气，暧昧流动 */
+            --love-mist: rgba(80, 30, 60, 0.15);
+
+            /* 辅助色 */
+            --grid-line: rgba(255, 235, 240, 0.15);
+            /* 极细的粉白线 */
+            --text-main: rgba(255, 250, 250, 0.95);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: white;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: none;
+            transition: background-color 1.5s ease;
+        }
+
+        /* --- 1. 氛围光场 (The Romantic Nebula) --- */
+        /* 这是一团绚烂、暧昧、流动的能量 */
+        .ambient-light {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160vw;
+            height: 160vw;
+            background: radial-gradient(circle at center,
+                    var(--love-core) 0%,
+                    /* 核心：玫瑰石英 */
+                    var(--love-glow) 35%,
+                    /* 中层：珊瑚橘 */
+                    var(--love-mist) 65%,
+                    /* 外层：紫罗兰雾 */
+                    var(--bg-color) 85%
+                    /* 融入深空 */
+                );
+            z-index: -2;
+            /* 呼吸节奏更深沉 */
+            animation: pulse 15s ease-in-out infinite alternate;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.7;
+                transform: translate(-50%, -50%) scale(0.95);
+                filter: hue-rotate(0deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+                filter: hue-rotate(10deg);
+            }
+        }
+
+        /* 噪点层：天鹅绒质感 */
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            z-index: -1;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+
+        /* --- 2. 结构网格 --- */
+        .grid-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .heavy-rule {
+            width: 100%;
+            height: 1px;
+            /* 更精致的线条 */
+            background: var(--grid-line);
+            margin: 0;
+            transform-origin: left;
+            transform: scaleX(0);
+            animation: drawLine 1.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+        .heavy-rule.delay {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes drawLine {
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        /* 标题排版 */
+        .typography-hero {
+            font-family: 'Bodoni Moda', serif;
+            font-size: clamp(3rem, 12vw, 9rem);
+            font-weight: 900;
+            line-height: 0.85;
+            letter-spacing: -0.04em;
+            text-transform: uppercase;
+            /* 关键：Exclusion 模式配合新的玫瑰背景，透出温润的玉石光泽 */
+            mix-blend-mode: exclusion;
+            color: rgba(255, 240, 245, 0.9);
+            opacity: 0;
+            animation: slideUp 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+            animation-delay: 0.5s;
+        }
+
+        .typography-swiss {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 400;
+            opacity: 0.7;
+            color: #dec8d0;
+            /* 灰玫瑰色 */
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-top: 20px;
+        }
+
+        /* --- 3. 交互光标 (The Rose Torch) --- */
+        .cursor-torch {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            /* 光标是一团流动的玫瑰星云 */
+            background: radial-gradient(circle, rgba(255, 180, 195, 0.12) 0%, rgba(255, 120, 100, 0.05) 50%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            mix-blend-mode: screen;
+            z-index: 20;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            /* 更丝滑的跟随 */
+        }
+
+        .cursor-dot {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: #ffecf0;
+            /* 亮白粉芯 */
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 21;
+            box-shadow: 0 0 15px rgba(255, 160, 170, 0.9);
+        }
+
+        /* --- 4. 按钮 --- */
+        .btn-minimal {
+            background: transparent;
+            border: 1px solid rgba(255, 210, 220, 0.25);
+            color: rgba(255, 235, 240, 0.9);
+            padding: 16px 32px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            cursor: none;
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-minimal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* 悬停时的渐变：珊瑚橘 -> 玫瑰粉 */
+            background: linear-gradient(90deg, #ff9a8b 0%, #ff6a88 55%, #ff99ac 100%);
+            z-index: -1;
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .btn-minimal:hover {
+            color: #4a0e1c;
+            /* 深紫红字，对比强烈 */
+            border-color: transparent;
+            padding-left: 40px;
+            /* 细微位移，增加互动感 */
+            padding-right: 40px;
+        }
+
+        .btn-minimal:hover::before {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+            animation-delay: 1s;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 日期计数器 */
+        .counter-bg {
+            font-family: 'Bodoni Moda';
+            font-size: 20vw;
+            line-height: 0.8;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 180, 190, 0.15);
+            opacity: 0.6;
+        }
+    </style>
 </head>
 
 <body>
 
-    <!-- ===================== WELCOME PAGE ===================== -->
-    <div id="welcome-overlay" class="welcome-overlay">
-        <div class="welcome-content">
-            <div class="welcome-icon">
-                <img src="images/sunflower_icon.png" alt="🌻" class="welcome-flower">
+    <!-- 氛围光场 (The Rose Nebula) -->
+    <div class="ambient-light"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- 光标 -->
+    <div class="cursor-torch" id="torch"></div>
+    <div class="cursor-dot" id="dot"></div>
+
+    <div class="grid-container">
+
+        <header class="w-full">
+            <div class="heavy-rule"></div>
+            <div class="flex justify-between mt-4 fade-in">
+                <span class="typography-swiss">Project No. 001</span>
+                <span class="typography-swiss">For My Bear Wife</span>
+                <span class="typography-swiss text-right">Est. 2025</span>
             </div>
-            <h1 class="welcome-title">Love Minnie Every Day</h1>
-            <button id="enter-btn" class="enter-btn">
-                <span>进入花园</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
-        <div class="welcome-particles"></div>
+        </header>
+
+        <main class="flex-grow flex flex-col justify-center relative overflow-hidden">
+            <h1 class="typography-hero">
+                Visual<br>
+                Letters
+            </h1>
+
+            <div class="absolute right-0 bottom-0 pointer-events-none mix-blend-screen">
+                <span class="counter-bg">365</span>
+            </div>
+        </main>
+
+        <footer class="w-full">
+            <div class="heavy-rule delay"></div>
+            <div class="meta-info fade-in">
+                <div class="max-w-md">
+                    <!-- 引用文字：温柔的粉白 -->
+                    <p class="font-serif italic text-xl mb-2" style="color: #fff0f5;">
+                        "Infinite shades of love."
+                    </p>
+                    <p class="typography-swiss text-xs leading-relaxed opacity-80">
+                        FROM CYBERPUNK TO IMPRESSIONISM<br>
+                        A DAILY ARCHIVE OF AFFECTION.
+                    </p>
+                </div>
+
+                <button onclick="enterGallery()" class="btn-minimal group">
+                    <span class="relative z-10">Unwrap Day 001</span>
+                </button>
+            </div>
+        </footer>
+
     </div>
 
-    <!-- ===================== HEADER ===================== -->
-    <header class="app-header">
-        <h1 class="logo">Love Minnie</h1>
-        <nav class="month-nav">
-            <button id="prev-month" class="nav-btn" aria-label="Previous Month">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <span id="current-month-label" class="month-label">January 2026</span>
-            <button id="next-month" class="nav-btn" aria-label="Next Month">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </nav>
-        <button id="toggle-calendar" class="mobile-calendar-btn" aria-label="Toggle Calendar">
-            <i class="fa-solid fa-calendar-days"></i>
-        </button>
-    </header>
+    <script>
+        const torch = document.getElementById('torch');
+        const dot = document.getElementById('dot');
+        const btn = document.querySelector('.btn-minimal');
+        const body = document.querySelector('body');
 
-    <!-- ===================== MAIN LAYOUT ===================== -->
-    <main class="app-container">
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
 
-        <!-- === Calendar Sidebar === -->
-        <aside id="calendar-sidebar" class="calendar-sidebar">
-            <div class="calendar-grid">
-                <div class="weekday-header">
-                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-                </div>
-                <div id="calendar-days" class="days-grid">
-                    <!-- Dynamically generated -->
-                </div>
-            </div>
-            <div class="calendar-legend">
-                <span><i class="fa-solid fa-circle" style="color: var(--accent-green);"></i> Has artwork</span>
-                <span><img src="images/sunflower_icon.png" class="sunflower-icon" alt="🌻"> Coming soon</span>
-            </div>
-        </aside>
+        // 使用 rAF 优化光标跟随，增加一点点惯性延迟感
+        function animateCursor() {
+            // 这里可以加一点缓动逻辑，但 CSS transition 已经处理了大部分
+            torch.style.left = mouseX + 'px';
+            torch.style.top = mouseY + 'px';
+            dot.style.left = mouseX + 'px';
+            dot.style.top = mouseY + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
 
-        <!-- === Content Area === -->
-        <section class="content-area">
-            <!-- Day Card with Flip Feature -->
-            <article id="day-card" class="day-card">
-                <!-- Flip Container -->
-                <div class="flip-container">
-                    <div class="flip-card" id="flip-card">
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
 
-                        <!-- FRONT: Photo Side -->
-                        <div class="flip-front">
-                            <div class="card-image-wrapper">
-                                <div id="card-bg-blur" class="card-bg-blur"></div>
-                                <img id="card-image" class="card-image" src="" alt="Artwork">
-                            </div>
-                        </div>
+        btn.addEventListener('mouseenter', () => {
+            // 悬停时，光芒变得更炽热、更像珊瑚
+            torch.style.width = "550px";
+            torch.style.height = "550px";
+            // 珊瑚橘色的光晕爆发
+            torch.style.background = "radial-gradient(circle, rgba(255, 140, 110, 0.25) 0%, rgba(255, 100, 120, 0.15) 50%, transparent 70%)";
+            dot.style.transform = "translate(-50%, -50%) scale(1.5)";
+            dot.style.background = "#fff";
+        });
 
-                        <!-- BACK: Love Letter Side -->
-                        <div class="flip-back">
-                            <div class="letter-container">
-                                <div class="letter-header">
-                                    <span class="letter-date" id="letter-date">Jan 1, 2026</span>
-                                    <h2 class="letter-title">💌 给你的悄悄话</h2>
-                                </div>
-                                <div class="letter-content" id="letter-content">
-                                    <p>这里是写给你的秘密话语...</p>
-                                </div>
-                                <div class="letter-signature">
-                                    <span>— 永远爱你的人</span>
-                                </div>
-                            </div>
-                            <!-- Click anywhere to flip back (cursor indicates it) -->
-                        </div>
+        btn.addEventListener('mouseleave', () => {
+            // 恢复温柔的玫瑰粉
+            torch.style.width = "400px";
+            torch.style.height = "400px";
+            torch.style.background = "radial-gradient(circle, rgba(255, 180, 195, 0.12) 0%, transparent 70%)";
+            dot.style.transform = "translate(-50%, -50%) scale(1)";
+            dot.style.background = "#ffecf0";
+        });
 
-                    </div>
-                </div>
-            </article>
+        function enterGallery() {
+            const light = document.querySelector('.ambient-light');
+            const content = document.querySelector('.grid-container');
 
-            <!-- Empty State (for future days) -->
-            <article id="empty-state" class="day-card empty-state" style="display: none;">
-                <img src="images/sunflower_icon.png" class="sunflower-icon" alt="Waiting">
-                <h2 class="empty-title">A seed waiting to bloom...</h2>
-                <p class="empty-text" id="empty-date-text">This day is yet to unfold.</p>
-            </article>
-        </section>
+            content.style.transition = "opacity 1.2s ease";
+            content.style.opacity = "0";
 
-    </main>
+            // 背景变为深沉的紫罗兰夜色，准备迎接画作
+            body.style.backgroundColor = "#1a050a";
 
-    <!-- ===================== TIMELINE STRIP ===================== -->
-    <nav class="timeline-strip">
-        <button id="timeline-prev" class="timeline-nav-btn">
-            <i class="fa-solid fa-angle-left"></i>
-        </button>
-        <div id="timeline-container" class="timeline-container">
-            <!-- Thumbnails injected here -->
-        </div>
-        <button id="timeline-next" class="timeline-nav-btn">
-            <i class="fa-solid fa-angle-right"></i>
-        </button>
-    </nav>
+            // 光芒爆发：彻底的粉色浪漫
+            light.style.transition = "transform 2s cubic-bezier(0.19, 1, 0.22, 1), opacity 2s ease-in";
+            light.style.transform = "translate(-50%, -50%) scale(4.5)";
+            light.style.opacity = "1";
+            // 爆发时的颜色：从中心高亮白粉 -> 珊瑚橘 -> 边缘深玫瑰
+            light.style.background = "radial-gradient(circle, #fff5f7 0%, #ffcfd8 30%, #ff9a8b 60%, transparent 100%)";
 
-    <!-- ===================== SCRIPTS ===================== -->
-    <script src="script.js"></script>
+            setTimeout(() => {
+                // 跳转到相册页面
+                location.href = "gallery.html";
+            }, 2000);
+        }
+    </script>
 </body>
 
 </html>

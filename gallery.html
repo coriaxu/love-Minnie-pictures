@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minnie's 2026 · Garden of Memories</title>
+
+    <!-- Google Fonts: Elegant Serif + Clean Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ===================== HEADER ===================== -->
+    <header class="app-header">
+        <h1 class="logo">Love Minnie</h1>
+        <nav class="month-nav">
+            <button id="prev-month" class="nav-btn" aria-label="Previous Month">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span id="current-month-label" class="month-label">January 2026</span>
+            <button id="next-month" class="nav-btn" aria-label="Next Month">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </nav>
+        <button id="toggle-calendar" class="mobile-calendar-btn" aria-label="Toggle Calendar">
+            <i class="fa-solid fa-calendar-days"></i>
+        </button>
+    </header>
+
+    <!-- ===================== MAIN LAYOUT ===================== -->
+    <main class="app-container">
+
+        <!-- === Calendar Sidebar === -->
+        <aside id="calendar-sidebar" class="calendar-sidebar">
+            <div class="calendar-grid">
+                <div class="weekday-header">
+                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                </div>
+                <div id="calendar-days" class="days-grid">
+                    <!-- Dynamically generated -->
+                </div>
+            </div>
+            <div class="calendar-legend">
+                <span><i class="fa-solid fa-circle" style="color: var(--accent-green);"></i> Has artwork</span>
+                <span><img src="images/sunflower_icon.png" class="sunflower-icon" alt="🌻"> Coming soon</span>
+            </div>
+        </aside>
+
+        <!-- === Content Area === -->
+        <section class="content-area">
+            <!-- Day Card with Flip Feature -->
+            <article id="day-card" class="day-card">
+                <!-- Flip Container -->
+                <div class="flip-container">
+                    <div class="flip-card" id="flip-card">
+
+                        <!-- FRONT: Photo Side -->
+                        <div class="flip-front">
+                            <div class="card-image-wrapper">
+                                <div id="card-bg-blur" class="card-bg-blur"></div>
+                                <img id="card-image" class="card-image" src="" alt="Artwork">
+                            </div>
+                        </div>
+
+                        <!-- BACK: Love Letter Side -->
+                        <div class="flip-back">
+                            <div class="letter-container">
+                                <div class="letter-header">
+                                    <span class="letter-date" id="letter-date">Jan 1, 2026</span>
+                                    <h2 class="letter-title">💌 给你的悄悄话</h2>
+                                </div>
+                                <div class="letter-content" id="letter-content">
+                                    <p>这里是写给你的秘密话语...</p>
+                                </div>
+                                <div class="letter-signature">
+                                    <span>— 永远爱你的人</span>
+                                </div>
+                            </div>
+                            <!-- Click anywhere to flip back (cursor indicates it) -->
+                        </div>
+
+                    </div>
+                </div>
+            </article>
+
+            <!-- Empty State (for future days) -->
+            <article id="empty-state" class="day-card empty-state" style="display: none;">
+                <img src="images/sunflower_icon.png" class="sunflower-icon" alt="Waiting">
+                <h2 class="empty-title">A seed waiting to bloom...</h2>
+                <p class="empty-text" id="empty-date-text">This day is yet to unfold.</p>
+            </article>
+        </section>
+
+    </main>
+
+    <!-- ===================== TIMELINE STRIP ===================== -->
+    <nav class="timeline-strip">
+        <button id="timeline-prev" class="timeline-nav-btn">
+            <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <div id="timeline-container" class="timeline-container">
+            <!-- Thumbnails injected here -->
+        </div>
+        <button id="timeline-next" class="timeline-nav-btn">
+            <i class="fa-solid fa-angle-right"></i>
+        </button>
+    </nav>
+
+    <!-- ===================== SCRIPTS ===================== -->
+    <script src="script.js"></script>
+</body>
+
+</html>
