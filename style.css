@@ -601,41 +601,92 @@ h3 {
     padding: 60px;
 }
 
-/* Flip Hint */
-.flip-hint {
+/* ============================================================
+   SUBTLE FLIP INTERACTION (No Button - Just Cursor Magic)
+   ============================================================ */
+
+/* Flip Card Cursor - subtle invitation to click */
+.flip-card {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M10 6v20l12-10z' fill='%23fff' stroke='%23333' stroke-width='1'/%3E%3C/svg%3E") 16 16, pointer;
+}
+
+/* When flipped, show return cursor */
+.flip-card.flipped {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M22 6v20l-12-10z' fill='%23fff' stroke='%23333' stroke-width='1'/%3E%3C/svg%3E") 16 16, pointer;
+}
+
+/* Hint Animation on Front - Subtle glow pulse on image */
+.flip-front::after {
+    content: '';
     position: absolute;
-    bottom: 130px;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.flip-card:not(.flipped):hover .flip-front::after {
+    opacity: 1;
+    animation: gentleGlow 2s ease-in-out infinite;
+}
+
+@keyframes gentleGlow {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Corner flip indicator - very subtle */
+.flip-front::before {
+    content: '';
+    position: absolute;
+    bottom: 140px;
+    right: 40px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 50%, transparent 50%);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.4s ease;
+    z-index: 20;
+    pointer-events: none;
+    border-radius: 4px;
+}
+
+.flip-card:not(.flipped):hover .flip-front::before {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Flip Back - subtle return indicator */
+.flip-back::before {
+    content: '↩ 点击返回';
+    position: absolute;
+    bottom: 40px;
     left: 50%;
     transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 24px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 50px;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.85rem;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
     z-index: 20;
-    cursor: pointer;
-    transition: var(--transition-smooth);
-    animation: gentlePulse 3s ease-in-out infinite;
+    transition: all 0.3s ease;
+    pointer-events: none;
 }
 
-.flip-hint:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    transform: translateX(-50%) scale(1.05);
-}
-
-.flip-hint i {
-    font-size: 1rem;
-}
-
-.flip-hint-back {
-    bottom: 40px;
-    animation: none;
+.flip-card.flipped:hover .flip-back::before {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* ============================================================
