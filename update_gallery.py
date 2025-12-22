@@ -8,6 +8,7 @@ from PIL import Image
 RAW_DIR = "raw_images"
 PROCESSED_DIR = "images"
 DATA_FILE = "data.json"
+DATA_JS = "data.js"
 MAX_WIDTH = 1600
 
 def setup_directories():
@@ -30,6 +31,13 @@ def save_data(data):
     data.sort(key=lambda x: x['date'], reverse=True)
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
+    save_data_js(data)
+
+def save_data_js(data):
+    with open(DATA_JS, 'w', encoding='utf-8') as f:
+        f.write("window.__GALLERY_DATA__ = ")
+        json.dump(data, f, ensure_ascii=False)
+        f.write(";\n")
 
 def compress_image(source_path, target_path):
     try:
@@ -115,6 +123,7 @@ def main():
         save_data(current_data)
         print(f"✅ Automatically added {processed_count} new paintings!")
     else:
+        save_data_js(current_data)
         print("✨ No new images found. Gallery is up to date.")
 
 if __name__ == "__main__":

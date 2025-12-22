@@ -74,46 +74,14 @@
 
         <!-- === Content Area === -->
         <section class="content-area">
-            <!-- Day Card with Flip Feature -->
-            <article id="day-card" class="day-card">
-                <!-- Flip Container -->
-                <div class="flip-container">
-                    <div class="flip-card" id="flip-card">
-
-                        <!-- FRONT: Photo Side -->
-                        <div class="flip-front">
-                            <div class="card-image-wrapper">
-                                <div id="card-bg-blur" class="card-bg-blur"></div>
-                                <img id="card-image" class="card-image" src="" alt="Artwork">
-                            </div>
-                        </div>
-
-                        <!-- BACK: Love Letter Side -->
-                        <div class="flip-back">
-                            <div class="letter-container">
-                                <div class="letter-header">
-                                    <span class="letter-date" id="letter-date">Jan 1, 2026</span>
-                                    <h2 class="letter-title">💌 给你的悄悄话</h2>
-                                </div>
-                                <div class="letter-content" id="letter-content">
-                                    <p>这里是写给你的秘密话语...</p>
-                                </div>
-                                <div class="letter-signature">
-                                    <span>— 永远爱你的人</span>
-                                </div>
-                            </div>
-                            <!-- Click anywhere to flip back (cursor indicates it) -->
-                        </div>
-
-                    </div>
-                </div>
-            </article>
+            <div id="gallery-grid" class="gallery-grid" aria-live="polite"></div>
 
             <!-- Empty State (for future days) -->
-            <article id="empty-state" class="day-card empty-state" style="display: none;">
+            <article id="empty-state" class="empty-state" style="display: none;">
                 <img src="images/sunflower_icon.png" class="sunflower-icon" alt="Waiting">
-                <h2 class="empty-title">A seed waiting to bloom...</h2>
-                <p class="empty-text" id="empty-date-text">This day is yet to unfold.</p>
+                <h2 class="empty-title" id="empty-title">花期未至</h2>
+                <p class="empty-text empty-cn" id="empty-date-text"></p>
+                <p class="empty-text empty-en" id="empty-subtext"></p>
             </article>
         </section>
 
@@ -132,7 +100,36 @@
         </button>
     </nav>
 
+    <!-- ===================== DETAIL MODAL ===================== -->
+    <div id="detail-modal" class="detail-modal" aria-hidden="true">
+        <div class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+            <div class="detail-media">
+                <img id="detail-image" src="" alt="Artwork detail">
+            </div>
+            <aside class="detail-side">
+                <div class="detail-header">
+                    <div class="detail-meta">
+                        <div id="detail-title" class="detail-title">Untitled</div>
+                        <div id="detail-date" class="detail-date">Jan 1, 2026</div>
+                    </div>
+                    <button id="detail-close" class="detail-close" type="button" aria-label="Back">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="detail-body">
+                    <div class="detail-label">💌 给你的悄悄话</div>
+                    <div id="detail-description" class="detail-description"></div>
+                    <div id="detail-letter" class="detail-letter"></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
     <!-- ===================== SCRIPTS ===================== -->
+    <script src="data.js"></script>
     <script src="script.js"></script>
 </body>
 

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Minnie · 发布台</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;1,6..96,400&family=Inter:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+    <div class="admin-bg"></div>
+    <div class="admin-noise"></div>
+
+    <main class="admin-shell">
+        <header class="admin-header">
+            <div>
+                <p class="admin-kicker">Love Minnie · 发布台</p>
+                <h1>把今天的心意，轻轻放进画廊</h1>
+            </div>
+            <div class="admin-badge">无需后端 · 免费发布</div>
+        </header>
+
+        <section class="admin-grid">
+            <form class="admin-panel" id="publish-form">
+                <div class="panel-title">填写与上传</div>
+
+                <div class="field">
+                    <label for="entry-date">日期</label>
+                    <input type="date" id="entry-date" required>
+                    <p class="field-note">用于生成文件名与展示日期。</p>
+                </div>
+
+                <div class="field">
+                    <label for="entry-image">图片</label>
+                    <input type="file" id="entry-image" accept="image/*" required>
+                    <p class="field-note">推荐 16:9 或 9:16，自动压缩为 WebP。</p>
+                </div>
+
+                <div class="field">
+                    <label for="entry-letter">悄悄话</label>
+                    <textarea id="entry-letter" rows="7" placeholder="写下今天的心意..." required></textarea>
+                </div>
+
+                <div class="field inline">
+                    <div>
+                        <label>文件名</label>
+                        <div class="field-value" id="file-name">-</div>
+                    </div>
+                    <div>
+                        <label>Day / No.</label>
+                        <div class="field-value" id="day-no">-</div>
+                    </div>
+                </div>
+
+                <button type="button" class="primary-btn" id="generate-btn">生成发布包</button>
+                <p class="status" id="status-text" aria-live="polite"></p>
+            </form>
+
+            <aside class="admin-panel preview">
+                <div class="panel-title">预览</div>
+                <div class="preview-card">
+                    <div class="preview-image" id="preview-image">
+                        <span>等待图片</span>
+                    </div>
+                    <div class="preview-meta">
+                        <div class="preview-title" id="preview-title">日期未选择</div>
+                        <div class="preview-sub" id="preview-sub">Day / No. 将自动计算</div>
+                    </div>
+                </div>
+
+                <div class="panel-title" style="margin-top: 24px;">发布步骤</div>
+                <ol class="steps">
+                    <li>点击“生成发布包”后，会下载一个 zip。</li>
+                    <li>解压 zip，把里面的内容上传到 GitHub 仓库。</li>
+                    <li>覆盖原来的 `data.json`、`data.js` 和 `images/` 中的文件。</li>
+                </ol>
+                <p class="hint">这一页可以离线打开，适合双击使用。</p>
+            </aside>
+        </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="libs/jszip.min.js"></script>
+    <script src="admin.js"></script>
+</body>
+
+</html>

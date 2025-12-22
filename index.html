@@ -340,27 +340,39 @@
         let mouseY = window.innerHeight / 2;
 
         // ============================================================
-        // 动态日期计算：从2026年1月1日开始计算天数
+        // 动态日期计算
         // ============================================================
-        function calculateDayNumber() {
-            const startDate = new Date('2026-01-01T00:00:00');
+        const RELATIONSHIP_START = new Date('2009-12-10T00:00:00');
+        const PROJECT_START = new Date('2026-01-01T00:00:00');
+
+        function toUtcDay(date) {
+            return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+        }
+
+        function diffDays(start, end) {
+            return Math.floor((toUtcDay(end) - toUtcDay(start)) / (1000 * 60 * 60 * 24));
+        }
+
+        function calculateRelationshipDay() {
             const today = new Date();
-            // 映射到2026年：使用当前的月和日
-            const todayIn2026 = new Date(2026, today.getMonth(), today.getDate());
+            return Math.max(1, diffDays(RELATIONSHIP_START, today) + 1);
+        }
 
-            // 计算距离起始日的天数差（+1是因为1月1日是第1天）
-            const diffTime = todayIn2026 - startDate;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-            // 确保至少是第1天，最多365天
-            return Math.max(1, Math.min(diffDays, 365));
+        function calculateProjectNo() {
+            const today = new Date();
+            if (toUtcDay(today) < toUtcDay(PROJECT_START)) {
+                return 1;
+            }
+            return Math.max(1, diffDays(PROJECT_START, today) + 1);
         }
 
         // 更新页面上的动态数字
-        const dayNum = calculateDayNumber();
+        const dayNum = calculateRelationshipDay();
+        const projectNo = calculateProjectNo();
         const dayStr = String(dayNum).padStart(3, '0');
+        const noStr = String(projectNo).padStart(3, '0');
 
-        document.getElementById('project-no').textContent = `Project No. ${dayStr}`;
+        document.getElementById('project-no').textContent = `Project No. ${noStr}`;
         document.getElementById('day-counter').textContent = dayStr;
         document.getElementById('unwrap-btn').textContent = `Unwrap Day ${dayStr}`;
 

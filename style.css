@@ -35,6 +35,8 @@
 
     --accent-red: #ff4d4d;
     /* For specialized highlights if needed */
+
+    --sidebar-width: 380px;
 }
 
 /* === RESET & BASE === */
@@ -439,10 +441,120 @@ h3 {
 .content-area {
     flex: 1;
     position: relative;
+    overflow-y: auto;
+    display: block;
+    padding: 32px 48px 60px calc(var(--sidebar-width) + 40px);
+}
+
+body.sidebar-closed .content-area {
+    padding-left: 80px;
+}
+
+/* ============================================================
+    GALLERY GRID
+    ============================================================ */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 8px;
+    grid-auto-flow: dense;
+    gap: 18px;
+    align-items: start;
+    padding-bottom: 40px;
+}
+
+.gallery-card {
+    position: relative;
+    border-radius: 16px;
     overflow: hidden;
+    background: var(--surface-glass);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    cursor: none;
+}
+
+.gallery-card.is-landscape {
+    grid-column: span 2;
+}
+
+.gallery-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(255, 180, 195, 0.4);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.gallery-card.selected {
+    border-color: rgba(255, 180, 195, 0.6);
+    box-shadow: 0 0 0 1px rgba(255, 180, 195, 0.4), 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.gallery-media {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: var(--card-ratio, 4 / 3);
+    background: rgba(0, 0, 0, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.gallery-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1);
+    transition: transform 0.4s ease;
+}
+
+.gallery-card:hover .gallery-media img {
+    transform: scale(1.02);
+}
+
+.gallery-meta {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 16px;
+    background: linear-gradient(180deg,
+            rgba(5, 2, 3, 0) 0%,
+            rgba(5, 2, 3, 0.55) 40%,
+            rgba(5, 2, 3, 0.9) 100%);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+.gallery-card:hover .gallery-meta,
+.gallery-card:focus-visible .gallery-meta {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.gallery-meta-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+}
+
+.gallery-title {
+    margin-top: 6px;
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+.gallery-card:focus-visible {
+    outline: 2px solid rgba(255, 180, 195, 0.6);
+    outline-offset: 4px;
 }
 
 .day-card {
@@ -722,15 +834,29 @@ h3 {
 
 .empty-title {
     font-family: var(--font-serif);
-    font-size: 1.8rem;
+    font-size: 2rem;
     color: var(--text-primary);
     margin-bottom: 12px;
+    letter-spacing: 0.08em;
 }
 
 .empty-text {
     font-family: var(--font-sans);
     font-size: 0.9rem;
     color: var(--text-muted);
+    max-width: 520px;
+}
+
+.empty-text.empty-cn {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.empty-text.empty-en {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: rgba(255, 235, 240, 0.7);
 }
 
 /* ============================================================
@@ -840,12 +966,174 @@ h3 {
 }
 
 /* ============================================================
+    DETAIL MODAL (Gallery Detail)
+    ============================================================ */
+.detail-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 2, 3, 0.85);
+    backdrop-filter: blur(12px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 200;
+}
+
+.detail-modal.open {
+    display: flex;
+}
+
+.detail-dialog {
+    width: min(1400px, 96vw);
+    height: min(90vh, 820px);
+    background: rgba(10, 5, 6, 0.95);
+    border: 1px solid var(--grid-line);
+    border-radius: 18px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    animation: modalIn 0.35s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.detail-media {
+    background: #060304;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+}
+
+.detail-media img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 14px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
+}
+
+.detail-side {
+    background: rgba(15, 8, 10, 0.95);
+    border-left: 1px solid var(--grid-line);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.detail-header {
+    padding: 24px 28px 18px;
+    border-bottom: 1px solid var(--grid-line);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.detail-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.detail-title {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    color: var(--text-primary);
+}
+
+.detail-date {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.detail-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--grid-line);
+    background: transparent;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: none;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.detail-close svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+.detail-close:hover {
+    color: var(--text-primary);
+    border-color: rgba(255, 180, 195, 0.5);
+    box-shadow: 0 0 16px rgba(255, 160, 170, 0.2);
+}
+
+.detail-body {
+    padding: 20px 28px 28px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.detail-label {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--love-glow);
+}
+
+.detail-description {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: rgba(255, 245, 247, 0.7);
+}
+
+.detail-letter {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.85;
+    color: rgba(255, 245, 247, 0.9);
+    white-space: pre-wrap;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+body.modal-open .content-area {
+    overflow: hidden;
+}
+
+/* ============================================================
    RESPONSIVE DESIGN
    ============================================================ */
 @media (max-width: 1024px) {
     .app-container {
-        grid-template-columns: 1fr;
-        padding: 90px 20px 120px;
+        padding: 0;
     }
 
     .calendar-sidebar {
@@ -867,6 +1155,34 @@ h3 {
 
     .mobile-calendar-btn {
         display: block;
+    }
+
+    .content-area {
+        padding: 24px 24px 80px;
+    }
+
+    body.sidebar-closed .content-area {
+        padding-left: 24px;
+    }
+
+    .gallery-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .detail-dialog {
+        grid-template-columns: 1fr;
+        height: min(92vh, 900px);
+    }
+
+    .detail-side {
+        border-left: none;
+        border-top: 1px solid var(--grid-line);
     }
 }
 
@@ -893,7 +1209,7 @@ h3 {
     }
 
     .app-container {
-        padding: 70px 0 100px;
+        padding: 0;
     }
 
     .day-card {
@@ -906,6 +1222,23 @@ h3 {
 
     .card-info {
         padding: 16px;
+    }
+
+    .content-area {
+        padding: 20px 16px 90px;
+    }
+
+    body.sidebar-closed .content-area {
+        padding-left: 16px;
+    }
+
+    .gallery-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .gallery-card.is-landscape {
+        grid-column: span 1;
     }
 
     /* Timeline on Mobile */
