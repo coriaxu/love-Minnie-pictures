@@ -746,8 +746,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         detailImage.src = `images/${item.filename}`;
         detailImage.alt = item.title || 'Artwork detail';
-        detailTitle.textContent = item.title || 'Untitled';
-        detailDate.textContent = formatDateDisplay(new Date(item.date));
+        // 只显示一个日期，用 YYYY.Jan.D 格式
+        detailTitle.textContent = formatDateDisplay(new Date(item.date));
+        // 隐藏重复的小日期
+        detailDate.style.display = 'none';
 
         const description = item.description ? item.description.trim() : '';
         if (description) {
