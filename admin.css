@@ -111,7 +111,7 @@ body {
     gap: 16px;
 }
 
-.field.inline > div {
+.field.inline>div {
     flex: 1;
 }
 
@@ -190,18 +190,23 @@ textarea:focus {
 }
 
 .preview-image {
-    aspect-ratio: 4 / 3;
+    /* 移除固定比例，让图片自适应 */
+    min-height: 200px;
+    max-height: 400px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.5);
     color: var(--text-muted);
+    overflow: hidden;
 }
 
 .preview-image img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    /* 完整显示图片，不裁剪 */
 }
 
 .preview-meta {
