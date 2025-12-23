@@ -42,7 +42,8 @@ fi
 echo "🚀 Pushing to GitHub..."
 git add .
 git commit -m "Update gallery content $(date +%Y-%m-%d)"
-git push
+# Use -u origin main to ensure upstream is set, handling the "no upstream" error
+git push -u origin main
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Success! Site updated.${NC}"
