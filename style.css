@@ -391,11 +391,9 @@ h3 {
 }
 
 .day-cell.future {
-    /* Ruogu Mod: 提高可见度，不再隐形 */
     opacity: 1;
     pointer-events: none;
-    filter: saturate(1.2);
-    /* 让向日葵色彩更鲜艳 */
+    /* Parent filter removed */
 }
 
 .day-cell.empty {
@@ -404,7 +402,6 @@ h3 {
 
 .seed-icon {
     font-size: 0.8rem;
-    /* Ruogu Mod: 去除图标自身的透明度 */
     opacity: 1;
     display: flex;
     align-items: center;
@@ -415,8 +412,10 @@ h3 {
     width: 24px;
     height: 24px;
     object-fit: contain;
-    /* 轻微阴影增加层次 */
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    /* Ruogu Mod: 炼金术 CSS 滤镜 - 将灰图变金图 */
+    /* Sepia(1) + Saturate(large) = Gold */
+    filter: sepia(100%) saturate(2000%) hue-rotate(5deg) brightness(1.1) drop-shadow(0 0 5px rgba(255, 200, 0, 0.5));
+    transition: all 0.5s ease;
 }
 
 .day-cell.today:not(.selected) {
