@@ -763,6 +763,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const letterText = item.loveLetter || item.description || '这是一个特别的日子，值得被永远铭记。';
         detailLetter.innerHTML = escapeHtml(letterText).replace(/\n/g, '<br>');
 
+        // 动态字号：文字少时放大
+        detailLetter.classList.remove('text-xl', 'text-2xl');
+        const textLength = letterText.length;
+        if (textLength < 30) {
+            detailLetter.classList.add('text-2xl');
+        } else if (textLength < 80) {
+            detailLetter.classList.add('text-xl');
+        }
         detailModal.classList.add('open');
         detailModal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');

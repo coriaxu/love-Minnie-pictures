@@ -1141,6 +1141,20 @@ body.sidebar-closed .content-area {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    flex: 1;
+    position: relative;
+}
+
+/* 底部装饰：淡淡的向日葵 */
+.detail-body::after {
+    content: '🌻';
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 3rem;
+    opacity: 0.08;
+    pointer-events: none;
+    filter: grayscale(30%);
 }
 
 .detail-label {
@@ -1163,6 +1177,19 @@ body.sidebar-closed .content-area {
     line-height: 1.85;
     color: rgba(255, 245, 247, 0.9);
     white-space: pre-wrap;
+    transition: font-size 0.3s ease;
+}
+
+/* 动态字号类 - 由 JS 根据文字长度添加 */
+.detail-letter.text-xl {
+    font-size: 1.4rem;
+    line-height: 2;
+}
+
+.detail-letter.text-2xl {
+    font-size: 1.8rem;
+    line-height: 2.2;
+    font-weight: 300;
 }
 
 body.modal-open {
