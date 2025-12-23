@@ -1,1 +1,1 @@
-window.__GALLERY_DATA__ = [];
+window.__GALLERY_DATA__ = [{"id":"20260101","date":"2026-01-01","filename":"20260101.webp","title":"Jan 1, 2026","description":"","music":"","loveLetter":"新的一年啦！愿这一年我们的都能平平安安，幸福健康♥️"}];
