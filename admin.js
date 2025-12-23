@@ -16,6 +16,7 @@ const previewSub = document.getElementById('preview-sub');
 const generateBtn = document.getElementById('generate-btn');
 
 const existingData = Array.isArray(window.__GALLERY_DATA__) ? [...window.__GALLERY_DATA__] : [];
+let existingImageBlob = null; // Store blob if editing existing entry
 
 const setStatus = (message) => {
     if (statusText) statusText.textContent = message;
@@ -160,8 +161,8 @@ const handleGenerate = async () => {
         setStatus('请先选择日期。');
         return;
     }
-    if (!imageInput.files || !imageInput.files[0]) {
-        setStatus('请先选择图片。');
+    if ((!imageInput.files || !imageInput.files[0]) && !existingImageBlob) {
+        setStatus('请选择图片（或等待原图加载）。');
         return;
     }
     if (!letterInput.value.trim()) {
@@ -186,7 +187,15 @@ const handleGenerate = async () => {
 
         const file = imageInput.files[0];
         const filename = getFileNameFromDate(dateValue);
-        const imageBlob = await compressToWebp(file);
+
+        let imageBlob;
+        if (file) {
+            imageBlob = await compressToWebp(file);
+        } else if (existingImageBlob) {
+            imageBlob = existingImageBlob;
+        } else {
+            throw new Error('No image source found');
+        }
 
         setStatus('正在更新数据...');
 
@@ -232,7 +241,41 @@ const setTodayIfEmpty = () => {
     }
 };
 
-setTodayIfEmpty();
+const checkPreFill = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const dateParam = params.get('date');
+    if (!dateParam) {
+        setTodayIfEmpty();
+        return;
+    }
+
+    const item = existingData.find(d => d.date === dateParam);
+    if (item) {
+        dateInput.value = item.date;
+        letterInput.value = item.loveLetter || item.description || '';
+
+        // Load existing image
+        try {
+            const response = await fetch(`images/${item.filename}`);
+            if (response.ok) {
+                existingImageBlob = await response.blob();
+                // Create preview from blob
+                const url = URL.createObjectURL(existingImageBlob);
+                previewImage.innerHTML = `<img src="${url}" alt="preview">`;
+                // Don't revoke immediately, let preview stay
+            }
+        } catch (e) {
+            console.error('Failed to load existing image', e);
+        }
+
+        updatePreview(); // Trigger text updates
+        setStatus('已加载历史内容，可直接修改。');
+    } else {
+        setTodayIfEmpty();
+    }
+};
+
+checkPreFill();
 updatePreview();
 
 if (form) {

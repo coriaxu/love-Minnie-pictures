@@ -629,6 +629,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detailClose) {
             detailClose.focus();
         }
+
+        // Add Edit Button if not exists
+        let editBtn = document.getElementById('detail-edit');
+        if (!editBtn) {
+            editBtn = document.createElement('button');
+            editBtn.id = 'detail-edit';
+            editBtn.className = 'detail-action-btn';
+            editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+            editBtn.setAttribute('title', 'Review & Edit');
+
+            // Insert before Close button
+            const header = document.querySelector('.detail-header');
+            if (header) {
+                header.appendChild(editBtn);
+            }
+        }
+
+        // Update Edit Link
+        editBtn.onclick = () => {
+            window.location.href = `admin.html?date=${item.date}`;
+        };
     }
 
     function closeDetail() {
@@ -649,8 +670,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatDateDisplay(date) {
-        const options = { year: 'numeric', month: 'short', day: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
+        // Change to YYYY.MMM.D, e.g., 2026.Jan.2
+        const year = date.getFullYear();
+        const day = date.getDate();
+        const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()];
+        return `${year}.${monthShort}.${day}`;
     }
 
     function formatMonthDisplay(date) {

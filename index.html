@@ -269,9 +269,15 @@
             font-family: 'Bodoni Moda';
             font-size: 20vw;
             line-height: 0.8;
-            color: transparent;
-            -webkit-text-stroke: 1px rgba(255, 180, 190, 0.15);
-            opacity: 0.6;
+            /* Ruogu Mod: 增加微弱填充，让数字不再空洞 */
+            color: rgba(255, 235, 240, 0.02);
+            /* Ruogu Mod: 增强描边可见度，使用更温柔的粉色 */
+            -webkit-text-stroke: 1px rgba(255, 210, 220, 0.5);
+            /* Ruogu Mod: 去除整体透明度，改用颜色控制，并添加高级柔光 */
+            opacity: 1;
+            text-shadow: 0 0 40px rgba(255, 100, 120, 0.15);
+            /* 添加混合模式让它与背景更好地融合但又清晰 */
+            mix-blend-mode: plus-lighter;
         }
     </style>
 </head>
