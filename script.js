@@ -86,6 +86,145 @@ document.addEventListener('DOMContentLoaded', () => {
     let dataByDate = {};
     const cardByDate = new Map();
     let resizeTimer = null;
+    const bgToneCache = new Map();
+    let bgToneRequestId = 0;
+    let baseTint = null;
+    const toneCanvas = document.createElement('canvas');
+    const toneCtx = toneCanvas.getContext('2d', { willReadFrequently: true });
+
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+    const parseHexColor = (value) => {
+        if (!value) return null;
+        const hex = value.trim();
+        if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return null;
+        const normalized = hex.length === 4
+            ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+            : hex;
+        const int = Number.parseInt(normalized.slice(1), 16);
+        return {
+            r: (int >> 16) & 255,
+            g: (int >> 8) & 255,
+            b: int & 255
+        };
+    };
+
+    const mixColor = (a, b, ratio) => ({
+        r: Math.round(a.r * (1 - ratio) + b.r * ratio),
+        g: Math.round(a.g * (1 - ratio) + b.g * ratio),
+        b: Math.round(a.b * (1 - ratio) + b.b * ratio)
+    });
+
+    const toRgba = (color, alpha) => (
+        `rgba(${color.r}, ${color.g}, ${color.b}, ${clamp(alpha, 0, 1)})`
+    );
+
+    const getBaseTint = () => {
+        if (!baseTint) {
+            const cssValue = getComputedStyle(document.documentElement)
+                .getPropertyValue('--bg-color');
+            baseTint = parseHexColor(cssValue) || { r: 26, g: 11, b: 42 };
+        }
+        return baseTint;
+    };
+
+    const setBgBlurImage = (filename) => {
+        if (!bgBlur) return;
+        const value = filename ? `url('images/${filename}')` : 'none';
+        bgBlur.style.setProperty('--bg-blur-image', value);
+    };
+
+    const setBgBlurOverlay = (tone) => {
+        if (!bgBlur || !tone) return;
+        const base = getBaseTint();
+        const toned = mixColor(tone, base, 0.55);
+        const strong = toRgba(toned, 0.45);
+        const soft = toRgba(toned, 0.25);
+        const deep = toRgba(base, 0.9);
+        bgBlur.style.setProperty(
+            '--bg-blur-overlay',
+            `radial-gradient(circle at 20% 20%, ${strong} 0%, ${soft} 45%, ${deep} 78%)`
+        );
+    };
+
+    const resetBgBlurOverlay = () => {
+        setBgBlurOverlay(getBaseTint());
+    };
+
+    const clearBgBlur = () => {
+        setBgBlurImage(null);
+        resetBgBlurOverlay();
+    };
+
+    const extractToneFromImage = (img) => {
+        if (!toneCtx) return null;
+        const size = 40;
+        toneCanvas.width = size;
+        toneCanvas.height = size;
+        toneCtx.clearRect(0, 0, size, size);
+        toneCtx.drawImage(img, 0, 0, size, size);
+        const { data } = toneCtx.getImageData(0, 0, size, size);
+
+        let r = 0;
+        let g = 0;
+        let b = 0;
+        let total = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const alpha = data[i + 3];
+            if (alpha < 40) continue;
+
+            const red = data[i];
+            const green = data[i + 1];
+            const blue = data[i + 2];
+            const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+            const max = Math.max(red, green, blue);
+            const min = Math.min(red, green, blue);
+            const chroma = max - min;
+            const saturation = chroma / 255;
+            const lumaWeight = 1 - Math.abs(luma - 128) / 128;
+            const weight = Math.max(0.1, lumaWeight) * (0.4 + saturation);
+
+            r += red * weight;
+            g += green * weight;
+            b += blue * weight;
+            total += weight;
+        }
+
+        if (!total) return null;
+        return {
+            r: Math.round(r / total),
+            g: Math.round(g / total),
+            b: Math.round(b / total)
+        };
+    };
+
+    const applyImageTone = (filename) => {
+        if (!bgBlur || !filename) return;
+        const cached = bgToneCache.get(filename);
+        if (cached) {
+            setBgBlurOverlay(cached);
+            return;
+        }
+        const requestId = ++bgToneRequestId;
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = `images/${filename}`;
+        img.onload = () => {
+            if (requestId !== bgToneRequestId) return;
+            const tone = extractToneFromImage(img);
+            if (tone) {
+                bgToneCache.set(filename, tone);
+                setBgBlurOverlay(tone);
+            } else {
+                resetBgBlurOverlay();
+            }
+        };
+        img.onerror = () => {
+            if (requestId !== bgToneRequestId) return;
+            resetBgBlurOverlay();
+        };
+    };
 
     // ============================================================
     // Initialize
@@ -349,9 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const items = getItemsForMonth(currentMonth);
 
         if (!items.length) {
-            if (bgBlur) {
-                bgBlur.style.backgroundImage = '';
-            }
+            clearBgBlur();
             showEmptyState({ mode: getEmptyMode(currentMonth), date: currentMonth });
             updateDateCapsuleForMonth(currentMonth);
             return;
@@ -515,7 +652,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (bgBlur) {
-            bgBlur.style.backgroundImage = `url('images/${item.filename}')`;
+            setBgBlurImage(item.filename);
+            applyImageTone(item.filename);
         }
 
         updateDateCapsule(item);

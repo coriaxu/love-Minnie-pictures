@@ -5,7 +5,7 @@
 
 :root {
     /* 背景 (Midnight Rose)：午夜玫瑰 - 深邃紫罗兰夜空 */
-    --bg-color: #0f050a;
+    --bg-color: #1a0b2a;
     /* 极深紫调 */
 
     /* --- 爱意星云配色方案 --- */
@@ -21,6 +21,12 @@
     /* 极细的粉白线 */
     --text-main: rgba(255, 250, 252, 0.95);
     --text-muted: rgba(255, 240, 245, 0.6);
+    --sunflower-filter: sepia(100%) saturate(3000%) hue-rotate(10deg) brightness(1.2) drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
+    --sunflower-filter-hover: sepia(100%) saturate(3000%) hue-rotate(10deg) brightness(1.4) drop-shadow(0 0 12px rgba(255, 220, 50, 0.9));
+    --modal-overlay: rgba(16, 7, 24, 0.86);
+    --modal-surface: rgba(22, 9, 32, 0.96);
+    --modal-panel: rgba(18, 8, 28, 0.96);
+    --modal-media: rgba(12, 6, 20, 0.98);
 
     /* Typography */
     --font-serif: 'Bodoni Moda', serif;
@@ -89,14 +95,23 @@ body {
 .bg-blur {
     position: fixed;
     inset: 0;
-    background-size: cover;
-    background-position: center;
+    --bg-blur-image: none;
+    --bg-blur-overlay: radial-gradient(circle at 20% 20%,
+            rgba(180, 80, 160, 0.2) 0%,
+            rgba(60, 20, 90, 0.3) 45%,
+            rgba(15, 6, 20, 0.9) 78%);
+    background-image: var(--bg-blur-overlay), var(--bg-blur-image);
+    background-size: 100% 100%, cover;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+    background-color: var(--bg-color);
     filter: blur(80px) brightness(0.4) saturate(1.4);
     /* 增加一点亮度 */
     transform: scale(1.2);
+    opacity: 0.7;
     z-index: -3;
     pointer-events: none;
-    transition: background-image 0.8s ease;
+    transition: background-image 0.8s ease, background-color 0.8s ease;
 }
 
 /* --- Date Capsule (Context Anchor) --- */
@@ -424,13 +439,13 @@ h3 {
     object-fit: contain;
     /* Ruogu Mod: 炼金术 CSS 滤镜 - 将灰图变金图 */
     /* Sepia(1) + Saturate(large) = Gold */
-    filter: sepia(100%) saturate(3000%) hue-rotate(10deg) brightness(1.2) drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
+    filter: var(--sunflower-filter);
     transition: all 0.5s ease;
 }
 
 /* 增强悬停效果 */
 .day-cell.future:hover .sunflower-icon {
-    filter: sepia(100%) saturate(3000%) hue-rotate(10deg) brightness(1.4) drop-shadow(0 0 12px rgba(255, 220, 50, 0.9));
+    filter: var(--sunflower-filter-hover);
     transform: scale(1.1);
 }
 
@@ -1001,7 +1016,7 @@ body.sidebar-closed .content-area {
 .detail-modal {
     position: fixed;
     inset: 0;
-    background: rgba(5, 2, 3, 0.85);
+    background: var(--modal-overlay);
     backdrop-filter: blur(12px);
     display: none;
     align-items: center;
@@ -1017,7 +1032,7 @@ body.sidebar-closed .content-area {
 .detail-dialog {
     width: min(1400px, 96vw);
     height: min(90vh, 820px);
-    background: rgba(10, 5, 6, 0.95);
+    background: var(--modal-surface);
     border: 1px solid var(--grid-line);
     border-radius: 18px;
     overflow: hidden;
@@ -1040,7 +1055,7 @@ body.sidebar-closed .content-area {
 }
 
 .detail-media {
-    background: #060304;
+    background: var(--modal-media);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1056,7 +1071,7 @@ body.sidebar-closed .content-area {
 }
 
 .detail-side {
-    background: rgba(15, 8, 10, 0.95);
+    background: var(--modal-panel);
     border-left: 1px solid var(--grid-line);
     display: flex;
     flex-direction: column;
@@ -1387,8 +1402,8 @@ body.modal-open .content-area {
     height: 36px;
     object-fit: contain;
     vertical-align: middle;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-    transition: transform 0.3s ease;
+    filter: var(--sunflower-filter);
+    transition: transform 0.3s ease, filter 0.5s ease;
 }
 
 .sunflower-icon:hover {
@@ -1399,7 +1414,7 @@ body.modal-open .content-area {
 .empty-icon .sunflower-icon {
     width: 96px;
     height: 96px;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+    filter: var(--sunflower-filter) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
 /* Timeline specific adjustment */
