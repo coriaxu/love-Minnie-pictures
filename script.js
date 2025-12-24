@@ -576,7 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="gallery-meta-top">
                 <span>Day ${String(dayNum).padStart(2, '0')}</span>
                 <span>No. ${String(noNum).padStart(3, '0')}</span>
-                <span>${formatDateDisplay(itemDate)}</span>
             </div>
             <div class="gallery-title">${escapeHtml(item.title || 'Untitled')}</div>
         `;
