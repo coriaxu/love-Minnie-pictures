@@ -217,10 +217,29 @@ body {
     pointer-events: none;
 }
 
+.date-capsule.capsule-flash {
+    animation: capsuleFlash 0.6s ease;
+}
+
 /* Show date capsule when sidebar is closed */
 body.sidebar-closed .date-capsule {
     opacity: 1;
     transform: translateX(0);
+}
+
+@keyframes capsuleFlash {
+    0% {
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        border-color: var(--grid-line);
+    }
+    50% {
+        box-shadow: 0 0 18px var(--love-glow);
+        border-color: var(--love-glow);
+    }
+    100% {
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        border-color: var(--grid-line);
+    }
 }
 
 @keyframes pulse {

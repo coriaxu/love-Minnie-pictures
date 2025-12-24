@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!initialDate) {
                 renderCalendar();
                 renderTimeline();
-                showEmptyState({ mode: getEmptyMode(START_DATE), date: START_DATE });
+                showEmptyState({ mode: getEmptyMode(START_DATE), date: START_DATE, scope: 'month' });
                 return;
             }
 
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(err => {
             console.error('Error loading data:', err);
-            showEmptyState({ mode: getEmptyMode(START_DATE), date: START_DATE });
+            showEmptyState({ mode: getEmptyMode(START_DATE), date: START_DATE, scope: 'month' });
         });
 
     // ============================================================
@@ -538,13 +538,30 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    function getItemsForWeek(date) {
+        const { start, end } = getWeekBounds(date);
+        const startKey = toUtcDay(start);
+        const endKey = toUtcDay(end);
+        return galleryData.filter(item => {
+            const dayKey = toUtcDay(item.dateObj);
+            return dayKey >= startKey && dayKey <= endKey;
+        });
+    }
+
+    function getEmptyScope(date) {
+        if (!date) return 'day';
+        if (!getItemsForMonth(date).length) return 'month';
+        if (!getItemsForWeek(date).length) return 'week';
+        return 'day';
+    }
+
     function updateMonthView(options = {}) {
         const { anchorDate = null } = options;
         const items = getItemsForMonth(currentMonth);
 
         if (!items.length) {
             clearBgBlur();
-            showEmptyState({ mode: getEmptyMode(currentMonth), date: currentMonth });
+            showEmptyState({ mode: getEmptyMode(currentMonth), date: currentMonth, scope: 'month' });
             updateDateCapsuleForMonth(currentMonth);
             return;
         }
@@ -566,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cardByDate.clear();
 
         if (!items.length) {
-            showEmptyState({ mode: getEmptyMode(currentMonth), date: currentMonth });
+            showEmptyState({ mode: getEmptyMode(currentMonth), date: currentMonth, scope: 'month' });
             return;
         }
 
@@ -685,7 +702,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!item) {
             // 没有内容的日期，显示空状态
-            showEmptyState({ mode: getEmptyMode(selectedDate), date: selectedDate, scope: 'day' });
+            const emptyScope = getEmptyScope(selectedDate);
+            showEmptyState({ mode: getEmptyMode(selectedDate), date: selectedDate, scope: emptyScope });
 
             // 仍然更新选中状态
             document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
@@ -693,6 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetCell) targetCell.classList.add('selected');
 
             updateDateCapsuleForDate(selectedDate);
+            flashDateCapsule();
 
             // 清空背景
             clearBgBlur();
@@ -750,6 +769,13 @@ document.addEventListener('DOMContentLoaded', () => {
         dateCapsule.textContent = `Day ${dayNum} · ${shortMonth} ${d.getDate()}`;
     }
 
+    function flashDateCapsule() {
+        if (!dateCapsule) return;
+        dateCapsule.classList.remove('capsule-flash');
+        void dateCapsule.offsetWidth;
+        dateCapsule.classList.add('capsule-flash');
+    }
+
     function updateDateCapsule(item) {
         if (!item?.date) return;
         updateDateCapsuleForDate(new Date(item.date));
@@ -764,6 +790,56 @@ document.addEventListener('DOMContentLoaded', () => {
         return toUtcDay(date) >= toUtcDay(EMPTY_FUTURE_START) ? 'future' : 'past';
     }
 
+    const EMPTY_PHRASES = {
+        day: [
+            { zh: '这一天还在路上', en: 'This day is still on its way.' },
+            { zh: '这一天尚未开启', en: 'This day has not opened yet.' },
+            { zh: '这一天先留白', en: 'Let this day stay blank for now.' },
+            { zh: '这一天的花还含苞', en: 'The bloom of this day is still closed.' },
+            { zh: '这一天等你点亮', en: 'This day is waiting for your light.' },
+            { zh: '这一天慢慢靠近', en: 'This day is quietly drawing near.' },
+            { zh: '这一天的故事未翻页', en: 'This day\'s story hasn\'t turned the page.' },
+            { zh: '这一天轻轻打盹', en: 'This day is taking a soft nap.' }
+        ],
+        week: [
+            { zh: '这一周正在靠近', en: 'This week is drawing near.' },
+            { zh: '这一周仍在酝酿', en: 'This week is still brewing.' },
+            { zh: '这一周慢慢生长', en: 'This week is growing slowly.' },
+            { zh: '这一周暂时留白', en: 'This week remains blank for now.' },
+            { zh: '这一周在准备亮相', en: 'This week is preparing to appear.' },
+            { zh: '这一周留待花开', en: 'This week is saved for blooming.' },
+            { zh: '这一周还在路上', en: 'This week is still on its way.' },
+            { zh: '这一周轻轻合上', en: 'This week is softly folded away.' }
+        ],
+        month: [
+            { zh: '这个月仍在沉睡', en: 'This month is still asleep.' },
+            { zh: '这个月尚未抵达', en: 'This month has not arrived yet.' },
+            { zh: '这个月的花期未到', en: 'The bloom of this month hasn\'t come.' },
+            { zh: '这个月缓慢靠近', en: 'This month is slowly approaching.' },
+            { zh: '这个月先把灯藏好', en: 'This month keeps its lights tucked away.' },
+            { zh: '这个月的故事未展开', en: 'The story of this month hasn\'t unfolded yet.' },
+            { zh: '这个月留给未来', en: 'This month is saved for later.' },
+            { zh: '这个月正在酝酿', en: 'This month is still brewing.' }
+        ]
+    };
+
+    const lastEmptyPhraseIndex = {
+        day: -1,
+        week: -1,
+        month: -1
+    };
+
+    const pickEmptyPhrase = (scope) => {
+        const list = EMPTY_PHRASES[scope] || EMPTY_PHRASES.day;
+        if (!list.length) return { zh: '', en: '' };
+        let nextIndex = Math.floor(Math.random() * list.length);
+        if (list.length > 1 && nextIndex === lastEmptyPhraseIndex[scope]) {
+            nextIndex = (nextIndex + 1) % list.length;
+        }
+        lastEmptyPhraseIndex[scope] = nextIndex;
+        return list[nextIndex];
+    };
+
     function showEmptyState(config = {}) {
         const { mode = 'future', date = currentMonth, scope = 'month' } = config;
         if (!emptyState) return;
@@ -773,17 +849,26 @@ document.addEventListener('DOMContentLoaded', () => {
             galleryGrid.style.display = 'none';
         }
 
-        const isDayScope = scope === 'day';
-        const zhDateText = isDayScope ? formatDateDisplayZh(date) : formatMonthDisplayZh(date);
-        const enDateText = isDayScope ? formatDateDisplayEn(date) : formatMonthDisplay(date);
+        const resolvedScope = ['day', 'week', 'month'].includes(scope) ? scope : 'month';
+        const zhDateText = resolvedScope === 'day'
+            ? formatDateDisplayZh(date)
+            : resolvedScope === 'week'
+                ? formatWeekRangeZh(date)
+                : formatMonthDisplayZh(date);
+        const enDateText = resolvedScope === 'day'
+            ? formatDateDisplayEn(date)
+            : resolvedScope === 'week'
+                ? formatWeekRangeEn(date)
+                : formatMonthDisplay(date);
 
         if (mode === 'future') {
+            const phrase = pickEmptyPhrase(resolvedScope);
             if (emptyTitle) emptyTitle.textContent = '花期未至';
             if (emptyDateText) {
-                emptyDateText.textContent = `${zhDateText} · 敬请期待`;
+                emptyDateText.textContent = `${zhDateText} · ${phrase.zh}`;
             }
             if (emptySubtext) {
-                emptySubtext.textContent = `${enDateText} · The gallery is still asleep.`;
+                emptySubtext.textContent = `${enDateText} · ${phrase.en}`;
             }
         } else if (mode === 'past') {
             if (emptyTitle) emptyTitle.textContent = '旧梦微光';
@@ -924,6 +1009,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDateDisplayEn(date) {
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function getWeekBounds(date) {
+        const base = new Date(date);
+        base.setHours(0, 0, 0, 0);
+        const day = base.getDay();
+        const diffToMonday = (day + 6) % 7;
+        const start = new Date(base);
+        start.setDate(base.getDate() - diffToMonday);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return { start, end };
+    }
+
+    function formatWeekRangeZh(date) {
+        const { start, end } = getWeekBounds(date);
+        const startYear = start.getFullYear();
+        const endYear = end.getFullYear();
+        const startMonth = start.getMonth() + 1;
+        const endMonth = end.getMonth() + 1;
+        const startDay = start.getDate();
+        const endDay = end.getDate();
+
+        if (startYear === endYear) {
+            return `${startYear}年${startMonth}月${startDay}日–${endMonth}月${endDay}日`;
+        }
+        return `${startYear}年${startMonth}月${startDay}日–${endYear}年${endMonth}月${endDay}日`;
+    }
+
+    function formatWeekRangeEn(date) {
+        const { start, end } = getWeekBounds(date);
+        const startYear = start.getFullYear();
+        const endYear = end.getFullYear();
+        const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const startLabel = `${monthShort[start.getMonth()]} ${start.getDate()}`;
+        const endLabel = `${monthShort[end.getMonth()]} ${end.getDate()}`;
+
+        if (startYear === endYear) {
+            return `${startLabel}–${endLabel}, ${startYear}`;
+        }
+        return `${startLabel}, ${startYear}–${endLabel}, ${endYear}`;
     }
 
     function toUtcDay(date) {
