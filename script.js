@@ -432,10 +432,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTimeline() {
         timelineContainer.innerHTML = '';
 
-        const allItems = [...galleryData];
+        // 按日期升序排列（早的在前）
+        const allItems = [...galleryData].sort((a, b) => a.dateObj - b.dateObj);
 
-        const lastDate = galleryData.length > 0
-            ? new Date(galleryData[0].dateObj)
+        // 在最后添加未来的占位符
+        const lastDate = allItems.length > 0
+            ? new Date(allItems[allItems.length - 1].dateObj)
             : new Date(START_DATE);
 
         for (let i = 1; i <= 5; i++) {
@@ -567,8 +569,10 @@ document.addEventListener('DOMContentLoaded', () => {
         meta.className = 'gallery-meta';
         const itemDate = new Date(item.date);
         const dayNum = getDayNumber(itemDate);
-        const absoluteIndex = galleryData.indexOf(item);
-        const noNum = getNoNumber(itemDate, absoluteIndex);
+        // 动态计算 No.：按日期升序排列后的位置
+        const sortedByDate = [...galleryData].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const chronologicalIndex = sortedByDate.findIndex(d => d.date === item.date);
+        const noNum = chronologicalIndex + 1;
         meta.innerHTML = `
             <div class="gallery-meta-top">
                 <span>Day ${String(dayNum).padStart(2, '0')}</span>
