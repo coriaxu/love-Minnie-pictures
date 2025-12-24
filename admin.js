@@ -13,6 +13,9 @@ const statusText = document.getElementById('status-text');
 const previewImage = document.getElementById('preview-image');
 const previewTitle = document.getElementById('preview-title');
 const previewSub = document.getElementById('preview-sub');
+const mockImage = document.getElementById('mock-image');
+const mockPrefix = document.getElementById('mock-prefix');
+const mockTitle = document.getElementById('mock-title');
 const generateBtn = document.getElementById('generate-btn');
 
 const existingData = Array.isArray(window.__GALLERY_DATA__) ? [...window.__GALLERY_DATA__] : [];
@@ -36,8 +39,11 @@ const getNoNumber = (date, index) => {
 };
 
 const formatDateDisplay = (date) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+    const year = date.getFullYear();
+    const day = date.getDate();
+    const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()];
+    return `${year} ${monthShort} ${day}`;
 };
 
 const normalizeDateValue = (value) => {
@@ -62,6 +68,8 @@ const updatePreview = () => {
         dayNoEl.textContent = '-';
         previewTitle.textContent = '日期未选择';
         previewSub.textContent = 'Day / No. 将自动计算';
+        if (mockPrefix) mockPrefix.textContent = 'Day / No.';
+        if (mockTitle) mockTitle.textContent = '日期未选择';
         return;
     }
 
@@ -74,13 +82,30 @@ const updatePreview = () => {
     const noNum = getNoNumber(dateValue, Math.max(index, 0));
 
     dayNoEl.textContent = `Day ${String(dayNum).padStart(3, '0')} · No. ${String(noNum).padStart(3, '0')}`;
-    previewTitle.textContent = formatDateDisplay(dateValue);
-    previewSub.textContent = `Day ${String(dayNum).padStart(3, '0')} · No. ${String(noNum).padStart(3, '0')}`;
+    const titleText = formatDateDisplay(dateValue);
+    const metaText = `Day ${String(dayNum).padStart(3, '0')} · No. ${String(noNum).padStart(3, '0')}`;
+    const cardMetaText = `Day ${String(dayNum).padStart(2, '0')} · No. ${String(noNum).padStart(3, '0')}`;
+    previewTitle.textContent = titleText;
+    previewSub.textContent = metaText;
+    if (mockPrefix) mockPrefix.textContent = cardMetaText;
+    if (mockTitle) mockTitle.textContent = titleText;
 
     if (file) {
         const url = URL.createObjectURL(file);
         previewImage.innerHTML = `<img src="${url}" alt="preview">`;
-        previewImage.querySelector('img').onload = () => URL.revokeObjectURL(url);
+        if (mockImage) {
+            mockImage.innerHTML = `<img src="${url}" alt="preview">`;
+        }
+        const previewImg = previewImage.querySelector('img');
+        const mockImg = mockImage ? mockImage.querySelector('img') : null;
+        const expectedLoads = mockImg ? 2 : 1;
+        let loaded = 0;
+        const revokeOnce = () => {
+            loaded += 1;
+            if (loaded >= expectedLoads) URL.revokeObjectURL(url);
+        };
+        if (previewImg) previewImg.onload = revokeOnce;
+        if (mockImg) mockImg.onload = revokeOnce;
     }
 };
 
@@ -262,6 +287,9 @@ const checkPreFill = async () => {
                 // Create preview from blob
                 const url = URL.createObjectURL(existingImageBlob);
                 previewImage.innerHTML = `<img src="${url}" alt="preview">`;
+                if (mockImage) {
+                    mockImage.innerHTML = `<img src="${url}" alt="preview">`;
+                }
                 // Don't revoke immediately, let preview stay
             }
         } catch (e) {

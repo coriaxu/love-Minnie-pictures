@@ -394,11 +394,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('keydown', (e) => {
-        if (detailModal && detailModal.classList.contains('open')) {
+        const isModalOpen = detailModal && detailModal.classList.contains('open');
+        if (isModalOpen) {
             if (e.key === 'Escape') {
                 closeDetail();
+                return;
             }
-            return;
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                const offset = e.key === 'ArrowLeft' ? -1 : 1;
+                const newDate = new Date(selectedDate);
+                newDate.setDate(newDate.getDate() + offset);
+                const dateStr = formatDateISO(newDate);
+                const item = dataByDate[dateStr];
+                if (item) {
+                    selectDate(newDate, { scroll: false });
+                    openDetail(item);
+                } else {
+                    closeDetail();
+                    selectDate(newDate, { scroll: false });
+                }
+                return;
+            }
         }
 
         if (e.key === 'ArrowLeft') {
@@ -452,10 +469,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const isFuture = cellDate > today && !hasContent;
             const isSelected = formatDateISO(cellDate) === formatDateISO(selectedDate);
             const isToday = formatDateISO(cellDate) === formatDateISO(today);
+            const weekIndex = Math.floor((firstDay + day - 1) / 7);
 
             const cell = document.createElement('div');
             cell.className = 'day-cell';
             cell.dataset.date = dateStr;
+            cell.classList.add('reveal');
+            cell.style.setProperty('--reveal-delay', `${weekIndex * 70}ms`);
 
             if (hasContent) cell.classList.add('has-content');
             if (isFuture) cell.classList.add('future');
@@ -643,12 +663,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortedByDate = [...galleryData].sort((a, b) => new Date(a.date) - new Date(b.date));
         const chronologicalIndex = sortedByDate.findIndex(d => d.date === item.date);
         const noNum = chronologicalIndex + 1;
+        const titleText = item.title || formatCardDateDisplay(itemDate);
         meta.innerHTML = `
-            <div class="gallery-meta-top">
-                <span>Day ${String(dayNum).padStart(2, '0')}</span>
-                <span>No. ${String(noNum).padStart(3, '0')}</span>
+            <div class="gallery-meta-line">
+                <span class="meta-prefix">Day ${String(dayNum).padStart(2, '0')} · No. ${String(noNum).padStart(3, '0')}</span>
+                <span class="meta-title">${escapeHtml(titleText)}</span>
             </div>
-            <div class="gallery-title">${escapeHtml(item.title || 'Untitled')}</div>
         `;
 
         card.appendChild(media);
@@ -895,9 +915,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function navigateDay(offset) {
         const newDate = new Date(selectedDate);
         newDate.setDate(newDate.getDate() + offset);
-        const dateStr = formatDateISO(newDate);
-
-        if (!dataByDate[dateStr]) return;
         selectDate(newDate);
     }
 
@@ -1011,6 +1028,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     }
 
+    function formatCardDateDisplay(date) {
+        const year = date.getFullYear();
+        const day = date.getDate();
+        const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()];
+        return `${year} ${monthShort} ${day}`;
+    }
+
     function getWeekBounds(date) {
         const base = new Date(date);
         base.setHours(0, 0, 0, 0);
@@ -1033,9 +1058,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const endDay = end.getDate();
 
         if (startYear === endYear) {
-            return `${startYear}年${startMonth}月${startDay}日–${endMonth}月${endDay}日`;
+            return `${startYear}年${startMonth}月${startDay}日-${endMonth}月${endDay}日`;
         }
-        return `${startYear}年${startMonth}月${startDay}日–${endYear}年${endMonth}月${endDay}日`;
+        return `${startYear}年${startMonth}月${startDay}日-${endYear}年${endMonth}月${endDay}日`;
     }
 
     function formatWeekRangeEn(date) {
@@ -1048,9 +1073,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const endLabel = `${monthShort[end.getMonth()]} ${end.getDate()}`;
 
         if (startYear === endYear) {
-            return `${startLabel}–${endLabel}, ${startYear}`;
+            return `${startLabel}-${endLabel}, ${startYear}`;
         }
-        return `${startLabel}, ${startYear}–${endLabel}, ${endYear}`;
+        return `${startLabel}, ${startYear}-${endLabel}, ${endYear}`;
     }
 
     function toUtcDay(date) {
