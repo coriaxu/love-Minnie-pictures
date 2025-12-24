@@ -62,16 +62,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const setTorchMode = (isActive) => {
         if (!torch) return;
+        const gradient = isActive
+            ? 'radial-gradient(circle, var(--torch-active-strong) 0%, var(--torch-active-soft) 50%, transparent 70%)'
+            : 'radial-gradient(circle, var(--torch-idle-strong) 0%, var(--torch-idle-soft) 50%, transparent 70%)';
         if (isActive) {
             torch.style.width = '600px';
             torch.style.height = '600px';
-            torch.style.background =
-                'radial-gradient(circle, rgba(255, 140, 110, 0.2) 0%, rgba(255, 100, 120, 0.1) 50%, transparent 70%)';
+            torch.style.background = gradient;
         } else {
             torch.style.width = '400px';
             torch.style.height = '400px';
-            torch.style.background =
-                'radial-gradient(circle, rgba(255, 180, 195, 0.12) 0%, rgba(255, 120, 100, 0.05) 50%, transparent 70%)';
+            torch.style.background = gradient;
         }
     };
 
@@ -228,6 +229,57 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ============================================================
+    // Theme Toggle
+    // ============================================================
+    const themeButtons = document.querySelectorAll('.theme-btn');
+    const THEME_STORAGE_KEY = 'love-minnie-theme';
+    const DEFAULT_THEME = 'spring';
+    const THEME_SET = new Set(['winter', 'spring', 'summer', 'autumn']);
+
+    const applyTheme = (theme, options = {}) => {
+        const { persist = true } = options;
+        const nextTheme = THEME_SET.has(theme) ? theme : DEFAULT_THEME;
+        document.documentElement.dataset.theme = nextTheme;
+        themeButtons.forEach(btn => {
+            const isActive = btn.dataset.theme === nextTheme;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+
+        if (persist) {
+            try {
+                localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+            } catch (err) {
+                console.warn('Theme persistence failed:', err);
+            }
+        }
+
+        baseTint = null;
+        const dateStr = selectedDate ? formatDateISO(selectedDate) : null;
+        const item = dateStr ? dataByDate[dateStr] : null;
+        if (item?.filename) {
+            applyImageTone(item.filename);
+        } else {
+            resetBgBlurOverlay();
+        }
+    };
+
+    const initTheme = () => {
+        let storedTheme = null;
+        try {
+            storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        } catch (err) {
+            storedTheme = null;
+        }
+        const initialTheme = THEME_SET.has(storedTheme) ? storedTheme : DEFAULT_THEME;
+        applyTheme(initialTheme, { persist: true });
+    };
+
+    themeButtons.forEach(btn => {
+        btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+    });
+
+    // ============================================================
     // Initialize
     // ============================================================
     const getEmbeddedData = () => (
@@ -251,6 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return Promise.reject(err);
             });
     };
+
+    initTheme();
 
     loadGalleryData()
         .then(data => {
