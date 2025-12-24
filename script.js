@@ -632,8 +632,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = dataByDate[dateStr];
 
         if (!item) {
+            // 没有内容的日期，显示空状态
+            showEmptyState({ mode: getEmptyMode(selectedDate), date: selectedDate });
+
+            // 仍然更新选中状态
+            document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
+            const targetCell = document.querySelector(`.day-cell[data-date="${dateStr}"]`);
+            if (targetCell) targetCell.classList.add('selected');
+
+            // 清空背景
+            clearBgBlur();
             return;
         }
+
+        // 有内容时隐藏空状态
+        if (emptyState) emptyState.style.display = 'none';
 
         document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
         const targetCell = document.querySelector(`.day-cell[data-date="${dateStr}"]`);
