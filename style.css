@@ -417,7 +417,6 @@ h3 {
 
 .day-cell.future {
     opacity: 1;
-    pointer-events: none;
     /* Parent filter removed */
 }
 

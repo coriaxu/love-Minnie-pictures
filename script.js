@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     const START_DATE = new Date('2026-01-01T00:00:00');
     const RELATIONSHIP_START = new Date('2009-12-10T00:00:00');
+    const EMPTY_FUTURE_START = new Date('2025-12-25T00:00:00');
     let currentMonth = new Date(START_DATE);
     let selectedDate = new Date(START_DATE);
     let galleryData = [];
@@ -413,14 +414,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.textContent = day;
             }
 
-            if (!isFuture) {
-                cell.addEventListener('click', () => {
-                    selectDate(cellDate);
-                    if (window.innerWidth <= 1024) {
-                        calendarSidebar.classList.remove('open');
-                    }
-                });
-            }
+            cell.addEventListener('click', () => {
+                selectDate(cellDate);
+                if (window.innerWidth <= 1024) {
+                    calendarSidebar.classList.remove('open');
+                }
+            });
 
             calendarDays.appendChild(cell);
         }
@@ -633,12 +632,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!item) {
             // 没有内容的日期，显示空状态
-            showEmptyState({ mode: getEmptyMode(selectedDate), date: selectedDate });
+            showEmptyState({ mode: getEmptyMode(selectedDate), date: selectedDate, scope: 'day' });
 
             // 仍然更新选中状态
             document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
             const targetCell = document.querySelector(`.day-cell[data-date="${dateStr}"]`);
             if (targetCell) targetCell.classList.add('selected');
+
+            updateDateCapsuleForDate(selectedDate);
 
             // 清空背景
             clearBgBlur();
@@ -687,13 +688,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateDateCapsule(item) {
-        if (!dateCapsule || !item?.date) return;
-        const d = new Date(item.date);
+    function updateDateCapsuleForDate(date) {
+        if (!dateCapsule || !date) return;
+        const d = new Date(date);
         const dayNum = getDayNumber(d);
         const shortMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
         dateCapsule.textContent = `Day ${dayNum} · ${shortMonth} ${d.getDate()}`;
+    }
+
+    function updateDateCapsule(item) {
+        if (!item?.date) return;
+        updateDateCapsuleForDate(new Date(item.date));
     }
 
     function updateDateCapsuleForMonth(date) {
@@ -702,13 +708,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getEmptyMode(date) {
-        const monthKey = date.getFullYear() * 12 + date.getMonth();
-        const startKey = START_DATE.getFullYear() * 12 + START_DATE.getMonth();
-        return monthKey < startKey ? 'past' : 'future';
+        return toUtcDay(date) >= toUtcDay(EMPTY_FUTURE_START) ? 'future' : 'past';
     }
 
     function showEmptyState(config = {}) {
-        const { mode = 'future', date = currentMonth } = config;
+        const { mode = 'future', date = currentMonth, scope = 'month' } = config;
         if (!emptyState) return;
         emptyState.style.display = 'flex';
         if (galleryGrid) {
@@ -716,21 +720,25 @@ document.addEventListener('DOMContentLoaded', () => {
             galleryGrid.style.display = 'none';
         }
 
+        const isDayScope = scope === 'day';
+        const zhDateText = isDayScope ? formatDateDisplayZh(date) : formatMonthDisplayZh(date);
+        const enDateText = isDayScope ? formatDateDisplayEn(date) : formatMonthDisplay(date);
+
         if (mode === 'future') {
             if (emptyTitle) emptyTitle.textContent = '花期未至';
             if (emptyDateText) {
-                emptyDateText.textContent = `${formatMonthDisplayZh(date)} · 敬请期待`;
+                emptyDateText.textContent = `${zhDateText} · 敬请期待`;
             }
             if (emptySubtext) {
-                emptySubtext.textContent = `${formatMonthDisplay(date)} · The gallery is still asleep.`;
+                emptySubtext.textContent = `${enDateText} · The gallery is still asleep.`;
             }
         } else if (mode === 'past') {
             if (emptyTitle) emptyTitle.textContent = '旧梦微光';
             if (emptyDateText) {
-                emptyDateText.textContent = `${formatMonthDisplayZh(date)} · 美好已成回忆`;
+                emptyDateText.textContent = `${zhDateText} · 美好已成回忆`;
             }
             if (emptySubtext) {
-                emptySubtext.textContent = `${formatMonthDisplay(date)} · Those days now glow in memory.`;
+                emptySubtext.textContent = `${enDateText} · Those days now glow in memory.`;
             }
         } else {
             if (emptyTitle) emptyTitle.textContent = 'A seed waiting to bloom...';
@@ -852,6 +860,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
         return `${year}年${month}月`;
+    }
+
+    function formatDateDisplayZh(date) {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${year}年${month}月${day}日`;
+    }
+
+    function formatDateDisplayEn(date) {
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     }
 
     function toUtcDay(date) {
