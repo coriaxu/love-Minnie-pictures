@@ -523,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        allItems.forEach((item) => {
+        allItems.forEach((item, index) => {
             const thumb = document.createElement('div');
             thumb.className = 'timeline-thumb';
             thumb.dataset.date = item.date;
@@ -537,25 +537,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.alt = item.title || 'Artwork';
                 img.loading = 'lazy';
                 thumb.appendChild(img);
-                
-                // Add Number Badge (1-based index)
-                // Filter out future items for numbering if needed, but here we use 'i' from sorted array
+
+                // Add Number Badge (1-based index, Chronological)
                 const badge = document.createElement('span');
                 badge.className = 'thumb-badge';
-                // Using the index in the sorted "allItems" (which includes future items at the end)
-                // We only want to number the actual artwork.
-                const realIndex = galleryData.findIndex(d => d.date === item.date);
-                if (realIndex !== -1) {
-                     badge.textContent = realIndex + 1;
-                     thumb.appendChild(badge);
-                }
+                // Using the loop index directly because 'allItems' is sorted chronologically
+                // and artwork items appear first.
+                // This ensures No.1 is the oldest (leftmost), No.N is the newest.
+                badge.textContent = index + 1;
+                thumb.appendChild(badge);
 
                 thumb.addEventListener('click', () => {
                     // Check if modal is open to determine behavior
                     const isModalOpen = document.body.classList.contains('modal-open');
-                    
+
                     selectDate(new Date(item.date), { scroll: !isModalOpen });
-                    
+
                     if (isModalOpen) {
                         // If in theater mode, just update content
                         openDetail(item);
