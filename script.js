@@ -329,21 +329,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const realToday = new Date();
             realToday.setHours(0, 0, 0, 0);
-            const todayIn2026 = new Date(2026, realToday.getMonth(), realToday.getDate());
-            const todayStr = formatDateISO(todayIn2026);
+            const todayStr = formatDateISO(realToday);
 
             let initialDate = null;
 
-            if (todayIn2026 >= START_DATE && dataByDate[todayStr]) {
-                initialDate = todayIn2026;
-            } else if (galleryData.length > 0) {
-                initialDate = galleryData[0].dateObj;
+            // 1. First priority: Check if today has artwork
+            if (dataByDate[todayStr]) {
+                initialDate = realToday;
+            } else {
+                // 2. Second priority: Find the most recent artwork that's <= today
+                //    (galleryData is sorted newest first, so find the first one <= today)
+                const pastItems = galleryData.filter(item => item.dateObj <= realToday);
+                if (pastItems.length > 0) {
+                    initialDate = pastItems[0].dateObj; // Most recent past artwork
+                } else if (galleryData.length > 0) {
+                    // 3. Fallback: If all artwork is in the future, show the earliest upcoming
+                    const futureItems = [...galleryData].sort((a, b) => a.dateObj - b.dateObj);
+                    initialDate = futureItems[0].dateObj;
+                }
             }
 
             if (!initialDate) {
+                // No artwork at all, show current month empty state
+                currentMonth = new Date(realToday);
                 renderCalendar();
                 renderTimeline();
-                showEmptyState({ mode: getEmptyMode(START_DATE), date: START_DATE, scope: 'month' });
+                showEmptyState({ mode: getEmptyMode(realToday), date: realToday, scope: 'month' });
                 return;
             }
 
