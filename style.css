@@ -436,7 +436,8 @@ h3 {
 .app-container {
     position: absolute;
     top: 80px;
-    bottom: 100px;
+    bottom: 20px;
+    /* Reduced from 100px since timeline strip is now hidden by default */
     left: 0;
     right: 0;
     display: flex;
