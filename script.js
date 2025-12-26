@@ -537,9 +537,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.alt = item.title || 'Artwork';
                 img.loading = 'lazy';
                 thumb.appendChild(img);
+                
+                // Add Number Badge (1-based index)
+                // Filter out future items for numbering if needed, but here we use 'i' from sorted array
+                const badge = document.createElement('span');
+                badge.className = 'thumb-badge';
+                // Using the index in the sorted "allItems" (which includes future items at the end)
+                // We only want to number the actual artwork.
+                const realIndex = galleryData.findIndex(d => d.date === item.date);
+                if (realIndex !== -1) {
+                     badge.textContent = realIndex + 1;
+                     thumb.appendChild(badge);
+                }
 
                 thumb.addEventListener('click', () => {
-                    selectDate(new Date(item.date), { scroll: true });
+                    // Check if modal is open to determine behavior
+                    const isModalOpen = document.body.classList.contains('modal-open');
+                    
+                    selectDate(new Date(item.date), { scroll: !isModalOpen });
+                    
+                    if (isModalOpen) {
+                        // If in theater mode, just update content
+                        openDetail(item);
+                    }
                 });
             }
 
