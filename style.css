@@ -555,17 +555,14 @@ h3 {
     font-weight: 600;
 }
 
-/* Use a subtle dot for 'has content' instead of background */
+/* Use a subtle heart for 'has content' indicator */
 .day-cell.has-content::after {
-    content: '';
+    content: '❤';
     position: absolute;
-    bottom: 6px;
-    width: 4px;
-    height: 4px;
-    background-color: var(--love-core);
-    /* Pink dot */
-    border-radius: 50%;
-    box-shadow: 0 0 5px var(--love-glow);
+    bottom: 2px;
+    font-size: 8px;
+    color: var(--love-core);
+    text-shadow: 0 0 6px var(--love-glow);
 }
 
 .day-cell.selected {
