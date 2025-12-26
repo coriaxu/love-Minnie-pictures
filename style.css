@@ -1093,11 +1093,7 @@ body.sidebar-closed .content-area {
     transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-/* Show only when user intentionally moves mouse to very bottom edge */
-.timeline-strip:hover {
-    transform: translateY(0);
-    background: rgba(10, 5, 6, 0.8);
-}
+/* Hover is DISABLED - strip only appears in Theater Mode (body.modal-open) */
 
 .timeline-nav-btn {
     width: 32px;
