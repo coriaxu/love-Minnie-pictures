@@ -405,6 +405,12 @@ document.addEventListener('DOMContentLoaded', () => {
         calendarSidebar.classList.toggle('open');
         toggleCalendarBtn.classList.toggle('active');
         document.body.classList.toggle('sidebar-closed', !calendarSidebar.classList.contains('open'));
+
+        // 等待 CSS 过渡动画完成后，重新计算 Masonry 布局
+        // 避免图片重叠 bug
+        setTimeout(() => {
+            resizeAllGalleryItems();
+        }, 450); // 稍长于 CSS transition 时间 (0.4s)
     });
 
     timelinePrev.addEventListener('click', () => {
