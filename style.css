@@ -30,11 +30,11 @@
     --torch-dot: #ffecf0;
     --torch-dot-glow: rgba(255, 100, 150, 0.9);
 
-    /* Modal */
-    --modal-overlay: rgba(16, 7, 24, 0.86);
-    --modal-surface: rgba(22, 9, 32, 0.96);
-    --modal-panel: rgba(18, 8, 28, 0.96);
-    --modal-media: rgba(12, 6, 20, 0.98);
+    /* Modal - Spring: Midnight Rose 深邃玫瑰紫 */
+    --modal-overlay: rgba(26, 11, 42, 0.92);
+    --modal-surface: rgba(32, 14, 48, 0.97);
+    --modal-panel: rgba(28, 12, 42, 0.97);
+    --modal-media: rgba(20, 8, 32, 0.98);
 
     /* Typography */
     --font-serif: 'Bodoni Moda', serif;
@@ -71,10 +71,11 @@
     --torch-active-soft: rgba(110, 160, 255, 0.12);
     --torch-dot: #e7f1ff;
     --torch-dot-glow: rgba(120, 180, 255, 0.9);
-    --modal-overlay: rgba(8, 12, 24, 0.9);
-    --modal-surface: rgba(12, 18, 32, 0.96);
-    --modal-panel: rgba(10, 16, 28, 0.96);
-    --modal-media: rgba(8, 12, 22, 0.98);
+    /* Modal - Winter: Frosted Midnight 冰霜深夜蓝 */
+    --modal-overlay: rgba(11, 20, 42, 0.92);
+    --modal-surface: rgba(16, 28, 52, 0.97);
+    --modal-panel: rgba(14, 24, 46, 0.97);
+    --modal-media: rgba(10, 18, 36, 0.98);
     --surface-glass: rgba(50, 80, 120, 0.14);
     --surface-glass-hover: rgba(70, 120, 180, 0.24);
 }
@@ -96,10 +97,11 @@
     --torch-active-soft: rgba(90, 210, 130, 0.12);
     --torch-dot: #e9fff1;
     --torch-dot-glow: rgba(120, 220, 150, 0.9);
-    --modal-overlay: rgba(8, 16, 12, 0.9);
-    --modal-surface: rgba(12, 24, 18, 0.96);
-    --modal-panel: rgba(10, 20, 16, 0.96);
-    --modal-media: rgba(8, 16, 12, 0.98);
+    /* Modal - Summer: Deep Forest 深邃森林绿 */
+    --modal-overlay: rgba(11, 28, 20, 0.92);
+    --modal-surface: rgba(16, 38, 28, 0.97);
+    --modal-panel: rgba(14, 32, 24, 0.97);
+    --modal-media: rgba(10, 24, 18, 0.98);
     --surface-glass: rgba(40, 120, 80, 0.14);
     --surface-glass-hover: rgba(60, 160, 110, 0.24);
 }
@@ -121,10 +123,11 @@
     --torch-active-soft: rgba(255, 185, 110, 0.16);
     --torch-dot: #fff2d8;
     --torch-dot-glow: rgba(255, 200, 130, 0.95);
-    --modal-overlay: rgba(28, 16, 6, 0.9);
-    --modal-surface: rgba(36, 22, 10, 0.96);
-    --modal-panel: rgba(32, 20, 9, 0.96);
-    --modal-media: rgba(26, 16, 8, 0.98);
+    /* Modal - Autumn: Warm Amber 暖金琥珀 */
+    --modal-overlay: rgba(42, 26, 10, 0.92);
+    --modal-surface: rgba(52, 34, 16, 0.97);
+    --modal-panel: rgba(46, 30, 14, 0.97);
+    --modal-media: rgba(38, 24, 12, 0.98);
     --surface-glass: rgba(190, 120, 60, 0.18);
     --surface-glass-hover: rgba(230, 150, 70, 0.3);
 }
