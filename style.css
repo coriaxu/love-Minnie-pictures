@@ -1724,3 +1724,233 @@ body.modal-open .content-area {
     width: 44px;
     height: 44px;
 }
+
+/* ============================================================
+   ANNIVERSARY EFFECTS ANIMATIONS (纪念日特效动画)
+   ============================================================ */
+
+/* === 蝴蝶飞舞 (生日) === */
+@keyframes butterflyFly {
+    0% {
+        opacity: 0;
+        transform: translateY(0) rotate(var(--rotation, 0deg)) scale(0);
+    }
+
+    10% {
+        opacity: 1;
+        transform: translateY(-10vh) rotate(var(--rotation, 0deg)) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        left: var(--end-x, 50%);
+        top: var(--end-y, -20%);
+        transform: translateY(-100vh) rotate(calc(var(--rotation, 0deg) + 180deg)) scale(0.8);
+    }
+}
+
+@keyframes butterflyWing {
+
+    0%,
+    100% {
+        transform: scaleX(1);
+    }
+
+    50% {
+        transform: scaleX(0.7);
+    }
+}
+
+@keyframes sparkleRise {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0);
+    }
+
+    20% {
+        opacity: 1;
+        transform: translateY(-20vh) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100vh) scale(0.5);
+    }
+}
+
+/* === 玫瑰金几何 (恋爱纪念日) === */
+@keyframes goldenFall {
+    0% {
+        opacity: 0;
+        transform: translateY(0) rotate(0deg);
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(110vh) rotate(var(--rotation, 360deg));
+    }
+}
+
+@keyframes grainFade {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.08;
+    }
+
+    100% {
+        opacity: 0.05;
+    }
+}
+
+/* === 玫瑰花瓣雨 (结婚纪念日) === */
+@keyframes petalFall {
+    0% {
+        transform: translateY(0) rotate(var(--rotation, 0deg)) translateX(0);
+    }
+
+    25% {
+        transform: translateY(25vh) rotate(calc(var(--rotation, 0deg) + 45deg)) translateX(var(--sway, 20px));
+    }
+
+    50% {
+        transform: translateY(50vh) rotate(calc(var(--rotation, 0deg) + 90deg)) translateX(calc(var(--sway, 20px) * -1));
+    }
+
+    75% {
+        transform: translateY(75vh) rotate(calc(var(--rotation, 0deg) + 135deg)) translateX(var(--sway, 20px));
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(110vh) rotate(calc(var(--rotation, 0deg) + 180deg)) translateX(0);
+    }
+}
+
+@keyframes petalBlowAway {
+    0% {
+        transform: translateX(0) rotate(0deg);
+        opacity: 0.85;
+    }
+
+    100% {
+        transform: translateX(200px) translateY(-50px) rotate(180deg);
+        opacity: 0;
+    }
+}
+
+/* === 烟花 (新年) === */
+@keyframes fireworkRise {
+    0% {
+        bottom: 0;
+        opacity: 1;
+    }
+
+    100% {
+        bottom: calc(100% - var(--end-y, 20%));
+        opacity: 0;
+    }
+}
+
+@keyframes fireworkExplode {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform:
+            translate(-50%, -50%) translateX(calc(cos(var(--angle, 0)) * var(--distance, 50px))) translateY(calc(sin(var(--angle, 0)) * var(--distance, 50px) + 100px));
+        opacity: 0;
+    }
+}
+
+/* === 霓虹爱心 (情人节) === */
+@keyframes heartBeat {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+
+    20% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+
+    40% {
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+
+    60% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    80% {
+        transform: translate(-50%, -50%) scale(0.95);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes heartExplode {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+}
+
+@keyframes neonBurst {
+    0% {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    100% {
+        left: var(--end-x, 50%);
+        top: var(--end-y, 50%);
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* === 情话浮动 === */
+@keyframes quoteFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(0);
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+}

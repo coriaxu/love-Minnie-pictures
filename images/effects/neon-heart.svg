@@ -1,0 +1,47 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 霓虹爱心轮廓 - 用于情人节 -->
+  <defs>
+    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur1"/>
+      <feGaussianBlur stdDeviation="4" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF1493"/>
+      <stop offset="50%" stop-color="#FF69B4"/>
+      <stop offset="100%" stop-color="#FF6B6B"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- 霓虹心形轮廓 -->
+  <path d="M24 40 
+           C12 32 4 24 4 16 
+           C4 10 8 6 14 6 
+           C18 6 22 9 24 12 
+           C26 9 30 6 34 6 
+           C40 6 44 10 44 16 
+           C44 24 36 32 24 40 Z" 
+        fill="none" 
+        stroke="url(#neonGrad)" 
+        stroke-width="2.5"
+        stroke-linecap="round"
+        filter="url(#neonGlow)"/>
+  
+  <!-- 内层光晕 -->
+  <path d="M24 36 
+           C14 30 8 23 8 17 
+           C8 12 11 9 15 9 
+           C18 9 21 11 24 14 
+           C27 11 30 9 33 9 
+           C37 9 40 12 40 17 
+           C40 23 34 30 24 36 Z" 
+        fill="none" 
+        stroke="#FF69B4" 
+        stroke-width="1"
+        opacity="0.5"
+        filter="url(#neonGlow)"/>
+</svg>

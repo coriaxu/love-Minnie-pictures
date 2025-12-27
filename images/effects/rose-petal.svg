@@ -1,0 +1,35 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 深红玫瑰花瓣 - 用于结婚纪念日 -->
+  <defs>
+    <linearGradient id="petalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A52A2A"/>
+      <stop offset="40%" stop-color="#8B0000"/>
+      <stop offset="100%" stop-color="#800020"/>
+    </linearGradient>
+    <filter id="petalShadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- 花瓣主体 - 自然卷边形态 -->
+  <path d="M24 4 
+           Q38 8 42 20 
+           Q44 32 36 40 
+           Q28 46 20 42 
+           Q8 36 6 24 
+           Q4 12 16 6 
+           Q20 4 24 4 Z" 
+        fill="url(#petalGrad)" 
+        filter="url(#petalShadow)"/>
+  
+  <!-- 花瓣脉络 -->
+  <path d="M24 8 Q26 20 24 36" 
+        stroke="#6B0000" stroke-width="0.5" fill="none" opacity="0.4"/>
+  <path d="M18 14 Q24 22 22 32" 
+        stroke="#6B0000" stroke-width="0.3" fill="none" opacity="0.3"/>
+  <path d="M30 14 Q24 22 26 32" 
+        stroke="#6B0000" stroke-width="0.3" fill="none" opacity="0.3"/>
+  
+  <!-- 高光 -->
+  <ellipse cx="20" cy="16" rx="4" ry="6" fill="#C44040" opacity="0.3"/>
+</svg>

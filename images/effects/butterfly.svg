@@ -1,0 +1,37 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 梦幻蝴蝶 - 用于生日特效 -->
+  <defs>
+    <linearGradient id="wingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8B4E8" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#FFC7D4" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#B8E8D2" stop-opacity="0.8"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 左翅膀 -->
+  <path d="M32 32 Q12 8 8 28 Q4 42 20 38 Q28 36 32 32" 
+        fill="url(#wingGradient)" filter="url(#glow)"/>
+  <!-- 右翅膀 -->
+  <path d="M32 32 Q52 8 56 28 Q60 42 44 38 Q36 36 32 32" 
+        fill="url(#wingGradient)" filter="url(#glow)"/>
+  <!-- 下左翅 -->
+  <path d="M32 32 Q18 40 12 52 Q16 58 28 48 Q32 44 32 32" 
+        fill="url(#wingGradient)" filter="url(#glow)" opacity="0.8"/>
+  <!-- 下右翅 -->
+  <path d="M32 32 Q46 40 52 52 Q48 58 36 48 Q32 44 32 32" 
+        fill="url(#wingGradient)" filter="url(#glow)" opacity="0.8"/>
+  <!-- 身体 -->
+  <ellipse cx="32" cy="32" rx="2" ry="10" fill="#8B7B8B"/>
+  <!-- 触角 -->
+  <path d="M30 22 Q28 16 24 14" stroke="#8B7B8B" stroke-width="1" fill="none"/>
+  <path d="M34 22 Q36 16 40 14" stroke="#8B7B8B" stroke-width="1" fill="none"/>
+  <circle cx="24" cy="14" r="1.5" fill="#FFD700"/>
+  <circle cx="40" cy="14" r="1.5" fill="#FFD700"/>
+</svg>
