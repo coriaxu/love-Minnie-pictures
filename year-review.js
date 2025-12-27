@@ -191,8 +191,15 @@
     // ============================================================
     function setCellPhoto(cell, photoData) {
         cell.classList.remove('placeholder');
-        // 瀑布流布局：图片自然保持原始比例，不需要设置 aspect-ratio
-        cell.innerHTML = `<img src="images/${photoData.filename}" alt="${photoData.title || 'Photo'}" loading="lazy">`;
+        const imgSrc = `images/${photoData.filename}`;
+        const altText = photoData.title || 'Photo';
+
+        // 双层图片结构：模糊背景 + 清晰主图
+        // 类似 Apple Music / Spotify 封面卡片效果
+        cell.innerHTML = `
+            <img class="blur-bg" src="${imgSrc}" alt="" loading="lazy" aria-hidden="true">
+            <img class="main-img" src="${imgSrc}" alt="${altText}" loading="lazy">
+        `;
         cell.dataset.filename = photoData.filename;
     }
 
