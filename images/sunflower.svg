@@ -1,0 +1,79 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 核心光晕 -->
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#7B3F00"/> <!-- 深褐色花盘中心 -->
+      <stop offset="90%" stop-color="#4A2500"/> <!-- 花盘边缘 -->
+    </radialGradient>
+    <linearGradient id="petalGradient" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700"/> <!-- 金黄 -->
+      <stop offset="100%" stop-color="#FFA500"/> <!-- 橙黄 -->
+    </linearGradient>
+  </defs>
+
+  <!-- 花瓣层 -->
+  <g filter="url(#glow)">
+    <!-- 第一层花瓣 (背景) -->
+    <g transform="rotate(15, 128, 128)">
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(22.5, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(45, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(67.5, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(90, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(112.5, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(135, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(157.5, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(180, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(202.5, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(225, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(247.5, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(270, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(292.5, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(315, 128, 128)" fill="url(#petalGradient)"/>
+      <path d="M128 40 Q148 80 128 128 Q108 80 128 40 Z" transform="rotate(337.5, 128, 128)" fill="url(#petalGradient)"/>
+    </g>
+
+    <!-- 第二层花瓣 (前景，稍微错开) -->
+    <g>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(22.5, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(45, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(67.5, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(90, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(112.5, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(135, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(157.5, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(180, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(202.5, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(225, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(247.5, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(270, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(292.5, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(315, 128, 128)" fill="#FDD017"/>
+      <path d="M128 48 Q144 80 128 128 Q112 80 128 48 Z" transform="rotate(337.5, 128, 128)" fill="#FDD017"/>
+    </g>
+  </g>
+
+  <!-- 花盘 -->
+  <circle cx="128" cy="128" r="48" fill="url(#centerGradient)" stroke="#5D4037" stroke-width="2"/>
+  
+  <!-- 种子点缀 (简单的点阵效果) -->
+  <g fill="#3E2723" opacity="0.6">
+    <circle cx="128" cy="128" r="2"/>
+    <circle cx="118" cy="118" r="2"/>
+    <circle cx="138" cy="118" r="2"/>
+    <circle cx="118" cy="138" r="2"/>
+    <circle cx="138" cy="138" r="2"/>
+    <circle cx="108" cy="128" r="2"/>
+    <circle cx="148" cy="128" r="2"/>
+    <circle cx="128" cy="108" r="2"/>
+    <circle cx="128" cy="148" r="2"/>
+  </g>
+</svg>

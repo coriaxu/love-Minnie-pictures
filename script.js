@@ -510,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isToday) cell.classList.add('today');
 
             if (isFuture) {
-                cell.innerHTML = '<span class="seed-icon"><img src="images/sunflower_icon.png" class="sunflower-icon" alt="🌻"></span>';
+                cell.innerHTML = '<span class="seed-icon"><img src="images/sunflower.svg" class="sunflower-icon" alt="🌻"></span>';
             } else {
                 cell.textContent = day;
             }
@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (item.isFuture) {
                 thumb.classList.add('future');
-                thumb.innerHTML = '<img src="images/sunflower_icon.png" class="sunflower-icon" alt="🌻">';
+                thumb.innerHTML = '<img src="images/sunflower.svg" class="sunflower-icon" alt="🌻">';
             } else {
                 const img = document.createElement('img');
                 img.src = `images/${item.filename}`;

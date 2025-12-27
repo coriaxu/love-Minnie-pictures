@@ -17,8 +17,9 @@
     --text-main: rgba(255, 250, 252, 0.95);
     --text-muted: rgba(255, 240, 245, 0.65);
     --capsule-bg: rgba(20, 5, 10, 0.6);
-    --sunflower-filter: sepia(100%) saturate(3000%) hue-rotate(10deg) brightness(1.2) drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
-    --sunflower-filter-hover: sepia(100%) saturate(3000%) hue-rotate(10deg) brightness(1.4) drop-shadow(0 0 12px rgba(255, 220, 50, 0.9));
+    /* Sunflower Icon - SVG is already gold, just add glow */
+    --sunflower-filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.4));
+    --sunflower-filter-hover: drop-shadow(0 0 12px rgba(255, 220, 50, 0.8));
 
     /* Ambient + Torch */
     --ambient-core: rgba(200, 60, 220, 0.14);
@@ -1644,7 +1645,30 @@ body.modal-open .content-area {
         left: 0;
         right: 0;
         border-radius: 0;
-        padding: 16px;
+        padding: 20px;
+        background: rgba(10, 5, 12, 0.98);
+        /* Less transparent for legibility */
+    }
+
+    /* Mobile Calendar Optimization for Touch */
+    .day-cell {
+        aspect-ratio: 1;
+        /* Ensure square */
+        font-size: 1.1rem;
+        /* Bigger font */
+        margin: 2px 0;
+        /* Vertical breathing room */
+    }
+
+    .weekday-header {
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+
+    .days-grid {
+        gap: 8px;
+        /* More space between days */
     }
 }
 
