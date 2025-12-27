@@ -155,6 +155,10 @@
     border: 1px solid rgba(255, 200, 220, 0.1);
     cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    /* 让格子能够适应图片 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .poster-cell:hover {
@@ -167,8 +171,9 @@
 .poster-cell img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    /* Changed from cover to show full image without cropping */
+    /* 使用 cover 填满格子，格子的 aspect-ratio 由 JS 动态设置为图片原始比例 */
+    object-fit: cover;
+    object-position: center center;
     /* Sharp Focus + Color Grading */
     filter: contrast(1.08) brightness(1.02) saturate(1.1);
     transition: transform 0.4s ease, filter 0.3s ease;
