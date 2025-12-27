@@ -38,7 +38,8 @@
 
     /* Typography */
     --font-serif: 'Bodoni Moda', serif;
-    --font-sans: 'Inter', sans-serif;
+    /* Scheme A: Handwritten Letter */
+    --font-sans: 'LXGW WenKai Screen', 'Inter', sans-serif;
 
     /* Semantic Mappings for Gallery */
     --bg-deep: var(--bg-color);

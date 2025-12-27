@@ -232,13 +232,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Theme Toggle
     // ============================================================
     const themeButtons = document.querySelectorAll('.theme-btn');
-    const THEME_STORAGE_KEY = 'love-minnie-theme';
-    const DEFAULT_THEME = 'spring';
+    const THEME_STORAGE_KEY = 'love-minnie-theme-v2'; // Updated to reset defaults
     const THEME_SET = new Set(['winter', 'spring', 'summer', 'autumn']);
+
+    const getSeasonalTheme = () => {
+        const month = new Date().getMonth(); // 0-11
+        // Spring: March (2), April (3), May (4)
+        if (month >= 2 && month <= 4) return 'spring';
+        // Summer: June (5), July (6), August (7)
+        if (month >= 5 && month <= 7) return 'summer';
+        // Autumn: September (8), October (9), November (10)
+        if (month >= 8 && month <= 10) return 'autumn';
+        // Winter: December (11), January (0), February (1)
+        return 'winter';
+    };
 
     const applyTheme = (theme, options = {}) => {
         const { persist = true } = options;
-        const nextTheme = THEME_SET.has(theme) ? theme : DEFAULT_THEME;
+        const nextTheme = THEME_SET.has(theme) ? theme : getSeasonalTheme();
         document.documentElement.dataset.theme = nextTheme;
         themeButtons.forEach(btn => {
             const isActive = btn.dataset.theme === nextTheme;
@@ -271,8 +282,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             storedTheme = null;
         }
-        const initialTheme = THEME_SET.has(storedTheme) ? storedTheme : DEFAULT_THEME;
-        applyTheme(initialTheme, { persist: true });
+
+        const hasStoredTheme = THEME_SET.has(storedTheme);
+        const initialTheme = hasStoredTheme ? storedTheme : getSeasonalTheme();
+
+        // Only persist if it was already stored (user preference). 
+        // If it's the default seasonal theme, don't save it so it auto-updates next season.
+        applyTheme(initialTheme, { persist: hasStoredTheme });
     };
 
     themeButtons.forEach(btn => {
