@@ -191,19 +191,8 @@
     // ============================================================
     function setCellPhoto(cell, photoData) {
         cell.classList.remove('placeholder');
-        const img = document.createElement('img');
-        img.src = `images/${photoData.filename}`;
-        img.alt = photoData.title || 'Photo';
-        img.loading = 'lazy';
-
-        // 图片加载后，设置 cell 的 aspect-ratio 来匹配图片比例
-        img.onload = function () {
-            const ratio = img.naturalWidth / img.naturalHeight;
-            cell.style.aspectRatio = ratio.toFixed(2);
-        };
-
-        cell.innerHTML = '';
-        cell.appendChild(img);
+        // 瀑布流布局：图片自然保持原始比例，不需要设置 aspect-ratio
+        cell.innerHTML = `<img src="images/${photoData.filename}" alt="${photoData.title || 'Photo'}" loading="lazy">`;
         cell.dataset.filename = photoData.filename;
     }
 
