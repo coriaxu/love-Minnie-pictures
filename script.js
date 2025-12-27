@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Theme Toggle
     // ============================================================
     const themeButtons = document.querySelectorAll('.theme-btn');
-    const THEME_STORAGE_KEY = 'love-minnie-theme-v2'; // Updated to reset defaults
+    const THEME_STORAGE_KEY = 'love-minnie-theme-v3'; // v3: Reset to force seasonal auto-detection
     const THEME_SET = new Set(['winter', 'spring', 'summer', 'autumn']);
 
     const getSeasonalTheme = () => {
