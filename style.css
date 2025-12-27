@@ -202,24 +202,9 @@ body {
 }
 
 /* --- Date Capsule (Context Anchor) --- */
+/* 已隐藏：徐老师不需要这个功能 */
 .date-capsule {
-    position: fixed;
-    top: 100px;
-    left: 30px;
-    padding: 8px 16px;
-    background: var(--capsule-bg);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--grid-line);
-    border-radius: 20px;
-    font-family: var(--font-sans);
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    letter-spacing: 0.05em;
-    z-index: 60;
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: opacity 0.3s, transform 0.3s;
-    pointer-events: none;
+    display: none !important;
 }
 
 .date-capsule.capsule-flash {
