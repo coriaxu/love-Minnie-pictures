@@ -191,15 +191,8 @@
     // ============================================================
     function setCellPhoto(cell, photoData) {
         cell.classList.remove('placeholder');
-        const imgSrc = `images/${photoData.filename}`;
-        const altText = photoData.title || 'Photo';
-
-        // 双层图片结构：模糊背景 + 清晰主图
-        // 类似 Apple Music / Spotify 封面卡片效果
-        cell.innerHTML = `
-            <img class="blur-bg" src="${imgSrc}" alt="" loading="lazy" aria-hidden="true">
-            <img class="main-img" src="${imgSrc}" alt="${altText}" loading="lazy">
-        `;
+        // 单层图片：统一 16:9 格子，直接用 cover 填满
+        cell.innerHTML = `<img src="images/${photoData.filename}" alt="${photoData.title || 'Photo'}" loading="lazy">`;
         cell.dataset.filename = photoData.filename;
     }
 
