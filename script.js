@@ -406,11 +406,18 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleCalendarBtn.classList.toggle('active');
         document.body.classList.toggle('sidebar-closed', !calendarSidebar.classList.contains('open'));
 
-        // 等待 CSS 过渡动画完成后，重新计算 Masonry 布局
-        // 避免图片重叠 bug
-        setTimeout(() => {
+        // 在动画过程中持续刷新布局，消除"先错后对"的顿挫感
+        // 使用 requestAnimationFrame 循环，持续 500ms
+        const startTime = performance.now();
+        const animationDuration = 500;
+
+        const smoothResize = () => {
             resizeAllGalleryItems();
-        }, 450); // 稍长于 CSS transition 时间 (0.4s)
+            if (performance.now() - startTime < animationDuration) {
+                requestAnimationFrame(smoothResize);
+            }
+        };
+        requestAnimationFrame(smoothResize);
     });
 
     timelinePrev.addEventListener('click', () => {
