@@ -17,7 +17,7 @@
     // ============================================================
     const CONFIG = {
         // Set to true to always show the gift button (for development)
-        DEV_MODE: true,
+        DEV_MODE: false, // 关闭开发模式，2026.12.31 才会显示礼物盒
 
         // Target date when the gift button appears (Dec 31)
         TARGET_MONTH: 11, // 0-indexed (11 = December)
