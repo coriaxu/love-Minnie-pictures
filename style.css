@@ -1426,6 +1426,55 @@ body.modal-open .content-area {
 }
 
 /* ============================================================
+   PORTRAIT MODE MODAL LAYOUT (竖版图片弹窗布局)
+   当图片是竖版(9:16等)时，调整布局让图片完整显示
+   ============================================================ */
+.detail-dialog.is-portrait {
+    /* 竖版时宽度可以小一点，因为图片本身较窄 */
+    width: min(1200px, 95vw);
+    height: min(92vh, 900px);
+    /* 改为：图片区更宽，信息面板缩窄 */
+    grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+/* 竖版图片在影院模式下（有底部胶卷条时） */
+body.modal-open .detail-dialog.is-portrait {
+    height: calc(92vh - 100px);
+    margin-bottom: 90px;
+}
+
+/* 竖版时，图片区域让图片有更多垂直空间 */
+.detail-dialog.is-portrait .detail-media {
+    padding: 16px;
+    /* 确保图片可以尽可能大地展示 */
+    min-height: 0;
+}
+
+.detail-dialog.is-portrait .detail-media img {
+    /* 竖版图片：优先保证高度，让它可以铺满可用高度 */
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* 竖版时信息面板可以稍微紧凑一些 */
+.detail-dialog.is-portrait .detail-side {
+    min-width: 280px;
+}
+
+.detail-dialog.is-portrait .detail-header {
+    padding: 18px 22px 14px;
+}
+
+.detail-dialog.is-portrait .detail-body {
+    padding: 16px 22px 22px;
+}
+
+.detail-dialog.is-portrait .detail-title {
+    font-size: 1.25rem;
+}
+
+/* ============================================================
    RESPONSIVE DESIGN
    ============================================================ */
 @media (max-width: 1024px) {
@@ -1477,11 +1526,30 @@ body.modal-open .content-area {
         height: min(92vh, 900px);
     }
 
+    /* 竖版图片在小屏幕上：单列布局，让图片区域占更多高度 */
+    .detail-dialog.is-portrait {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(60%, 1fr) auto;
+        width: min(95vw, 500px);
+        height: min(95vh, 950px);
+    }
+
+    .detail-dialog.is-portrait .detail-media {
+        padding: 12px;
+        min-height: 50vh;
+    }
+
+    .detail-dialog.is-portrait .detail-side {
+        max-height: 35vh;
+        overflow-y: auto;
+    }
+
     .detail-side {
         border-left: none;
         border-top: 1px solid var(--grid-line);
     }
 }
+
 
 @media (max-width: 600px) {
     .app-header {

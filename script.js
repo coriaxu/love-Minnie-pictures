@@ -981,8 +981,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function openDetail(item) {
         if (!item || !detailModal) return;
 
+        const detailDialog = detailModal.querySelector('.detail-dialog');
+        
+        // 先移除之前的方向类
+        if (detailDialog) {
+            detailDialog.classList.remove('is-portrait', 'is-landscape');
+        }
+
         detailImage.src = `images/${item.filename}`;
         detailImage.alt = item.title || 'Artwork detail';
+        
+        // 监听图片加载，检测纵横比并添加相应类
+        detailImage.onload = function() {
+            const isPortrait = this.naturalHeight > this.naturalWidth;
+            if (detailDialog) {
+                detailDialog.classList.toggle('is-portrait', isPortrait);
+                detailDialog.classList.toggle('is-landscape', !isPortrait);
+            }
+        };
         // 只显示一个日期，用 YYYY.Jan.D 格式
         detailTitle.textContent = formatDateDisplay(new Date(item.date));
         // 隐藏重复的小日期
