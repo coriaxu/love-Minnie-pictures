@@ -306,8 +306,7 @@
         <header class="w-full">
             <div class="heavy-rule"></div>
             <div class="flex justify-between mt-4 fade-in">
-                <span class="typography-swiss" id="project-no">Project No. 001</span>
-                <span class="typography-swiss">For My Bear Wife</span>
+                <span class="typography-swiss">For My Wife</span>
                 <span class="typography-swiss text-right">Est. 2026</span>
             </div>
         </header>
@@ -387,7 +386,7 @@
         const dayStr = String(dayNum).padStart(3, '0');
         const noStr = String(projectNo).padStart(3, '0');
 
-        document.getElementById('project-no').textContent = `Project No. ${noStr}`;
+        // "For My Wife" 现在是静态文字，不需要动态更新
         document.getElementById('day-counter').textContent = dayStr;
         document.getElementById('unwrap-btn').textContent = `Unwrap Day ${dayStr}`;
 
