@@ -19,9 +19,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="style.css?v=7.0">
+    <link rel="stylesheet" href="style.css?v=8.0">
     <!-- Year in Review Poster -->
-    <link rel="stylesheet" href="year-review.css?v=7.0">
+    <link rel="stylesheet" href="year-review.css?v=8.0">
 </head>
 
 <body>
@@ -112,6 +112,63 @@
         </button>
     </nav>
 
+    <!-- ===================== MOBILE BOTTOM NAVIGATION ===================== -->
+    <!-- 方案 A：极简沉浸派 - 仅在 600px 以下显示 -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+        <div class="nav-items">
+            <button class="nav-item" id="nav-home" aria-label="返回首页">
+                <i class="fa-solid fa-house"></i>
+                <span>首页</span>
+            </button>
+            <button class="nav-item active" id="nav-gallery" aria-label="画廊">
+                <i class="fa-solid fa-images"></i>
+                <span>画廊</span>
+            </button>
+            <button class="nav-item" id="nav-calendar" aria-label="日历">
+                <i class="fa-regular fa-calendar"></i>
+                <span>日历</span>
+            </button>
+            <button class="nav-item" id="nav-settings" aria-label="设置">
+                <i class="fa-solid fa-gear"></i>
+                <span>设置</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 日历 Bottom Sheet 遮罩层 -->
+    <div class="calendar-overlay" id="calendar-overlay"></div>
+
+    <!-- ===================== SETTINGS BOTTOM SHEET ===================== -->
+    <!-- 设置面板：包含季节主题切换 -->
+    <div class="settings-sheet" id="settings-sheet">
+        <div class="settings-handle"></div>
+        <div class="settings-content">
+            <h3 class="settings-title">主题设置</h3>
+            <div class="settings-section">
+                <label class="settings-label">季节主题</label>
+                <div class="theme-options" id="mobile-theme-options">
+                    <button type="button" class="theme-option" data-theme="spring">
+                        <span class="theme-icon">🌸</span>
+                        <span class="theme-name">春</span>
+                    </button>
+                    <button type="button" class="theme-option" data-theme="summer">
+                        <span class="theme-icon">🌿</span>
+                        <span class="theme-name">夏</span>
+                    </button>
+                    <button type="button" class="theme-option" data-theme="autumn">
+                        <span class="theme-icon">🍂</span>
+                        <span class="theme-name">秋</span>
+                    </button>
+                    <button type="button" class="theme-option" data-theme="winter">
+                        <span class="theme-icon">❄️</span>
+                        <span class="theme-name">冬</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="settings-overlay" id="settings-overlay"></div>
+
     <!-- ===================== DETAIL MODAL ===================== -->
     <div id="detail-modal" class="detail-modal" aria-hidden="true">
         <div class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title">
@@ -141,12 +198,12 @@
     </div>
 
     <!-- ===================== SCRIPTS ===================== -->
-    <script src="data.js?v=6.0"></script>
-    <script src="script.js?v=6.0"></script>
+    <script src="data.js?v=8.0"></script>
+    <script src="script.js?v=8.0"></script>
     <!-- Anniversary Effects Engine -->
-    <script src="anniversary-effects.js?v=6.0"></script>
+    <script src="anniversary-effects.js?v=8.0"></script>
     <!-- Year in Review Poster Generator -->
-    <script src="year-review.js?v=6.0"></script>
+    <script src="year-review.js?v=8.0"></script>
 </body>
 
 </html>

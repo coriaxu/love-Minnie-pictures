@@ -1552,92 +1552,171 @@ body.modal-open .detail-dialog.is-portrait {
 
 
 @media (max-width: 600px) {
+    /* ============================================================
+       方案 A：极简沉浸派 - 移动端专属样式
+       ============================================================ */
+
+    /* === Header 极简化 === */
     .app-header {
-        padding: 0 16px;
-        height: 56px;
+        padding: 0 12px;
+        height: 52px;
+        justify-content: center;
+        /* 居中布局 */
     }
 
+    /* 隐藏 Logo - 手机端不需要 */
     .logo {
-        font-size: 1rem;
-        letter-spacing: 1px;
+        display: none !important;
+    }
+
+    /* 隐藏季节切换 - 移入底部导航设置 */
+    .theme-toggle {
+        display: none !important;
+    }
+
+    /* 月份导航居中显示 */
+    .month-nav {
+        flex: 1;
+        justify-content: center;
+        gap: 16px;
     }
 
     .month-label {
-        font-size: 0.9rem;
-        min-width: 100px;
+        font-size: 1rem;
+        min-width: 130px;
+        font-weight: 500;
     }
 
+    /* 导航按钮增大触摸区域 */
     .nav-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 0.75rem;
+        width: 44px;
+        height: 44px;
+        font-size: 0.9rem;
     }
 
+    /* 日历按钮移到右侧 */
     .header-actions {
+        position: absolute;
+        right: 12px;
         gap: 8px;
     }
 
-    .theme-toggle {
-        padding: 3px;
-        gap: 4px;
+    .mobile-calendar-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1rem;
     }
 
-    .theme-btn {
-        width: 24px;
-        height: 24px;
-        font-size: 0.65rem;
-    }
-
+    /* === 主容器适配底部导航栏 === */
     .app-container {
         padding: 0;
+        bottom: 64px;
+        /* 为底部导航栏留出空间 */
     }
 
-    .day-card {
-        border-radius: 0;
-    }
-
-    .card-title {
-        font-size: 1.5rem;
-    }
-
-    .card-info {
-        padding: 16px;
-    }
-
+    /* === 画廊 2 列瀑布流 === */
     .content-area {
-        padding: 20px 16px 90px;
+        padding: 12px 8px 20px;
     }
 
     body.sidebar-closed .content-area {
-        padding-left: 16px;
+        padding-left: 8px;
     }
 
     .gallery-grid {
-        grid-template-columns: 1fr;
-        gap: 14px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
     }
 
-    /* Landscape rule removed - waterfall mode */
+    .gallery-card {
+        border-radius: 12px;
+    }
 
-    /* Timeline on Mobile */
+    .gallery-meta {
+        padding: 10px;
+    }
+
+    .gallery-meta-line .meta-prefix {
+        font-size: 0.5rem;
+    }
+
+    .gallery-meta-line .meta-title {
+        font-size: 0.85rem;
+    }
+
+    /* === Timeline 底部隐藏 === */
     .timeline-strip {
-        height: 80px;
-        padding: 0 12px;
-        transform: translateY(85%);
+        display: none;
+        /* 移动端隐藏横向时间轴，用底部导航代替 */
     }
 
-    .timeline-thumb {
-        width: 48px;
-        height: 48px;
+    /* === 日历改为 Bottom Sheet === */
+    .calendar-sidebar {
+        position: fixed;
+        top: auto;
+        bottom: 64px;
+        /* 底部导航栏上方 */
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 60vh;
+        max-height: 500px;
+        border-radius: 24px 24px 0 0;
+        padding: 20px 16px;
+        background: rgba(10, 5, 12, 0.98);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        z-index: 200;
     }
 
-    .timeline-nav-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 0.7rem;
+    .calendar-sidebar.open {
+        transform: translateY(0);
     }
 
-    /* Flip Card Letter on Mobile */
+    /* Bottom Sheet 拖动把手 */
+    .calendar-sidebar::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+    }
+
+    .calendar-grid {
+        padding-top: 12px;
+    }
+
+    /* 日历单元格触摸优化 */
+    .day-cell {
+        aspect-ratio: 1;
+        font-size: 1rem;
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .weekday-header {
+        font-size: 0.8rem;
+        margin-bottom: 16px;
+        font-weight: 600;
+    }
+
+    .days-grid {
+        gap: 6px;
+    }
+
+    /* === 底部导航栏 === */
+    .mobile-bottom-nav {
+        display: flex !important;
+    }
+
+    /* === Flip Card / Letter on Mobile === */
     .flip-back {
         padding: 20px;
     }
@@ -1671,7 +1750,7 @@ body.modal-open .detail-dialog.is-portrait {
         font-size: 0.8rem;
     }
 
-    /* Welcome Page on Mobile */
+    /* === Welcome / 入口页 on Mobile === */
     .welcome-content {
         padding: 20px;
     }
@@ -1692,37 +1771,324 @@ body.modal-open .detail-dialog.is-portrait {
         font-size: 1rem;
     }
 
-    /* Calendar sidebar on mobile */
-    .calendar-sidebar {
-        top: 56px;
+    /* === 隐藏桌面端光标 === */
+    .cursor-torch,
+    .cursor-dot {
+        display: none !important;
+    }
+
+    body {
+        cursor: auto;
+        /* 恢复默认光标 */
+    }
+
+    /* === 详情弹窗全屏沉浸模式 === */
+    .detail-modal {
+        padding: 0;
+    }
+
+    .detail-dialog {
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        max-height: none;
+        border-radius: 0;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+    }
+
+    .detail-dialog.is-portrait {
+        width: 100vw;
+        height: 100vh;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+    }
+
+    .detail-media {
+        position: relative;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        overflow: hidden;
+    }
+
+    .detail-media img {
         width: 100%;
+        height: 100%;
+        object-fit: contain;
+        max-height: none;
+    }
+
+    .detail-side {
+        position: absolute;
+        bottom: 0;
         left: 0;
         right: 0;
-        border-radius: 0;
-        padding: 20px;
-        background: rgba(10, 5, 12, 0.98);
-        /* Less transparent for legibility */
+        background: linear-gradient(0deg, 
+            rgba(0, 0, 0, 0.9) 0%, 
+            rgba(0, 0, 0, 0.7) 50%, 
+            transparent 100%);
+        border-left: none;
+        border-top: none;
+        max-height: 40vh;
+        overflow-y: auto;
     }
 
-    /* Mobile Calendar Optimization for Touch */
-    .day-cell {
-        aspect-ratio: 1;
-        /* Ensure square */
+    .detail-header {
+        padding: 16px 16px 8px;
+    }
+
+    .detail-title {
         font-size: 1.1rem;
-        /* Bigger font */
-        margin: 2px 0;
-        /* Vertical breathing room */
     }
 
-    .weekday-header {
-        font-size: 0.85rem;
-        margin-bottom: 20px;
-        font-weight: 600;
+    .detail-date {
+        font-size: 0.75rem;
     }
 
-    .days-grid {
-        gap: 8px;
-        /* More space between days */
+    .detail-close {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        width: 44px;
+        height: 44px;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 100;
+    }
+
+    .detail-body {
+        padding: 8px 16px 24px;
+    }
+
+    .detail-body::after {
+        display: none; /* 隐藏向日葵装饰 */
+    }
+
+    .detail-letter {
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+
+    /* 滑动提示 */
+    .detail-media::after {
+        content: '← 滑动切换 →';
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 0.75rem;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .detail-media.show-hint::after {
+        opacity: 1;
+    }
+}
+
+/* ============================================================
+   底部导航栏样式 (Mobile Bottom Navigation)
+   ============================================================ */
+.mobile-bottom-nav {
+    display: none;
+    /* 默认隐藏，仅在 600px 以下显示 */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(10, 5, 12, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--grid-line);
+    z-index: 300;
+    padding: 0 8px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    /* iPhone X+ 安全区域 */
+}
+
+.mobile-bottom-nav .nav-items {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.mobile-bottom-nav .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    /* 移除点击高亮 */
+}
+
+.mobile-bottom-nav .nav-item i {
+    font-size: 1.25rem;
+    transition: transform 0.2s ease;
+}
+
+.mobile-bottom-nav .nav-item.active {
+    color: var(--love-core);
+}
+
+.mobile-bottom-nav .nav-item.active i {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px var(--love-glow));
+}
+
+.mobile-bottom-nav .nav-item:active {
+    transform: scale(0.92);
+}
+
+/* 日历遮罩层 */
+.calendar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.calendar-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+/* ============================================================
+   设置面板 Bottom Sheet (Mobile Settings)
+   ============================================================ */
+.settings-sheet {
+    display: none;
+    position: fixed;
+    bottom: 64px;
+    left: 0;
+    right: 0;
+    height: auto;
+    max-height: 50vh;
+    background: rgba(10, 5, 12, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px 24px 0 0;
+    padding: 16px 20px 24px;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    z-index: 200;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.settings-sheet.open {
+    transform: translateY(0);
+}
+
+.settings-handle {
+    width: 36px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+}
+
+.settings-title {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.settings-section {
+    margin-bottom: 16px;
+}
+
+.settings-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.theme-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    background: var(--surface-glass);
+    border: 1px solid var(--grid-line);
+    border-radius: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.theme-option .theme-icon {
+    font-size: 1.5rem;
+}
+
+.theme-option .theme-name {
+    font-size: 0.75rem;
+    font-family: var(--font-sans);
+}
+
+.theme-option.active {
+    background: var(--love-core);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 16px var(--love-glow);
+}
+
+.theme-option:active {
+    transform: scale(0.95);
+}
+
+.settings-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.settings-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+@media (max-width: 600px) {
+    .settings-sheet {
+        display: block;
     }
 }
 

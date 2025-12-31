@@ -288,6 +288,89 @@
             /* 添加混合模式让它与背景更好地融合但又清晰 */
             mix-blend-mode: plus-lighter;
         }
+
+        /* ============================================================
+           方案 A：入口页移动端适配
+           ============================================================ */
+        @media (max-width: 600px) {
+            .grid-container {
+                padding: 24px 20px;
+            }
+
+            /* 标题缩小 */
+            .typography-hero {
+                font-size: clamp(2.5rem, 18vw, 5rem);
+                line-height: 0.9;
+            }
+
+            /* 副标题 */
+            .typography-swiss {
+                font-size: 0.65rem;
+                letter-spacing: 0.08em;
+            }
+
+            /* 日期计数器调小 */
+            .counter-bg {
+                font-size: 25vw;
+            }
+
+            /* 底部信息区域 */
+            .meta-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 24px;
+                text-align: center;
+            }
+
+            .meta-info .max-w-md {
+                max-width: 100%;
+            }
+
+            .meta-info p.font-serif {
+                font-size: 1rem;
+                line-height: 1.5;
+            }
+
+            .meta-info .typography-swiss {
+                font-size: 0.6rem;
+                line-height: 1.6;
+            }
+
+            /* 按钮 */
+            .btn-minimal {
+                padding: 14px 28px;
+                font-size: 0.7rem;
+                width: 100%;
+                max-width: 280px;
+                text-align: center;
+            }
+
+            /* 隐藏自定义光标 */
+            .cursor-torch,
+            .cursor-dot {
+                display: none !important;
+            }
+
+            body {
+                cursor: auto;
+            }
+
+            /* 减少动画复杂度 */
+            .ambient-light {
+                animation-duration: 20s;
+            }
+        }
+
+        /* 更小屏幕（iPhone SE 等） */
+        @media (max-width: 375px) {
+            .typography-hero {
+                font-size: 2.2rem;
+            }
+
+            .counter-bg {
+                font-size: 28vw;
+            }
+        }
     </style>
 </head>
 

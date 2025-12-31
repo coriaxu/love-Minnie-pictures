@@ -1061,6 +1061,108 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ============================================================
+    // 移动端触摸滑动切换画作
+    // ============================================================
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    const SWIPE_THRESHOLD = 50; // 最小滑动距离
+    const SWIPE_RESTRAINT = 100; // 垂直方向最大偏移
+
+    if (detailModal) {
+        const detailMediaEl = detailModal.querySelector('.detail-media');
+        
+        detailModal.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        detailModal.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            // 只处理水平滑动（垂直偏移不能太大）
+            if (Math.abs(deltaX) > SWIPE_THRESHOLD && Math.abs(deltaY) < SWIPE_RESTRAINT) {
+                if (deltaX > 0) {
+                    // 右滑 -> 上一张
+                    navigateDetailBySwipe(-1);
+                } else {
+                    // 左滑 -> 下一张
+                    navigateDetailBySwipe(1);
+                }
+            }
+        }
+
+        function navigateDetailBySwipe(offset) {
+            const currentDateStr = formatDateISO(selectedDate);
+            
+            // 获取所有有内容的日期，按日期排序
+            const allDates = Object.keys(dataByDate).sort();
+            const currentIndex = allDates.indexOf(currentDateStr);
+            
+            if (currentIndex === -1) return;
+            
+            const newIndex = currentIndex + offset;
+            if (newIndex < 0 || newIndex >= allDates.length) {
+                // 到达边界，可以添加震动反馈
+                if (detailMediaEl) {
+                    detailMediaEl.style.transform = offset > 0 ? 'translateX(-10px)' : 'translateX(10px)';
+                    setTimeout(() => {
+                        detailMediaEl.style.transform = '';
+                    }, 150);
+                }
+                return;
+            }
+            
+            const newDateStr = allDates[newIndex];
+            const newItem = dataByDate[newDateStr];
+            
+            if (newItem) {
+                // 添加滑动动画
+                if (detailMediaEl) {
+                    const direction = offset > 0 ? '-100%' : '100%';
+                    detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
+                    detailMediaEl.style.transform = `translateX(${direction})`;
+                    detailMediaEl.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        selectDate(new Date(newDateStr), { scroll: false });
+                        openDetail(newItem);
+                        
+                        // 从另一侧滑入
+                        const enterFrom = offset > 0 ? '100%' : '-100%';
+                        detailMediaEl.style.transition = 'none';
+                        detailMediaEl.style.transform = `translateX(${enterFrom})`;
+                        detailMediaEl.style.opacity = '0';
+                        
+                        requestAnimationFrame(() => {
+                            detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
+                            detailMediaEl.style.transform = 'translateX(0)';
+                            detailMediaEl.style.opacity = '1';
+                        });
+                    }, 200);
+                } else {
+                    selectDate(new Date(newDateStr), { scroll: false });
+                    openDetail(newItem);
+                }
+            }
+        }
+
+        // 首次打开时显示滑动提示（3秒后消失）
+        const originalOpenDetail = openDetail;
+        let hasShownHint = false;
+        
+        // 注：这里不覆盖原函数，滑动提示通过CSS :first-time伪类或JS逻辑单独处理
+    }
+
+    // ============================================================
     // Utility Functions
     // ============================================================
     function formatDateISO(date) {
@@ -1181,5 +1283,147 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    // ============================================================
+    // 方案 A：移动端底部导航栏交互
+    // ============================================================
+    const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+    const navHome = document.getElementById('nav-home');
+    const navGallery = document.getElementById('nav-gallery');
+    const navCalendar = document.getElementById('nav-calendar');
+    const navSettings = document.getElementById('nav-settings');
+    const calendarOverlay = document.getElementById('calendar-overlay');
+    const settingsSheet = document.getElementById('settings-sheet');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const mobileThemeOptions = document.getElementById('mobile-theme-options');
+
+    // 辅助函数：关闭所有 Bottom Sheet
+    const closeAllSheets = () => {
+        calendarSidebar?.classList.remove('open');
+        calendarOverlay?.classList.remove('show');
+        settingsSheet?.classList.remove('open');
+        settingsOverlay?.classList.remove('show');
+        document.body.style.overflow = '';
+        updateNavActiveState('gallery');
+    };
+
+    // 更新导航栏激活状态
+    const updateNavActiveState = (activeNav) => {
+        [navHome, navGallery, navCalendar, navSettings].forEach(btn => {
+            btn?.classList.remove('active');
+        });
+        if (activeNav === 'home') navHome?.classList.add('active');
+        else if (activeNav === 'gallery') navGallery?.classList.add('active');
+        else if (activeNav === 'calendar') navCalendar?.classList.add('active');
+        else if (activeNav === 'settings') navSettings?.classList.add('active');
+    };
+
+    // 首页按钮：返回入口页
+    navHome?.addEventListener('click', () => {
+        window.location.href = 'index.html';
+    });
+
+    // 画廊按钮：关闭所有面板，回到画廊视图
+    navGallery?.addEventListener('click', () => {
+        closeAllSheets();
+    });
+
+    // 日历按钮：切换日历 Bottom Sheet
+    navCalendar?.addEventListener('click', () => {
+        const isOpen = calendarSidebar?.classList.contains('open');
+        
+        // 先关闭设置面板
+        settingsSheet?.classList.remove('open');
+        settingsOverlay?.classList.remove('show');
+        
+        if (isOpen) {
+            calendarSidebar?.classList.remove('open');
+            calendarOverlay?.classList.remove('show');
+            document.body.style.overflow = '';
+            updateNavActiveState('gallery');
+        } else {
+            calendarSidebar?.classList.add('open');
+            calendarOverlay?.classList.add('show');
+            document.body.style.overflow = 'hidden'; // 防止背景滚动
+            updateNavActiveState('calendar');
+        }
+    });
+
+    // 设置按钮：切换设置 Bottom Sheet
+    navSettings?.addEventListener('click', () => {
+        const isOpen = settingsSheet?.classList.contains('open');
+        
+        // 先关闭日历面板
+        calendarSidebar?.classList.remove('open');
+        calendarOverlay?.classList.remove('show');
+        
+        if (isOpen) {
+            settingsSheet?.classList.remove('open');
+            settingsOverlay?.classList.remove('show');
+            document.body.style.overflow = '';
+            updateNavActiveState('gallery');
+        } else {
+            settingsSheet?.classList.add('open');
+            settingsOverlay?.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            updateNavActiveState('settings');
+            // 更新主题选项的激活状态
+            updateMobileThemeButtons();
+        }
+    });
+
+    // 点击遮罩层关闭日历
+    calendarOverlay?.addEventListener('click', () => {
+        calendarSidebar?.classList.remove('open');
+        calendarOverlay?.classList.remove('show');
+        document.body.style.overflow = '';
+        updateNavActiveState('gallery');
+    });
+
+    // 点击遮罩层关闭设置
+    settingsOverlay?.addEventListener('click', () => {
+        settingsSheet?.classList.remove('open');
+        settingsOverlay?.classList.remove('show');
+        document.body.style.overflow = '';
+        updateNavActiveState('gallery');
+    });
+
+    // 移动端主题切换
+    const updateMobileThemeButtons = () => {
+        const currentTheme = document.documentElement.dataset.theme || 'spring';
+        mobileThemeOptions?.querySelectorAll('.theme-option').forEach(btn => {
+            const isActive = btn.dataset.theme === currentTheme;
+            btn.classList.toggle('active', isActive);
+        });
+    };
+
+    mobileThemeOptions?.querySelectorAll('.theme-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const theme = btn.dataset.theme;
+            applyTheme(theme);
+            updateMobileThemeButtons();
+            // 切换主题后自动关闭设置面板
+            setTimeout(() => {
+                settingsSheet?.classList.remove('open');
+                settingsOverlay?.classList.remove('show');
+                document.body.style.overflow = '';
+                updateNavActiveState('gallery');
+            }, 300);
+        });
+    });
+
+    // 同步桌面端主题切换按钮的事件到移动端
+    themeButtons.forEach(btn => {
+        btn.addEventListener('click', updateMobileThemeButtons);
+    });
+
+    // 移动端：重写日历切换按钮行为（Header 右侧的日历图标）
+    if (window.innerWidth <= 600) {
+        toggleCalendarBtn?.removeEventListener('click', () => {});
+        toggleCalendarBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navCalendar?.click(); // 委托给底部导航栏的日历按钮
+        });
     }
 });
