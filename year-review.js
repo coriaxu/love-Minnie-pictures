@@ -68,7 +68,9 @@
         if (!btn) return;
 
         const today = new Date();
-        const isTargetDate = (today.getMonth() === CONFIG.TARGET_MONTH &&
+        // 必须同时满足：年份=2026、月份=12月、日期=31日
+        const isTargetDate = (today.getFullYear() === CONFIG.TARGET_YEAR &&
+            today.getMonth() === CONFIG.TARGET_MONTH &&
             today.getDate() === CONFIG.TARGET_DAY);
 
         if (CONFIG.DEV_MODE || isTargetDate) {
