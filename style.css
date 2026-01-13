@@ -1149,6 +1149,75 @@ body.modal-open .detail-dialog {
     display: none;
 }
 
+/* ============================================================
+   Desktop Navigation
+   ============================================================ */
+.desktop-nav {
+    display: none; /* Hidden on mobile */
+    gap: 30px;
+    margin-left: 40px;
+}
+
+.nav-link {
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    position: relative;
+    padding: 5px 0;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #fff;
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #FF69B4; /* Hot Pink Accent */
+    box-shadow: 0 0 8px #FF69B4;
+}
+
+@media (min-width: 768px) {
+    .desktop-nav {
+        display: flex;
+        align-items: center;
+        /* 绝对定位到右侧，避免与居中的 month-nav 重叠 */
+        position: absolute;
+        right: 240px; /* 给 header-actions 留出更多空间 */
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .app-header {
+        justify-content: space-between;
+        position: relative; /* 为绝对定位的子元素提供参照 */
+    }
+    
+    .app-header .logo {
+        margin-right: 0;
+    }
+
+    /* If month nav exists, center it */
+    .month-nav {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .header-actions {
+        margin-left: 0; /* Let flexbox space-between handle it or margin-left auto */
+    }
+}
+
 /* Timeline Thumbnail (Rothko Soft Edges) */
 /* Timeline Thumbnail (Rothko Soft Edges) */
 .timeline-thumb {
