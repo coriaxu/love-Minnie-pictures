@@ -361,14 +361,52 @@
             }
         }
 
-        /* 更小屏幕（iPhone SE 等） */
-        @media (max-width: 375px) {
-            .typography-hero {
-                font-size: 2.2rem;
-            }
-
             .counter-bg {
                 font-size: 28vw;
+            }
+        }
+
+        /* Desktop Main Nav (Index Specific) */
+        .desktop-main-nav {
+            position: absolute;
+            top: 40px;
+            right: 60px;
+            display: flex;
+            gap: 40px;
+            z-index: 50;
+        }
+
+        .desktop-main-nav .nav-link {
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .desktop-main-nav .nav-link:hover,
+        .desktop-main-nav .nav-link.active {
+            color: #fff;
+            text-shadow: 0 0 12px rgba(255, 100, 150, 0.6);
+        }
+
+        .desktop-main-nav .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: #FF69B4;
+            box-shadow: 0 0 8px #FF69B4;
+        }
+
+        @media (max-width: 768px) {
+            .desktop-main-nav {
+                display: none;
             }
         }
     </style>
@@ -399,6 +437,13 @@
                 Visual<br>
                 Letters
             </h1>
+
+             <!-- Desktop Nav (Absoluted positioned for aesthetics) -->
+             <nav class="desktop-main-nav">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="gallery.html" class="nav-link">Gallery</a>
+                <a href="moments.html" class="nav-link">Moments</a>
+            </nav>
 
             <div class="absolute right-0 bottom-0 pointer-events-none mix-blend-screen">
                 <span class="counter-bg" id="day-counter">001</span>

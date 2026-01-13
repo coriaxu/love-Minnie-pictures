@@ -32,20 +32,30 @@
             <form class="admin-panel" id="publish-form">
                 <div class="panel-title">填写与上传</div>
 
+                <div class="mode-switch">
+                    <button type="button" class="mode-btn active" data-mode="gallery">画廊模式</button>
+                    <button type="button" class="mode-btn" data-mode="moments">点滴模式</button>
+                </div>
+
                 <div class="field">
                     <label for="entry-date">日期</label>
                     <input type="date" id="entry-date" required>
                     <p class="field-note">用于生成文件名与展示日期。</p>
                 </div>
 
-                <div class="field">
-                    <label for="entry-image">图片</label>
-                    <input type="file" id="entry-image" accept="image/*" required>
-                    <p class="field-note">推荐 16:9 或 9:16，自动压缩为 WebP。</p>
+                <div class="field" id="title-field" style="display: none;">
+                    <label for="entry-title">标题 (地点/主题)</label>
+                    <input type="text" id="entry-title" placeholder="例如：西安肉夹馍">
                 </div>
 
                 <div class="field">
-                    <label for="entry-letter">悄悄话</label>
+                    <label for="entry-image">图片</label>
+                    <input type="file" id="entry-image" accept="image/*" required>
+                    <p class="field-note" id="file-note">推荐 16:9 或 9:16，自动压缩为 WebP。</p>
+                </div>
+
+                <div class="field">
+                    <label for="entry-letter" id="desc-label">悄悄话</label>
                     <textarea id="entry-letter" rows="7" placeholder="写下今天的心意..." required></textarea>
                 </div>
 

@@ -1,0 +1,251 @@
+/* ============================================================
+   MOMENTS PAGE STYLES (Vertical Timeline)
+   ============================================================ */
+
+/* Root Variables (Inherit from style.css where possible) */
+:root {
+    --moment-line-color: rgba(255, 255, 255, 0.15);
+    --moment-card-bg: rgba(255, 255, 255, 0.03);
+    --moment-card-border: rgba(255, 255, 255, 0.08);
+    --moment-text-primary: #fff;
+    --moment-text-secondary: rgba(255, 255, 255, 0.6);
+    --moment-accent: #e0c3fc; /* Soft Lavender */
+}
+
+/* Page Container */
+.moments-container {
+    position: relative;
+    max-width: 800px;
+    margin: 120px auto 100px; /* Header Space & Bottom Nav Space */
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* Timeline Axis (The Vertical Line) */
+.timeline-axis {
+    position: absolute;
+    left: 40px; /* Mobile Left Alignment */
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, 
+        transparent 0%, 
+        var(--moment-line-color) 10%, 
+        var(--moment-line-color) 90%, 
+        transparent 100%
+    );
+    z-index: 0;
+}
+
+@media (max-width: 600px) {
+    .timeline-axis {
+        left: 24px;
+    }
+}
+
+/* Moment Card (Article) */
+.moment-card {
+    position: relative;
+    margin-bottom: 60px;
+    padding-left: 60px; /* Space for date/axis */
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.moment-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Date Indicator on Axis */
+.moment-date {
+    position: absolute;
+    left: -18px; /* Offset to center on axis (axis left:40px) */
+    top: 0;
+    width: 60px;
+    text-align: center;
+    background: #0a0514; /* Match body bg to hide line behind */
+    padding: 8px 0;
+    z-index: 1;
+    border: 1px solid var(--moment-card-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 600px) {
+    .moment-card {
+        padding-left: 50px;
+    }
+    .moment-date {
+        left: -32px; /* Adjusted for mobile axis position */
+    }
+}
+
+.moment-date .month {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--moment-accent);
+}
+
+.moment-date .day {
+    display: block;
+    font-family: 'Bodoni Moda', serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 2px;
+    color: var(--moment-text-primary);
+}
+
+/* Content Box */
+.moment-content {
+    background: var(--moment-card-bg);
+    border: 1px solid var(--moment-card-border);
+    border-radius: 24px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    /* Glassmorphism shine */
+    overflow: hidden;
+}
+
+/* Typography */
+.moment-title {
+    font-family: 'LXGW WenKai', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: var(--moment-text-primary);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.moment-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--moment-text-secondary);
+    margin-bottom: 20px;
+}
+
+/* Photo Grid Logic */
+.moment-gallery {
+    display: grid;
+    gap: 8px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.moment-gallery img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+    cursor: zoom-in;
+}
+
+.moment-gallery img:hover {
+    transform: scale(1.03);
+}
+
+/* Dynamic Grid Layouts based on photo count */
+.grid-1 {
+    grid-template-columns: 1fr;
+    aspect-ratio: 16/9;
+}
+
+.grid-2 {
+    grid-template-columns: 1fr 1fr;
+    aspect-ratio: 3/2;
+}
+
+.grid-3 {
+    grid-template-columns: 1fr 1fr; /* First takes full width, next 2 split bottom? Or complex grid */
+    grid-template-areas: "a a" "b c";
+    aspect-ratio: 4/3;
+}
+.grid-3 img:nth-child(1) { grid-area: a; }
+.grid-3 img:nth-child(2) { grid-area: b; }
+.grid-3 img:nth-child(3) { grid-area: c; }
+
+.grid-4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    aspect-ratio: 1/1;
+}
+
+.grid-multi {
+    /* For 5+ images, show first 4 and a "+N" overlay */
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+}
+
+/* Location Tag */
+.moment-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Lightbox */
+.lightbox {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.lightbox[aria-hidden="false"] {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lightbox-content img {
+    max-width: 90vw;
+    max-height: 90vh;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    border-radius: 4px;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px; right: 30px;
+    background: none; border: none;
+    color: white; font-size: 40px;
+    cursor: pointer;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 600px) {
+    .app-header .page-title {
+        text-align: center;
+        margin-left: 0;
+    }
+    
+    .page-title .en {
+        display: block;
+        font-family: 'Bodoni Moda', serif;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+    }
+    .page-title .cn {
+        display: block;
+        font-size: 0.8rem;
+        opacity: 0.6;
+    }
+}
