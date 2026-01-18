@@ -26,12 +26,14 @@ const descLabel = document.getElementById('desc-label');
 const fileNote = document.getElementById('file-note');
 const generateBtn = document.getElementById('generate-btn');
 const statusText = document.getElementById('status-text');
+const fileNameDisplay = document.getElementById('file-name');
+const dayNoDisplay = document.getElementById('day-no');
 
 // Preview Elements
 const previewContainer = document.querySelector('.preview-image');
 const previewTitle = document.getElementById('preview-title');
 const previewSub = document.getElementById('preview-sub');
-const mockCard = document.getElementById('mock-card'); // Hide in moments mode?
+let previewImageUrl = null;
 
 // --- Helpers ---
 const setStatus = (msg) => {
@@ -45,11 +47,37 @@ const formatDateISO = (date) => {
     return `${y}-${m}-${d}`;
 };
 
+const formatDateZh = (date) => {
+    return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+};
+
 const getFileNameFromDate = (date) => {
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
     return `${yyyy}${mm}${dd}.webp`;
+};
+
+const toUtcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+
+const diffDays = (start, end) => {
+    return Math.floor((toUtcDay(end) - toUtcDay(start)) / (1000 * 60 * 60 * 24));
+};
+
+const getDayNumber = (date) => diffDays(RELATIONSHIP_START, date) + 1;
+
+const getNoNumber = (date) => {
+    const today = new Date();
+    const useRealNo = toUtcDay(today) >= toUtcDay(PROJECT_START);
+    if (!useRealNo) {
+        return existingData.length + 1;
+    }
+    const diff = diffDays(PROJECT_START, date) + 1;
+    return diff > 0 ? diff : existingData.length + 1;
 };
 
 const loadImage = (file) => new Promise((resolve, reject) => {
@@ -107,57 +135,73 @@ const switchMode = (mode) => {
         imageInput.setAttribute('multiple', 'multiple');
         descLabel.textContent = '点滴描述';
         fileNote.textContent = '支持多选 (最多9张)，自动压缩。';
-        mockCard.style.display = 'none'; // Hide gallery card preview
-        
-        // Reset preview text for moments
-        previewTitle.textContent = titleInput.value || '未命名点滴';
-        previewSub.textContent = '等待上传...';
+        updateMomentsMetaPreview();
     } else {
         titleField.style.display = 'none';
         imageInput.removeAttribute('multiple');
         descLabel.textContent = '悄悄话';
         fileNote.textContent = '推荐 16:9 或 9:16，自动压缩为 WebP。';
-        mockCard.style.display = 'block';
-        
-        updateGalleryPreview(); // Restore gallery preview
+        updateGalleryMetaPreview(); // Restore gallery preview
     }
+
+    updateImagePreview();
 };
 
 // --- Logic: Gallery Mode ---
-const updateGalleryPreview = () => {
+const updateGalleryMetaPreview = () => {
     if (currentMode !== 'gallery') return;
     
     const dateValue = dateInput.value ? new Date(dateInput.value) : null;
     if (!dateValue || isNaN(dateValue)) {
         previewTitle.textContent = '日期未选择';
+        previewSub.textContent = 'Day / No. 将自动计算';
+        if (fileNameDisplay) fileNameDisplay.textContent = '-';
+        if (dayNoDisplay) dayNoDisplay.textContent = '-';
         return;
     }
 
-    // Reuse existing logic for finding Day No.
-    // ... simplified for brevity, assuming similar to original logic
-    const dayDisplay = dateValue.toDateString(); 
-    previewTitle.textContent = dayDisplay;
-    
-    // Image Preview
-    if (imageInput.files && imageInput.files[0]) {
-        const url = URL.createObjectURL(imageInput.files[0]);
-        previewContainer.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:contain;">`;
+    const dayNum = getDayNumber(dateValue);
+    const noNum = getNoNumber(dateValue);
+    const dayLabel = `Day ${String(dayNum).padStart(2, '0')} · No. ${String(noNum).padStart(3, '0')}`;
+    const dateLabel = formatDateZh(dateValue);
+    previewTitle.textContent = dateLabel;
+    previewSub.textContent = dayLabel;
+    if (fileNameDisplay) fileNameDisplay.textContent = getFileNameFromDate(dateValue);
+    if (dayNoDisplay) dayNoDisplay.textContent = dayLabel;
+};
+
+const updateImagePreview = () => {
+    const file = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+    if (!file) {
+        previewContainer.innerHTML = '<span>等待图片</span>';
+        if (previewImageUrl) {
+            URL.revokeObjectURL(previewImageUrl);
+            previewImageUrl = null;
+        }
+        return;
     }
+    if (previewImageUrl) URL.revokeObjectURL(previewImageUrl);
+    previewImageUrl = URL.createObjectURL(file);
+    previewContainer.innerHTML = `<img src="${previewImageUrl}" style="width:100%; height:100%; object-fit:contain;">`;
 };
 
 // --- Logic: Moments Mode ---
-const updateMomentsPreview = () => {
+const updateMomentsMetaPreview = () => {
     if (currentMode !== 'moments') return;
 
     previewTitle.textContent = titleInput.value || '未命名点滴';
     
     const count = imageInput.files ? imageInput.files.length : 0;
     previewSub.textContent = `已选 ${count} 张照片`;
-
-    if (count > 0) {
-        // Show first image as preview
-        const url = URL.createObjectURL(imageInput.files[0]);
-        previewContainer.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:contain;">`;
+    if (dayNoDisplay) dayNoDisplay.textContent = '-';
+    if (fileNameDisplay) {
+        if (!dateInput.value || !titleInput.value) {
+            fileNameDisplay.textContent = '-';
+        } else {
+            const safeTitle = titleInput.value.replace(/[^\w\u4e00-\u9fa5]/g, '_');
+            const baseId = `${dateInput.value.replace(/-/g, '')}_${safeTitle}`;
+            fileNameDisplay.textContent = `${baseId}_01.webp...`;
+        }
     }
 };
 
@@ -193,6 +237,7 @@ const handleGenerate = async () => {
 
 const generateGalleryPackage = async (zip) => {
     // 1. Validate
+    if (!dateInput.value) throw new Error('请选择日期');
     if (!imageInput.files[0] && !existingImageBlob) throw new Error('请选择图片');
     
     // 2. Process Image
@@ -223,8 +268,10 @@ const generateGalleryPackage = async (zip) => {
 
 const generateMomentsPackage = async (zip) => {
     // 1. Validate
+    if (!dateInput.value) throw new Error('请选择日期');
     if (imageInput.files.length === 0) throw new Error('请至少选择一张图片');
     if (!titleInput.value) throw new Error('请输入标题');
+    if (imageInput.files.length > 9) throw new Error('最多支持 9 张图片');
 
     const dateStr = dateInput.value; // YYYY-MM-DD
     const safeTitle = titleInput.value.replace(/[^\w\u4e00-\u9fa5]/g, '_'); // Basic sanitize
@@ -272,9 +319,18 @@ modeBtns.forEach(btn => {
     btn.addEventListener('click', () => switchMode(btn.dataset.mode));
 });
 
-form.addEventListener('input', () => {
-    if (currentMode === 'gallery') updateGalleryPreview();
-    else updateMomentsPreview();
+const handleDateChange = () => {
+    if (currentMode === 'gallery') updateGalleryMetaPreview();
+    else updateMomentsMetaPreview();
+};
+
+dateInput.addEventListener('input', handleDateChange);
+dateInput.addEventListener('change', handleDateChange);
+titleInput.addEventListener('input', updateMomentsMetaPreview);
+imageInput.addEventListener('change', () => {
+    if (currentMode === 'gallery') updateGalleryMetaPreview();
+    else updateMomentsMetaPreview();
+    updateImagePreview();
 });
 
 generateBtn.addEventListener('click', handleGenerate);
