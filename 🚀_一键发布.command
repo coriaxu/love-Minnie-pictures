@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Fix encoding issues for Chinese paths
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# Auto-configure proxy (Surfin's Environment)
+export https_proxy=http://127.0.0.1:33210
+export http_proxy=http://127.0.0.1:33210
+export all_proxy=socks5://127.0.0.1:33210
+
 # ========================================================
 # Minnie's Gallery - One-Click Publisher
 # ========================================================
