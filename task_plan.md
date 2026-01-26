@@ -21,6 +21,14 @@
 - [ ] **R2. 渲染输出**: 调试 html2canvas 生成 16:9 高清海报。
 - [ ] **R3. 倒计时逻辑**: 完善 12 月 31 日 自动触发机制。
 
+## 📅 Milestone: 6000 Days Anniversary
+
+> Target Date: 2026-05-14 (Thursday)
+
+- [ ] **Celebration Feature**: 6000 天纪念日网站庆祝活动 (具体方案待定)。
+  - [ ] 策划具体庆祝形式（着陆页特效、彩蛋或专属页面）。
+  - [ ] 开发与部署。
+
 ## ✅ Completed Tasks
 
 - [x] **导航栏修复**: 修复了 Gallery 页面顶部 MOMENTS 与季节按钮重叠的问题 (2026-01-13)。
