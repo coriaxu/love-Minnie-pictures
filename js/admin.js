@@ -264,6 +264,8 @@ const generateGalleryPackage = async (zip) => {
 
     zip.file('data.json', JSON.stringify(newHistory, null, 4));
     zip.file('data.js', `window.__GALLERY_DATA__ = ${JSON.stringify(newHistory)};`);
+    // Also update js/data.js for admin panel to read latest data
+    zip.file('js/data.js', `window.__GALLERY_DATA__ = ${JSON.stringify(newHistory)};`);
 };
 
 const generateMomentsPackage = async (zip) => {
