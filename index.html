@@ -11,6 +11,11 @@
         rel="stylesheet">
     <!-- LXGW WenKai (Handwritten Style) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css">
+    <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Pinyon+Script&family=Cinzel:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/day-6000.css?v=11.9">
 
     <style>
         /* --- 核心设计：Vignelli 的骨架 + 玫瑰石英星云 (The Rose Quartz Nebula) --- */
@@ -249,6 +254,37 @@
             transform-origin: left;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .day-6000-archive {
+            border: 1px solid rgba(255, 210, 220, 0.28);
+            border-radius: 999px;
+            padding: 8px 14px;
+            background: rgba(255, 230, 235, 0.08);
+            color: rgba(255, 235, 240, 0.9);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            cursor: none;
+            transition: all 0.3s ease;
+        }
+
+        .day-6000-archive:hover {
+            background: rgba(255, 210, 220, 0.18);
+            border-color: rgba(255, 210, 220, 0.55);
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 100, 150, 0.55);
+        }
+
+        .day-6000-archive[hidden] {
+            display: none;
+        }
+
         @keyframes slideUp {
             from {
                 transform: translateY(100%);
@@ -428,7 +464,12 @@
             <div class="heavy-rule"></div>
             <div class="flex justify-between mt-4 fade-in">
                 <span class="typography-swiss">For My Wife</span>
-                <span class="typography-swiss text-right">Est. 2026</span>
+                <div class="header-actions">
+                    <span class="typography-swiss text-right">Est. 2026</span>
+                    <button type="button" id="day-6000-archive" class="day-6000-archive" hidden>
+                        6000 Days
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -518,6 +559,30 @@
         document.getElementById('day-counter').textContent = dayStr;
         document.getElementById('unwrap-btn').textContent = `Unwrap Day ${dayStr}`;
 
+        const archiveBtn = document.getElementById('day-6000-archive');
+        const showArchiveFrom = new Date('2026-05-15T00:00:00');
+        const isDay6000Preview = new URLSearchParams(window.location.search).has('d6k');
+
+        if (archiveBtn && (toUtcDay(new Date()) >= toUtcDay(showArchiveFrom) || isDay6000Preview)) {
+            archiveBtn.hidden = false;
+            archiveBtn.addEventListener('click', () => {
+                if (window.Day6000 && typeof window.Day6000.start === 'function') {
+                    window.Day6000.cleanup?.();
+                    setTimeout(() => {
+                        window.Day6000.start({
+                            id: 'day-6000',
+                            name: '6000 天纪念日',
+                            type: 'C',
+                            effect: 'day-6000'
+                        });
+                    }, 80);
+                    return;
+                }
+
+                window.location.href = 'index.html?d6k=1';
+            });
+        }
+
         // 使用 rAF 优化光标跟随，增加一点点惯性延迟感
         function animateCursor() {
             // 这里可以加一点缓动逻辑，但 CSS transition 已经处理了大部分
@@ -576,6 +641,8 @@
             }, 2000);
         }
     </script>
+    <script src="js/day-6000.js?v=11.9"></script>
+    <script src="js/anniversary-effects.js?v=11.6"></script>
 </body>
 
 </html>

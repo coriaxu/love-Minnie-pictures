@@ -11,8 +11,21 @@
 
     // ============================================================
     // 配置：纪念日列表
+    //
+    // 字段说明：
+    //   date  : 'MM-DD' —— 每年触发的循环纪念日
+    //   once  : 'YYYY-MM-DD' —— 仅在指定日期触发一次（once-in-a-lifetime）
+    //   带 once 的条目优先于 date 匹配，命中后该条目仅当年生效
     // ============================================================
     const ANNIVERSARIES = [
+        {
+            id: 'day-6000',
+            once: '2026-05-14',
+            name: '6000 天纪念日',
+            type: 'C', // 沉浸叙事 (Personal Cinema)
+            effect: 'day-6000',
+            // 不使用标准 overlay，由 window.Day6000 模块独立渲染
+        },
         {
             id: 'birthday',
             date: '09-22',
@@ -70,6 +83,23 @@
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         return `${month}-${day}`;
+    };
+
+    const getTodayFullString = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    // 找到今天对应的纪念日：once 字段优先（精确到年），其次 date 字段（按 MM-DD 循环）
+    const findTodayAnniversary = () => {
+        const todayFull = getTodayFullString();
+        const todayShort = getTodayString();
+        const onceMatch = ANNIVERSARIES.find(a => a.once === todayFull);
+        if (onceMatch) return onceMatch;
+        return ANNIVERSARIES.find(a => a.date === todayShort);
     };
 
     const hasShownToday = (id) => {
@@ -566,14 +596,55 @@
     // ============================================================
     // 调度器主逻辑
     // ============================================================
+
+    // URL 参数测试钩子（开发用，不影响 5-14 当天的真实触发）
+    //   ?d6k=1 / ?d6k=auto      → 强制完整跑 day-6000 叙事
+    //   ?d6k=stage1/stage2/stage3 → 跳到指定阶段
+    //   ?anniversary=<id>        → 强制触发任意 id 的纪念日
+    const checkUrlOverride = () => {
+        const params = new URLSearchParams(window.location.search);
+        const d6k = params.get('d6k');
+        if (d6k) {
+            const launch = () => {
+                if (!window.Day6000) {
+                    console.warn('Anniversary URL override: Day6000 not loaded yet');
+                    return;
+                }
+                if (d6k === '1' || d6k === 'auto' || d6k === 'true') {
+                    const cfg = ANNIVERSARIES.find(a => a.id === 'day-6000');
+                    window.Day6000.start(cfg);
+                } else if (/^stage[123]$/.test(d6k)) {
+                    window.Day6000.testStage(Number(d6k.slice(5)));
+                }
+            };
+            // 等 day-6000.js 初始化完成（同一帧内）
+            if (window.Day6000) launch();
+            else setTimeout(launch, 50);
+            return true;
+        }
+
+        const force = params.get('anniversary');
+        if (force) {
+            setTimeout(() => window.AnniversaryEffects?.test(force), 100);
+            return true;
+        }
+
+        return false;
+    };
+
     const checkAndPlayEffect = () => {
+        // URL 测试钩子优先（开发用，不受 prefers-reduced-motion 限制）
+        if (checkUrlOverride()) {
+            console.log('Anniversary: URL override active, skipping date check.');
+            return;
+        }
+
         if (prefersReducedMotion()) {
             console.log('Anniversary: Reduced motion preferred, skipping effects.');
             return;
         }
 
-        const today = getTodayString();
-        const anniversary = ANNIVERSARIES.find(a => a.date === today);
+        const anniversary = findTodayAnniversary();
 
         if (!anniversary) {
             console.log('Anniversary: No special day today.');
@@ -581,6 +652,21 @@
         }
 
         console.log(`Anniversary: Today is ${anniversary.name}!`);
+
+        // 方案 C: 沉浸叙事 (Personal Cinema) —— 委托给独立模块
+        if (anniversary.type === 'C') {
+            const launch = () => {
+                if (window.Day6000 && typeof window.Day6000.start === 'function') {
+                    window.Day6000.start(anniversary);
+                } else {
+                    console.warn('Anniversary: type=C requires window.Day6000.start (day-6000.js not loaded).');
+                }
+            };
+            // once 类型本身就只触发一次，不再用 hasShownToday 二次拦截
+            // 模块内部自行管理"用户已看过"的状态
+            setTimeout(launch, 600);
+            return;
+        }
 
         // 方案 A: 只播放一次
         if (anniversary.type === 'A') {
@@ -652,27 +738,43 @@
     window.AnniversaryEffects = {
         test: (id) => {
             const anniversary = ANNIVERSARIES.find(a => a.id === id);
-            if (anniversary) {
-                console.log(`Testing: ${anniversary.name}`);
-                if (anniversary.title) {
-                    createTextOverlay(anniversary.title, anniversary.colors);
-                    removeTextOverlay(3000);
-                }
-                switch (anniversary.effect) {
-                    case 'butterfly': playButterflyEffect(anniversary.colors); break;
-                    case 'golden-shapes': playGoldenShapesEffect(anniversary.colors); break;
-                    case 'neon-hearts': playNeonHeartsEffect(anniversary.colors); break;
-                    case 'rose-petals': playRosePetalsEffect(anniversary.colors); break;
-                    case 'fireworks': playFireworksEffect(anniversary.colors); break;
-                }
-                if (anniversary.type === 'A') removeEffectsContainer(6000);
+            if (!anniversary) {
+                console.warn(`Anniversary: id="${id}" not found. Available:`, ANNIVERSARIES.map(a => a.id));
+                return;
             }
+            console.log(`Testing: ${anniversary.name}`);
+
+            // 方案 C 走独立模块
+            if (anniversary.type === 'C') {
+                if (window.Day6000 && typeof window.Day6000.start === 'function') {
+                    window.Day6000.start(anniversary);
+                } else {
+                    console.warn('Anniversary: type=C requires window.Day6000.start (day-6000.js not loaded).');
+                }
+                return;
+            }
+
+            if (anniversary.title) {
+                createTextOverlay(anniversary.title, anniversary.colors);
+                removeTextOverlay(3000);
+            }
+            switch (anniversary.effect) {
+                case 'butterfly': playButterflyEffect(anniversary.colors); break;
+                case 'golden-shapes': playGoldenShapesEffect(anniversary.colors); break;
+                case 'neon-hearts': playNeonHeartsEffect(anniversary.colors); break;
+                case 'rose-petals': playRosePetalsEffect(anniversary.colors); break;
+                case 'fireworks': playFireworksEffect(anniversary.colors); break;
+            }
+            if (anniversary.type === 'A') removeEffectsContainer(6000);
         },
-        list: () => ANNIVERSARIES.map(a => `${a.date}: ${a.name} (${a.id})`),
+        list: () => ANNIVERSARIES.map(a => `${a.once || a.date}: ${a.name} (${a.id})`),
         cleanup: () => {
             if (window._anniversaryCleanup) window._anniversaryCleanup();
             effectsContainer?.remove();
             textOverlay?.remove();
+            if (window.Day6000 && typeof window.Day6000.cleanup === 'function') {
+                window.Day6000.cleanup();
+            }
         }
     };
 

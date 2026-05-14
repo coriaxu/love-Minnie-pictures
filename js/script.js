@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const setBgBlurImage = (filename) => {
         if (!bgBlur) return;
-        const value = filename ? `url('images/${filename}')` : 'none';
+        const value = filename ? `url('../images/${filename}')` : 'none';
         bgBlur.style.setProperty('--bg-blur-image', value);
     };
 

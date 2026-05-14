@@ -1,0 +1,942 @@
+/**
+ * Day 6000 · 6000 天纪念日特效样式
+ * 仅在 2026-05-14 当天加载与触发，5-15 后由 once 字段自动归位
+ *
+ * 设计语言：克制的私人星座馆
+ *   - 沿用 Starry Night 主基调，整体色温调暖一档
+ *   - 不抢视觉，让"被认出"的感觉自己浮现
+ *   - 所有动效遵守 prefers-reduced-motion
+ */
+
+/* ============================================================
+   色彩变量（与 docs/ANNIVERSARY_EFFECTS.md 同步）
+   ============================================================ */
+:root {
+    --d6k-sky-deep: #050a1f;           /* 深空蓝（主底色） */
+    --d6k-sky-mid:  #0a1530;           /* 中层星云蓝 */
+    --d6k-star-glow: #DCE7FF;          /* 6000 颗星的冷白光（蓝白） */
+    --d6k-today-star: #FFE8B0;         /* 今天那颗：暖金白（冷海中唯一的温暖焦点） */
+    --d6k-text-primary: #E8EEFF;       /* 主文字冷白 */
+    --d6k-text-soft: rgba(232, 238, 255, 0.78);
+    --d6k-envelope-wax: #8B3A2E;       /* 封蜡红 */
+    --d6k-envelope-paper: #F4E4C1;     /* 信纸暖米色（信纸跟星空对比，温暖打动人） */
+    --d6k-envelope-paper-deep: #E6D2A8;
+    --d6k-overlay-bg: transparent;  /* canvas 自带夜空渐变底，overlay 不再叠暗色 */
+    --d6k-ambient-cool: rgba(180, 210, 255, 0.05);
+}
+
+/* ============================================================
+   全局：Day 6000 模式下接管页面状态
+   ============================================================ */
+
+/* 整个 6000 天体验期间，彻底隐去玫瑰星云与天鹅绒噪点。
+ * 必须用 display:none —— mix-blend-mode: screen 在 opacity:0 下仍可能参与合成，
+ * 在某些 GPU 路径 / 截图压缩里产生残留辉光。 */
+body.d6k-active .ambient-light,
+body.d6k-active .noise-overlay {
+    display: none !important;
+}
+
+/* 鼠标光晕用 opacity 隐藏即可（粒子层不参与背景合成） */
+body.d6k-active .cursor-torch,
+body.d6k-active .cursor-dot {
+    opacity: 0 !important;
+    transition: opacity 1.2s ease !important;
+    pointer-events: none !important;
+}
+
+body.d6k-active {
+    background-color: var(--d6k-sky-deep) !important;
+    cursor: auto !important;
+}
+
+/* stage1 期间额外隐藏主页主内容（只在 stage1 这段窗口） */
+body.d6k-stage1-only .grid-container {
+    opacity: 0 !important;
+    transition: opacity 1.4s ease;
+    pointer-events: none;
+}
+
+/* ============================================================
+   阶段 1 · 星空认出 (Starfield Awakens)
+   全屏 Canvas + 中央数字"6000"+ 副标题
+   ============================================================ */
+#d6k-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 9700;            /* 低于 anniversary-effects 的 9998，但高于氛围光场 */
+    pointer-events: none;
+    overflow: hidden;
+    /* 关键：不透明深空蓝背景，彻底覆盖原主页所有装饰 */
+    background:
+        radial-gradient(ellipse at center,
+            var(--d6k-sky-mid) 0%,
+            var(--d6k-sky-deep) 60%,
+            #02040d 100%);
+    transition: opacity 1.6s ease;
+}
+
+#d6k-stage.is-fading-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#d6k-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 2.4s ease;
+}
+
+#d6k-canvas.is-visible {
+    opacity: 1;
+}
+
+/* 中央数字 6000 */
+#d6k-number {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bodoni Moda', 'LXGW WenKai Screen', serif;
+    font-size: clamp(5rem, 18vw, 14rem);
+    font-weight: 400;
+    color: var(--d6k-text-primary);
+    letter-spacing: 0.02em;
+    text-shadow:
+        0 0 30px rgba(220, 232, 255, 0.45),
+        0 0 60px rgba(180, 210, 255, 0.25);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+    transition: opacity 2s ease, transform 2.4s cubic-bezier(0.19, 1, 0.22, 1);
+    /* 不用 mix-blend-mode：深空蓝纯背景上直接 #E8EEFF 就够清晰，
+     * 加 blend mode 反而会跟 canvas 合成出渲染异常（数字看不见） */
+}
+
+#d6k-number.is-visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* 副标题"我数过每一天" */
+#d6k-subtitle {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + clamp(4rem, 10vw, 8rem));
+    transform: translate(-50%, 0);
+    font-family: 'LXGW WenKai Screen', serif;
+    font-size: clamp(1rem, 2.2vw, 1.5rem);
+    color: var(--d6k-text-soft);
+    letter-spacing: 0.3em;
+    opacity: 0;
+    transition: opacity 1.8s ease 0.6s;
+}
+
+#d6k-subtitle.is-visible {
+    opacity: 1;
+}
+
+/* ============================================================
+   阶段 2 · 主页变形 (Hero Transform)
+   信封图标停在右上角
+   ============================================================ */
+/* 旧的 #d6k-envelope 浮动信封图标 CSS 已废弃。
+ * Stage 2 改为 overlay 内右上角的 .d6k-letter-btn ❤ 圆形按钮，
+ * 复用 #d6k-envelope ID 是为了 JS 选择器兼容，但样式不再独立定义。 */
+
+/* ============================================================
+   阶段 3 · 信封展开 (Envelope Open)
+   全屏遮罩 + 信纸 + 历史星图背景
+   ============================================================ */
+#d6k-letter-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9800;
+    background: var(--d6k-overlay-bg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+#d6k-letter-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 历史星图背景画布 */
+#d6k-historical-sky {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 2.5s ease;
+}
+
+#d6k-letter-overlay.is-open #d6k-historical-sky {
+    opacity: 1;  /* canvas 完整呈现 */
+}
+
+/* 信纸 —— 半透明米色，让后面的星空朦胧透出 */
+#d6k-letter {
+    max-width: 640px;
+    margin: clamp(60px, 10vh, 120px) auto;
+    padding: clamp(30px, 6vw, 64px) clamp(24px, 5vw, 56px);
+    background:
+        linear-gradient(180deg,
+            rgba(244, 228, 193, 0.84) 0%,
+            rgba(230, 210, 168, 0.86) 100%);
+    backdrop-filter: blur(3px) saturate(1.08);
+    -webkit-backdrop-filter: blur(3px) saturate(1.08);
+    color: #2a1a0a;
+    font-family: 'LXGW WenKai Screen', serif;
+    font-size: clamp(1rem, 2.2vw, 1.18rem);
+    line-height: 2.1;
+    letter-spacing: 0.04em;
+    border-radius: 2px;
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(139, 58, 46, 0.22),
+        inset 0 0 60px rgba(255, 220, 160, 0.18);
+    position: relative;
+}
+
+/* 信纸顶部封蜡装饰 */
+#d6k-letter::before {
+    content: '';
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%,
+        #C25742 0%,
+        var(--d6k-envelope-wax) 60%,
+        #5C2419 100%);
+    box-shadow: 0 4px 12px rgba(139, 58, 46, 0.5);
+}
+
+/* 情书每一行（由 JS 动态生成） */
+.d6k-letter-line {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 1.2s ease, transform 1.2s ease;
+}
+
+.d6k-letter-line.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.d6k-letter-line.is-blank {
+    height: 1.2em;
+}
+
+.d6k-letter-line.is-signoff {
+    margin-top: 1.6em;
+    text-align: right;
+    font-style: italic;
+}
+
+/* 关闭按钮 */
+#d6k-letter-close {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(245, 230, 200, 0.4);
+    background: transparent;
+    color: var(--d6k-text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 9810;
+    opacity: 0;
+    transition: opacity 0.6s ease 1s, background 0.3s ease, transform 0.3s ease;
+}
+
+#d6k-letter-overlay.is-open #d6k-letter-close {
+    opacity: 1;
+}
+
+#d6k-letter-close:hover {
+    background: rgba(245, 230, 200, 0.1);
+    transform: scale(1.08);
+}
+
+/* 折起/展开切换按钮 —— 放在关闭按钮左侧 */
+#d6k-letter-toggle {
+    position: fixed;
+    top: 24px;
+    right: 76px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(245, 230, 200, 0.4);
+    background: transparent;
+    color: var(--d6k-text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 1.05rem;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 9810;
+    opacity: 0;
+    transition: opacity 0.6s ease 1s, background 0.3s ease,
+                transform 0.3s ease, color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+#d6k-letter-overlay.is-open #d6k-letter-toggle {
+    opacity: 1;
+}
+
+#d6k-letter-toggle:hover {
+    background: rgba(245, 230, 200, 0.1);
+    transform: scale(1.08);
+    color: #fff6e5;
+}
+
+/* 折起态：信纸渐隐上移，按钮变金亮 */
+#d6k-letter {
+    transition: opacity 1.1s ease, transform 1.1s ease;
+}
+
+#d6k-letter-overlay.is-letter-hidden #d6k-letter {
+    opacity: 0;
+    transform: translateY(-24px);
+    pointer-events: none;
+}
+
+#d6k-letter-overlay.is-letter-hidden #d6k-letter-toggle {
+    color: var(--d6k-today-star);
+    border-color: rgba(255, 232, 176, 0.55);
+}
+
+/* ============================================================
+   阶段 3.5 · 画卷收束 (Filmstrip Coda)
+   情书末尾的画作小卷轴
+   ============================================================ */
+#d6k-filmstrip {
+    margin: 2.4em 0 0;
+    padding-top: 1.6em;
+    border-top: 1px dashed rgba(139, 58, 46, 0.25);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+
+#d6k-filmstrip.is-visible {
+    opacity: 1;
+}
+
+#d6k-filmstrip-label {
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(61, 40, 20, 0.6);
+    letter-spacing: 0.3em;
+    margin-bottom: 1em;
+}
+
+#d6k-filmstrip-track {
+    display: flex;
+    gap: 8px;
+    overflow: hidden;
+    padding: 4px 0;
+    mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.d6k-filmstrip-frame {
+    flex: 0 0 auto;
+    width: 64px;
+    height: 64px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #1a0b2a;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.d6k-filmstrip-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ============================================================
+   主页变形：在 5-14 当天激活
+   设计意图：参考"夕阳海边情侣"温暖玫瑰金主题
+   - 完全用 overlay 接管主页视觉
+   - 原 hero/counter/导航/引言 全部隐藏
+   - overlay 内部按 6000 天专属布局
+   ============================================================ */
+
+/* 隐藏所有原主页可视元素，让 overlay 是唯一可见层 */
+body.is-day-6000 .typography-hero,
+body.is-day-6000 #day-counter,
+body.is-day-6000 .counter-bg,
+body.is-day-6000 .grid-container > header,
+body.is-day-6000 .grid-container > footer,
+body.is-day-6000 .desktop-main-nav {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.8s ease;
+}
+
+/* ============================================================
+   Stage 2 Overlay · 夕阳玫瑰金主页（参考徐老师提供的设计图）
+   ============================================================ */
+
+#d6k-stage2-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9700;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 1.6s ease;
+    pointer-events: auto;
+    background:
+        radial-gradient(ellipse at 50% 42%,
+            rgba(255, 238, 210, 0.78) 0%,
+            rgba(238, 154, 138, 0.42) 38%,
+            transparent 66%),
+        radial-gradient(circle at 12% 18%,
+            rgba(255, 255, 255, 0.32) 0%,
+            transparent 24%),
+        radial-gradient(circle at 86% 80%,
+            rgba(145, 65, 92, 0.28) 0%,
+            transparent 34%),
+        linear-gradient(180deg,
+            #F8DDD0 0%,
+            #F4C9BC 30%,
+            #E8A893 60%,
+            #C97D70 100%
+        );
+}
+
+#d6k-stage2-overlay.is-visible {
+    opacity: 1;
+}
+
+/* 背景图层 —— 设计稿合影，通过 blur 滤镜把烤字糊成色块，保留情侣剪影与夕阳氛围 */
+.d6k-bg-image {
+    position: absolute;
+    inset: 0;
+    background-image: url(../assets/day-6000-bg.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(7px) saturate(1.05);
+    /* blur 会让图片边缘出现透明虚边，用 transform 略微放大覆盖 */
+    transform: scale(1.04);
+    transform-origin: center;
+}
+
+/* 整体柔光叠加（让文字始终有可读性） */
+.d6k-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+        rgba(255, 230, 220, 0.15) 0%,
+        rgba(255, 220, 210, 0.08) 50%,
+        rgba(180, 100, 90, 0.18) 100%);
+    pointer-events: none;
+}
+
+/* ============================================================
+   顶部条：FOR MY WIFE | EN ❤
+   ============================================================ */
+.d6k-top-bar {
+    position: absolute;
+    top: clamp(20px, 4vh, 36px);
+    left: 0;
+    right: 0;
+    padding: 0 clamp(20px, 4vw, 60px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 5;
+}
+
+.d6k-top-left {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    color: #8B3A4F;
+}
+
+.d6k-top-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.d6k-lang {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: #8B3A4F;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.d6k-letter-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid #8B3A4F;
+    background: transparent;
+    color: #8B3A4F;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, background 0.3s ease;
+    pointer-events: auto;
+}
+
+.d6k-letter-btn:hover {
+    background: rgba(139, 58, 79, 0.1);
+    transform: scale(1.08);
+}
+
+.d6k-letter-cue {
+    position: fixed;
+    top: 92px;
+    right: 56px;
+    z-index: 6;
+    max-width: min(320px, calc(100vw - 40px));
+    margin: 0;
+    padding: 10px 16px;
+    border: 1px solid rgba(139, 58, 79, 0.16);
+    border-radius: 999px;
+    background: rgba(255, 239, 235, 0.54);
+    color: #7C2E47;
+    font-family: 'LXGW WenKai Screen', serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    pointer-events: none;
+    box-shadow: 0 10px 30px rgba(124, 46, 71, 0.12);
+}
+
+#d6k-stage2-overlay.is-letter-ready .d6k-letter-cue {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#d6k-stage2-overlay.is-letter-ready .d6k-letter-btn {
+    animation: d6k-letter-pulse 1.7s ease-in-out infinite;
+}
+
+@keyframes d6k-letter-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(139, 58, 79, 0);
+        background: transparent;
+    }
+    50% {
+        box-shadow: 0 0 0 9px rgba(139, 58, 79, 0.13);
+        background: rgba(139, 58, 79, 0.12);
+    }
+}
+
+/* ============================================================
+   中央主体：手写体 + 6000 DAYS + 副标题 + 导航胶囊
+   ============================================================ */
+.d6k-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 clamp(20px, 5vw, 80px);
+    text-align: center;
+    z-index: 4;
+}
+
+.d6k-handwriting {
+    font-family: 'Pinyon Script', cursive;
+    font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+    color: #9B4860;
+    margin-bottom: clamp(8px, 1.5vh, 18px);
+    line-height: 1;
+    opacity: 0;
+    animation: d6kFadeUp 1.2s ease 0.3s forwards;
+}
+
+.d6k-handwriting .heart {
+    display: inline-block;
+    color: #C8607A;
+    font-size: 0.7em;
+    margin-left: 0.15em;
+    transform: translateY(-0.2em);
+}
+
+/* 主标题 6000 DAYS */
+.d6k-hero {
+    font-family: 'Playfair Display', serif;
+    line-height: 0.95;
+    margin: 0;
+    opacity: 0;
+    animation: d6kFadeUp 1.4s ease 0.6s forwards;
+}
+
+.d6k-num {
+    display: block;
+    font-size: clamp(5rem, 13vw, 11rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    /* 金粉渐变填充 */
+    background: linear-gradient(180deg,
+        #F4C97A 0%,
+        #E8A07F 35%,
+        #C9576F 70%,
+        #9B3D5A 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+
+.d6k-word {
+    display: block;
+    font-family: 'Cinzel', 'Playfair Display', serif;
+    font-size: clamp(4rem, 11vw, 9.5rem);
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: #5C2E47;
+    line-height: 0.9;
+    margin-top: -0.05em;
+}
+
+/* 副标题：♥ 我们在一起 6000 天啦 ♥ */
+.d6k-sub {
+    font-family: 'LXGW WenKai Screen', serif;
+    font-size: clamp(1rem, 1.8vw, 1.35rem);
+    color: #7A3E5A;
+    letter-spacing: 0.18em;
+    margin: clamp(20px, 3vh, 36px) 0 clamp(24px, 3.5vh, 40px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    opacity: 0;
+    animation: d6kFadeUp 1.4s ease 1.0s forwards;
+}
+
+.d6k-sub-heart {
+    color: #C8607A;
+    font-size: 0.85em;
+}
+
+.d6k-origin {
+    margin: -18px 0 26px;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(0.62rem, 1vw, 0.78rem);
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    color: rgba(106, 43, 61, 0.66);
+    opacity: 0;
+    animation: d6kFadeUp 1.3s ease 1.15s forwards;
+}
+
+/* 导航胶囊 */
+.d6k-nav {
+    position: relative;
+    z-index: 8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 999px;
+    background: rgba(255, 232, 225, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 2px 16px rgba(155, 72, 96, 0.12);
+    opacity: 0;
+    animation: d6kFadeUp 1.2s ease 1.3s forwards;
+}
+
+.d6k-nav-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    padding: 10px 24px;
+    border-radius: 999px;
+    color: #8B3A4F;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.d6k-nav-link.is-active {
+    background: linear-gradient(135deg, #C9576F 0%, #9B3D5A 100%);
+    color: #FFF;
+    box-shadow: 0 4px 12px rgba(155, 61, 90, 0.3);
+}
+
+.d6k-nav-link:not(.is-active):hover {
+    color: #6A2B3D;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.d6k-nav-icon {
+    color: #C8607A;
+    font-size: 1.1rem;
+    padding: 0 8px;
+}
+
+/* 装饰星星 — 散布在 hero 周围 */
+.d6k-deco-star {
+    position: absolute;
+    color: #E8A07F;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0;
+    animation: d6kSparkle 3s ease infinite;
+}
+
+.d6k-deco-star.s1 { top: 22%; left: 36%; font-size: 1.5rem; animation-delay: 0.2s; }
+.d6k-deco-star.s2 { top: 18%; left: 60%; font-size: 1.1rem; animation-delay: 0.6s; color: #F4C97A; }
+.d6k-deco-star.s3 { top: 30%; left: 32%; font-size: 0.9rem; animation-delay: 1.2s; }
+.d6k-deco-star.s4 { top: 26%; left: 66%; font-size: 1.3rem; animation-delay: 0.9s; color: #C8607A; }
+.d6k-deco-star.s5 { top: 50%; left: 70%; font-size: 1rem; animation-delay: 1.5s; color: #F4C97A; }
+.d6k-deco-star.s6 { top: 14%; left: 48%; font-size: 0.85rem; animation-delay: 2s; }
+
+@keyframes d6kSparkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50%      { opacity: 1; transform: scale(1.2); }
+}
+
+.d6k-memory-ribbon {
+    /* 改为 flex 流式布局：ribbon 在 nav 下方自然排列，由 margin-top 控间距，
+     * 不再依赖 absolute 定位（会跟视口高度变化产生跟 nav 重叠的问题） */
+    position: relative;
+    margin: clamp(40px, 6vh, 72px) auto 0;
+    width: min(68vw, 900px);
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 8px;
+    z-index: 2;
+    opacity: 0;
+    animation: d6kFadeUp 1.3s ease 1.55s forwards;
+    pointer-events: none;
+}
+
+.d6k-memory-frame {
+    margin: 0;
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow:
+        0 10px 28px rgba(106, 43, 61, 0.16),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+}
+
+.d6k-memory-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: saturate(0.82) contrast(0.94) brightness(1.05);
+    opacity: 0.72;
+}
+
+/* ============================================================
+   底部：左下三行文案 + 右下箭头
+   ============================================================ */
+.d6k-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: clamp(20px, 3vh, 36px) clamp(20px, 4vw, 60px);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 5;
+}
+
+.d6k-corner-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: #6A2B3D;
+    line-height: 1.7;
+    opacity: 0;
+    animation: d6kFadeUp 1.4s ease 1.6s forwards;
+    max-width: min(22vw, 260px);
+}
+
+.d6k-corner-text p {
+    margin: 0;
+}
+
+.d6k-arrow {
+    font-size: 1.4rem;
+    color: #6A2B3D;
+    opacity: 0;
+    animation: d6kFadeUp 1.4s ease 1.8s forwards, d6kArrowBounce 2.4s ease infinite 2.8s;
+}
+
+@media (min-width: 701px) and (max-height: 520px) {
+    .d6k-memory-ribbon {
+        margin-top: clamp(20px, 4vh, 40px);
+        width: min(52vw, 760px);
+    }
+
+    .d6k-corner-text {
+        max-width: 250px;
+        font-size: 0.7rem;
+        line-height: 1.55;
+    }
+}
+
+@keyframes d6kArrowBounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(6px); }
+}
+
+/* ============================================================
+   通用浮入动画
+   ============================================================ */
+@keyframes d6kFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   响应式：移动端
+   ============================================================ */
+@media (max-width: 700px) {
+    .d6k-top-bar {
+        padding: 0 16px;
+    }
+    .d6k-top-left, .d6k-lang {
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+    }
+    .d6k-letter-btn {
+        width: 36px;
+        height: 36px;
+    }
+    .d6k-handwriting {
+        font-size: clamp(1.4rem, 6vw, 2rem);
+    }
+    .d6k-num {
+        font-size: clamp(3.5rem, 18vw, 6rem);
+    }
+    .d6k-word {
+        font-size: clamp(2.8rem, 14vw, 5rem);
+    }
+    .d6k-sub {
+        font-size: 0.95rem;
+        letter-spacing: 0.12em;
+    }
+    .d6k-origin {
+        margin: -10px 0 22px;
+        font-size: 0.58rem;
+        letter-spacing: 0.18em;
+        line-height: 1.6;
+    }
+    .d6k-nav-link {
+        padding: 8px 16px;
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+    }
+    .d6k-memory-ribbon {
+        margin: clamp(28px, 4vh, 48px) auto 0;
+        width: calc(100vw - 32px);
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
+    }
+    .d6k-memory-frame {
+        border-radius: 10px;
+    }
+    .d6k-deco-star { display: none; } /* 移动端隐藏装饰星避免拥挤 */
+    .d6k-corner-text {
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        max-width: 44vw;
+    }
+    .d6k-bottom {
+        padding: 16px;
+    }
+}
+
+/* ============================================================
+   响应式：移动端
+   ============================================================ */
+@media (max-width: 600px) {
+    #d6k-envelope {
+        width: 52px;
+        height: 40px;
+        top: 20px;
+        right: 16px;
+    }
+
+    #d6k-letter {
+        margin: 40px 16px;
+        padding: 28px 22px;
+        font-size: 1rem;
+        line-height: 1.95;
+    }
+
+    #d6k-letter-close {
+        top: 16px;
+        right: 16px;
+    }
+
+    .d6k-filmstrip-frame {
+        width: 48px;
+        height: 48px;
+    }
+
+    .d6k-memory-ribbon {
+        margin-top: clamp(18px, 4vh, 32px);
+    }
+}
+
+/* ============================================================
+   动效降级：prefers-reduced-motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    #d6k-canvas,
+    #d6k-number,
+    #d6k-subtitle,
+    #d6k-envelope,
+    #d6k-letter-overlay,
+    #d6k-historical-sky,
+    .d6k-letter-line,
+    #d6k-filmstrip {
+        transition-duration: 0.4s !important;
+    }
+
+    #d6k-envelope {
+        animation: none !important;
+    }
+
+    .d6k-letter-line {
+        transform: none !important;
+    }
+}
