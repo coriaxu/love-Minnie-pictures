@@ -118,6 +118,16 @@
             justify-content: space-between;
         }
 
+        .grid-container>main {
+            min-height: 0;
+        }
+
+        .grid-container>footer {
+            flex-shrink: 0;
+            position: relative;
+            z-index: 30;
+        }
+
         .heavy-rule {
             width: 100%;
             height: 1px;
@@ -394,11 +404,6 @@
             /* 减少动画复杂度 */
             .ambient-light {
                 animation-duration: 20s;
-            }
-        }
-
-            .counter-bg {
-                font-size: 28vw;
             }
         }
 
