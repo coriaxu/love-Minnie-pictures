@@ -15,6 +15,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Pinyon+Script&family=Cinzel:wght@400;700;900&display=swap"
         rel="stylesheet">
+    <!-- 毛笔书法体：今日卡竖版大字 -->
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
     <!-- LXGW WenKai (Handwritten Style) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css">
     <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
@@ -23,7 +25,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="css/style.css?v=9.6">
+    <link rel="stylesheet" href="css/style.css?v=9.7">
     <!-- Year in Review Poster -->
     <link rel="stylesheet" href="css/year-review.css?v=9.1">
     <link rel="stylesheet" href="css/day-6000.css?v=11.9">
@@ -34,6 +36,14 @@
     <!-- 氛围光场 (The Rose Nebula) -->
     <div class="ambient-light"></div>
     <div class="noise-overlay"></div>
+
+    <!-- SVG 滤镜：今日卡金色笔刷的毛边质感 -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <filter id="brush-rough" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="3" seed="7" result="n" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="46" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </svg>
 
     <!-- 动态模糊背景 (From Artwork) -->
     <div class="bg-blur" id="bg-blur"></div>
@@ -115,10 +125,14 @@
                 <div class="today-hero-letter">
                     <p class="today-hero-eyebrow">For My Wife · 致熊老婆</p>
                     <h2 class="today-hero-date" id="today-hero-date"></h2>
+                    <p class="today-hero-theme" id="today-hero-theme" hidden></p>
+                    <div class="today-hero-rule" aria-hidden="true"></div>
                     <p class="today-hero-days" id="today-hero-days"></p>
+                    <div class="today-hero-rule today-hero-rule-b" aria-hidden="true"></div>
                     <div class="today-hero-divider" aria-hidden="true"></div>
                     <p class="today-hero-text" id="today-hero-text"></p>
-                    <p class="today-hero-sign">Love</p>
+                    <p class="today-hero-sign"><span class="sign-dash" aria-hidden="true"></span>Love<span
+                            class="sign-dash" aria-hidden="true"></span></p>
                     <span class="today-hero-hint" aria-hidden="true">点开重温 →</span>
                 </div>
             </section>
@@ -241,7 +255,7 @@
 
     <!-- ===================== SCRIPTS ===================== -->
     <script src="js/data.js?v=10.8"></script>
-    <script src="js/script.js?v=10.5"></script>
+    <script src="js/script.js?v=10.6"></script>
     <script src="js/day-6000.js?v=11.9"></script>
     <!-- Anniversary Effects Engine -->
     <script src="js/anniversary-effects.js?v=11.6"></script>

@@ -734,10 +734,37 @@ document.addEventListener('DOMContentLoaded', () => {
         if (heroLetter) heroLetter.dataset.day = String(getDayNumber(today));
         document.getElementById('today-hero-date').textContent =
             `${today.getMonth() + 1}月${today.getDate()}日`;
-        document.getElementById('today-hero-days').textContent =
-            `我们在一起的第 ${getDayNumber(today)} 天`;
-        document.getElementById('today-hero-text').textContent =
-            item.loveLetter || item.description || '';
+
+        // 天数翻牌器："我们在一起的第 [6][0][2][9] 天"
+        const daysEl = document.getElementById('today-hero-days');
+        const dayDigits = String(getDayNumber(today)).split('')
+            .map(d => `<span class="flip-digit">${d}</span>`).join('');
+        daysEl.innerHTML = `我们在一起的第 <span class="flip-group">${dayDigits}</span> 天`;
+
+        const letterText = item.loveLetter || item.description || '';
+        document.getElementById('today-hero-text').textContent = letterText;
+
+        // 主题词大字行：从"♥️ 今日份爱你 XXX"抽出 XXX，末两字做金色重音
+        const themeEl = document.getElementById('today-hero-theme');
+        const themeMatch = letterText.match(/今日份爱你[,，、\s]*(.+)$/);
+        const themeText = themeMatch ? themeMatch[1].trim() : '';
+        if (themeEl) {
+            if (themeText) {
+                const chars = [...themeText];
+                if (chars.length >= 4) {
+                    const head = chars.slice(0, -2).join('');
+                    const tail = chars.slice(-2).join('');
+                    themeEl.innerHTML =
+                        `<span class="theme-head">${escapeHtml(head)}</span>` +
+                        `<span class="theme-accent">${escapeHtml(tail)}</span>`;
+                } else {
+                    themeEl.innerHTML = `<span class="theme-accent">${escapeHtml(themeText)}</span>`;
+                }
+                themeEl.hidden = false;
+            } else {
+                themeEl.hidden = true;
+            }
+        }
 
         if (!hero.dataset.bound) {
             const openToday = () => {

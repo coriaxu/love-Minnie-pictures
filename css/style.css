@@ -870,8 +870,54 @@ body.sidebar-closed .content-area {
     font-family: 'Pinyon Script', var(--font-sans), cursive;
     font-size: 1.7rem;
     color: rgba(255, 205, 220, 0.85);
-    transform: rotate(-2.5deg);
     margin-top: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* 落款两侧短线（竖版版式显示） */
+.sign-dash {
+    display: none;
+    width: 46px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 158, 181, 0.55));
+}
+
+.sign-dash:last-child {
+    background: linear-gradient(270deg, transparent, rgba(255, 158, 181, 0.55));
+}
+
+/* 主题词大字行与双细线：仅竖版版式使用 */
+.today-hero-theme {
+    display: none;
+}
+
+.today-hero-rule {
+    display: none;
+}
+
+/* 天数翻牌器：金块数字 */
+.flip-group {
+    display: inline-flex;
+    gap: 5px;
+    margin: 0 8px;
+    vertical-align: -0.32em;
+}
+
+.flip-digit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5em;
+    height: 1.85em;
+    background: linear-gradient(180deg, #f6e2a4 0%, #e9c26d 48%, #c6912f 100%);
+    color: #1d2c52;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.92em;
+    border-radius: 0.26em;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .today-hero-hint {
@@ -898,19 +944,60 @@ body.sidebar-closed .content-area {
 }
 
 /* ============================================================
-    今日卡 · 竖版画作布局
-    画格按原始比例呈现（零空间浪费），信笺居中轴线放大一档，
-    四周空白由满幅氛围底接住
+    今日卡 · 竖版画作布局（深蓝金 · 复刻小萌设计稿 2026-06-12）
+    左:画作浮卡  右:毛笔金字日期 + 主题大字 + 天数翻牌 + 情话 + Love
+    背景:固定深蓝夜 + 金尘颗粒 + 地球弧光 + 金色笔刷流光
     ============================================================ */
 .today-hero.is-portrait {
     grid-template-columns: auto minmax(0, 1fr);
+}
+
+/* 覆盖通用氛围底：竖版用固定深蓝金品牌底 */
+.today-hero.is-portrait::before {
+    background-image:
+        radial-gradient(2.5px 2.5px at 88% 12%, rgba(255, 216, 130, 0.95), transparent 70%),
+        radial-gradient(2px 2px at 72% 28%, rgba(255, 200, 100, 0.8), transparent 70%),
+        radial-gradient(1.5px 1.5px at 94% 38%, rgba(255, 228, 160, 0.9), transparent 70%),
+        radial-gradient(2px 2px at 60% 8%, rgba(255, 210, 120, 0.75), transparent 70%),
+        radial-gradient(1.5px 1.5px at 79% 55%, rgba(255, 220, 150, 0.6), transparent 70%),
+        radial-gradient(2px 2px at 35% 85%, rgba(255, 205, 110, 0.65), transparent 70%),
+        radial-gradient(2.5px 2.5px at 52% 93%, rgba(255, 215, 130, 0.8), transparent 70%),
+        radial-gradient(1.5px 1.5px at 12% 60%, rgba(255, 225, 150, 0.5), transparent 70%),
+        radial-gradient(1.5px 1.5px at 45% 18%, rgba(255, 230, 170, 0.55), transparent 70%),
+        radial-gradient(2px 2px at 68% 75%, rgba(255, 210, 125, 0.5), transparent 70%),
+        radial-gradient(58% 82% at 92% 54%, transparent 56%, rgba(130, 170, 235, 0.08) 59%, rgba(160, 195, 255, 0.03) 63%, transparent 67%),
+        linear-gradient(113deg, #0b1730 0%, #142850 42%, #0e2147 70%, #0a1a38 100%);
+    background-size: cover;
+    filter: none;
+    transform: none;
+}
+
+/* 金色笔刷流光：收在边角，中部留深邃给文字 */
+.today-hero.is-portrait::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image:
+        linear-gradient(115deg, transparent 74%, rgba(214, 164, 70, 0.26) 82%, rgba(244, 212, 130, 0.38) 88%, rgba(190, 140, 52, 0.18) 93%, transparent 98%),
+        linear-gradient(300deg, transparent 84%, rgba(222, 176, 84, 0.2) 91%, rgba(245, 215, 140, 0.3) 96%, transparent 100%),
+        radial-gradient(62% 80% at 100% 106%, transparent 58%, rgba(212, 160, 64, 0.22) 66%, rgba(245, 214, 134, 0.32) 72%, rgba(176, 124, 42, 0.14) 78%, transparent 86%);
+    mix-blend-mode: screen;
+    /* SVG 湍流位移：把光带边缘揉碎成毛笔刷痕 */
+    filter: url(#brush-rough) saturate(1.12);
+    pointer-events: none;
+}
+
+.today-hero.is-portrait .today-hero-media,
+.today-hero.is-portrait .today-hero-letter {
+    z-index: 1;
 }
 
 .today-hero.is-portrait .today-hero-media {
     min-height: 0;
     height: clamp(460px, 60vh, 640px);
     max-width: min(42vw, 520px);
-    padding: 30px 0 30px 34px;
+    padding: 28px 0 28px 30px;
 }
 
 .today-hero.is-portrait .today-hero-media img {
@@ -919,37 +1006,96 @@ body.sidebar-closed .content-area {
     max-width: 100%;
     max-height: none;
     object-fit: contain;
-    border-radius: 12px;
+    border-radius: 10px;
     box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .today-hero.is-portrait .today-hero-letter {
-    padding: 56px clamp(48px, 7vw, 130px);
-    gap: 16px;
+    padding: 44px clamp(36px, 4.5vw, 84px);
+    gap: 12px;
 }
 
 .today-hero.is-portrait .today-hero-eyebrow {
-    font-size: 0.74rem;
-    letter-spacing: 0.34em;
+    font-size: 0.76rem;
+    letter-spacing: 0.36em;
+    color: rgba(240, 245, 255, 0.85);
 }
 
+/* 毛笔金字大日期 */
 .today-hero.is-portrait .today-hero-date {
-    font-size: 3rem;
+    font-family: 'Ma Shan Zheng', 'LXGW WenKai Screen', serif;
+    font-weight: 400;
+    font-size: clamp(3.4rem, 6.4vw, 5.6rem);
+    line-height: 1.04;
+    background: linear-gradient(178deg, #f9ecbe 8%, #f0d188 32%, #d9a94e 56%, #b97f24 80%, #93600f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 26px rgba(240, 200, 110, 0.16));
+}
+
+/* 主题词大字：白毛笔 + 末两字金色重音 */
+.today-hero.is-portrait .today-hero-theme {
+    display: block;
+    font-family: 'Ma Shan Zheng', 'LXGW WenKai Screen', serif;
+    font-weight: 400;
+    font-size: clamp(1.8rem, 3.1vw, 2.7rem);
+    line-height: 1.25;
+    color: rgba(252, 250, 245, 0.97);
+    filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.4));
+    text-wrap: balance;
+    margin-top: -6px;
+}
+
+.today-hero.is-portrait .today-hero-theme .theme-accent {
+    font-size: 1.38em;
+    padding-left: 8px;
+    background: linear-gradient(178deg, #f9ecbe 10%, #eecd7e 40%, #d2a040 72%, #a06d14 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* 双细线夹天数 */
+.today-hero.is-portrait .today-hero-rule {
+    display: block;
+    width: min(82%, 560px);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22) 16%, rgba(255, 255, 255, 0.22) 84%, transparent);
+    margin: 12px 0 4px;
+}
+
+.today-hero.is-portrait .today-hero-rule-b {
+    margin: 4px 0 12px;
 }
 
 .today-hero.is-portrait .today-hero-days {
-    font-size: 1rem;
-    letter-spacing: 0.1em;
+    font-size: clamp(1.15rem, 1.8vw, 1.55rem);
+    letter-spacing: 0.06em;
+    color: rgba(248, 250, 255, 0.96);
+    display: flex;
+    align-items: center;
+}
+
+/* ✦ 分隔与通用氛围在竖版版式中不使用 */
+.today-hero.is-portrait .today-hero-divider {
+    display: none;
 }
 
 .today-hero.is-portrait .today-hero-text {
-    font-size: 1.55rem;
-    line-height: 2.1;
+    font-size: clamp(1.2rem, 1.7vw, 1.5rem);
+    line-height: 1.9;
+    letter-spacing: 0.08em;
 }
 
 .today-hero.is-portrait .today-hero-sign {
     font-size: 1.9rem;
-    margin-top: 8px;
+    margin-top: 6px;
+    color: rgba(255, 150, 178, 0.92);
+}
+
+.today-hero.is-portrait .today-hero-sign .sign-dash {
+    display: block;
 }
 
 /* ============================================================
@@ -2133,6 +2279,11 @@ body.modal-open .content-area {
         object-fit: contain;
     }
 
+    /* 小屏上湍流碎边比例过重，退回柔光版 */
+    .today-hero.is-portrait::after {
+        filter: blur(1.5px) saturate(1.1);
+    }
+
     .today-hero.is-portrait .today-hero-media {
         padding: 22px 16px 0;
     }
@@ -2145,8 +2296,8 @@ body.modal-open .content-area {
     }
 
     .today-hero.is-portrait .today-hero-letter {
-        padding: 24px 20px 28px;
-        gap: 10px;
+        padding: 24px 18px 30px;
+        gap: 9px;
     }
 
     .today-hero.is-portrait .today-hero-eyebrow {
@@ -2155,15 +2306,29 @@ body.modal-open .content-area {
     }
 
     .today-hero.is-portrait .today-hero-date {
-        font-size: 1.7rem;
+        font-size: 2.7rem;
+    }
+
+    .today-hero.is-portrait .today-hero-theme {
+        font-size: 1.45rem;
+        margin-top: -2px;
+    }
+
+    .today-hero.is-portrait .today-hero-rule {
+        width: 88%;
+        margin: 8px 0 2px;
+    }
+
+    .today-hero.is-portrait .today-hero-rule-b {
+        margin: 2px 0 8px;
     }
 
     .today-hero.is-portrait .today-hero-days {
-        font-size: 0.85rem;
+        font-size: 0.98rem;
     }
 
     .today-hero.is-portrait .today-hero-text {
-        font-size: 1.15rem;
+        font-size: 1.08rem;
         line-height: 1.9;
     }
 
