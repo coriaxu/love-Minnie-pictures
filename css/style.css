@@ -838,6 +838,8 @@ body.sidebar-closed .content-area {
     line-height: 2;
     color: rgba(255, 245, 247, 0.95);
     word-break: break-word;
+    /* 折行时两行字数均分，杜绝单字孤行 */
+    text-wrap: balance;
 }
 
 .today-hero-sign {
@@ -1829,6 +1831,8 @@ body.modal-open .timeline-strip {
     color: rgba(255, 245, 247, 0.92);
     white-space: pre-wrap;
     text-align: center;
+    /* 折行时两行字数均分，杜绝单字孤行 */
+    text-wrap: balance;
     transition: font-size 0.3s ease;
 }
 
@@ -2422,6 +2426,17 @@ body.modal-open .content-area {
     .detail-letter {
         font-size: 0.95rem;
         line-height: 1.7;
+    }
+
+    /* 移动端收敛动态大字号：短句尽量单行，折行交给 balance 均分 */
+    .detail-letter.text-xl {
+        font-size: 1.15rem;
+        line-height: 1.9;
+    }
+
+    .detail-letter.text-2xl {
+        font-size: 1.3rem;
+        line-height: 1.9;
     }
 
     /* 滑动提示 */
