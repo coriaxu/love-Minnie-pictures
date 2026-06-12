@@ -995,9 +995,12 @@ body.sidebar-closed .content-area {
 
 .today-hero.is-portrait .today-hero-media {
     min-height: 0;
-    height: clamp(460px, 60vh, 640px);
-    max-width: min(42vw, 520px);
-    padding: 28px 0 28px 30px;
+    /* 占满首屏：视口高减去 header(80)+内容区上边距+卡下边距的余量，
+       让瀑布流退到第二屏，今天的画独享开场 */
+    height: clamp(560px, calc(100vh - 150px), 980px);
+    max-height: none;
+    max-width: min(46vw, 660px);
+    padding: 30px 0 30px 32px;
 }
 
 .today-hero.is-portrait .today-hero-media img {
