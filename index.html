@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minnie's Gallery - The Eternal Rose</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,900;1,6..96,400&family=Inter:wght@300;400;600&display=swap"
         rel="stylesheet">
@@ -126,6 +125,79 @@
             flex-shrink: 0;
             position: relative;
             z-index: 30;
+        }
+
+        /* === 原 Tailwind 工具类的等价手写样式 === */
+        .site-header,
+        .site-footer {
+            width: 100%;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+
+        .hero-main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .counter-wrap {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+
+        .meta-copy {
+            max-width: 28rem;
+        }
+
+        .quote-line {
+            font-family: 'Bodoni Moda', serif;
+            font-style: italic;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            color: #fff0f5;
+        }
+
+        .meta-sub {
+            font-size: 0.75rem;
+            line-height: 1.65;
+            opacity: 0.8;
+        }
+
+        .btn-label {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* === 中文情感层：标题下的一行话 === */
+        .hero-subtitle {
+            margin-top: 30px;
+            font-family: 'LXGW WenKai Screen', 'Inter', serif;
+            font-size: 1.08rem;
+            letter-spacing: 0.16em;
+            color: rgba(255, 236, 243, 0.78);
+            opacity: 0;
+            animation: fadeIn 1.2s ease forwards;
+            animation-delay: 1s;
+        }
+
+        .hero-day-num {
+            font-family: 'Bodoni Moda', serif;
+            font-size: 1.45em;
+            font-style: italic;
+            color: #ffd9e4;
+            text-shadow: 0 0 18px rgba(255, 120, 160, 0.45);
+            padding: 0 2px;
         }
 
         .heavy-rule {
@@ -333,6 +405,9 @@
             text-shadow: 0 0 40px rgba(255, 100, 120, 0.15);
             /* 添加混合模式让它与背景更好地融合但又清晰 */
             mix-blend-mode: plus-lighter;
+            /* 上淡下实：与标题重叠的上半段隐去，避免笔画互相打架 */
+            -webkit-mask-image: linear-gradient(180deg, transparent 4%, rgba(0, 0, 0, 0.5) 40%, #000 78%);
+            mask-image: linear-gradient(180deg, transparent 4%, rgba(0, 0, 0, 0.5) 40%, #000 78%);
         }
 
         /* ============================================================
@@ -368,13 +443,19 @@
                 text-align: center;
             }
 
-            .meta-info .max-w-md {
+            .meta-info .meta-copy {
                 max-width: 100%;
             }
 
-            .meta-info p.font-serif {
+            .meta-info .quote-line {
                 font-size: 1rem;
                 line-height: 1.5;
+            }
+
+            .hero-subtitle {
+                font-size: 0.92rem;
+                letter-spacing: 0.1em;
+                margin-top: 22px;
             }
 
             .meta-info .typography-swiss {
@@ -411,7 +492,8 @@
         .desktop-main-nav {
             position: absolute;
             top: 40px;
-            right: 60px;
+            /* 与 header-actions 同轴对齐（grid-container 左右 padding 40px） */
+            right: 0;
             display: flex;
             gap: 40px;
             z-index: 50;
@@ -450,6 +532,44 @@
                 display: none;
             }
         }
+
+        /* 无障碍：偏好减少动效时全部即时完成 */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* 移动端快捷导航：桌面导航隐藏后，保证画廊/点滴仍可达 */
+        .mobile-quick-nav {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-quick-nav {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 14px;
+                margin-top: 18px;
+                font-family: 'Inter', 'LXGW WenKai Screen', sans-serif;
+                font-size: 0.8rem;
+                letter-spacing: 0.3em;
+                color: rgba(255, 235, 240, 0.45);
+            }
+
+            .mobile-quick-nav a {
+                color: rgba(255, 235, 240, 0.85);
+                text-decoration: none;
+                padding: 6px 2px;
+            }
+        }
     </style>
 </head>
 
@@ -465,12 +585,12 @@
 
     <div class="grid-container">
 
-        <header class="w-full">
+        <header class="site-header">
             <div class="heavy-rule"></div>
-            <div class="flex justify-between mt-4 fade-in">
+            <div class="header-row fade-in">
                 <span class="typography-swiss">For My Wife</span>
                 <div class="header-actions">
-                    <span class="typography-swiss text-right">Est. 2026</span>
+                    <span class="typography-swiss">Est. 2026</span>
                     <button type="button" id="day-6000-archive" class="day-6000-archive" hidden>
                         6000 Days
                     </button>
@@ -478,11 +598,13 @@
             </div>
         </header>
 
-        <main class="flex-grow flex flex-col justify-center relative overflow-hidden">
+        <main class="hero-main">
             <h1 class="typography-hero">
                 Visual<br>
                 Letters
             </h1>
+            <p class="hero-subtitle">每天一幅画、一句话。今天是我们在一起的第 <span class="hero-day-num"
+                    id="hero-day-num">6029</span> 天。</p>
 
              <!-- Desktop Nav (Absoluted positioned for aesthetics) -->
              <nav class="desktop-main-nav">
@@ -491,29 +613,34 @@
                 <a href="moments.html" class="nav-link">Moments</a>
             </nav>
 
-            <div class="absolute right-0 bottom-0 pointer-events-none mix-blend-screen">
+            <div class="counter-wrap">
                 <span class="counter-bg" id="day-counter">001</span>
             </div>
         </main>
 
-        <footer class="w-full">
+        <footer class="site-footer">
             <div class="heavy-rule delay"></div>
             <div class="meta-info fade-in">
-                <div class="max-w-md">
+                <div class="meta-copy">
                     <!-- 引用文字：温柔的粉白 -->
-                    <p class="font-serif italic text-xl mb-2" style="color: #fff0f5;">
+                    <p class="quote-line">
                         "Infinite shades of love."
                     </p>
-                    <p class="typography-swiss text-xs leading-relaxed opacity-80">
+                    <p class="typography-swiss meta-sub">
                         FROM CYBERPUNK TO IMPRESSIONISM<br>
                         A DAILY ARCHIVE OF AFFECTION.
                     </p>
                 </div>
 
                 <button onclick="enterGallery()" class="btn-minimal group">
-                    <span class="relative z-10" id="unwrap-btn">Unwrap Day 001</span>
+                    <span class="btn-label" id="unwrap-btn">拆开第 6029 天</span>
                 </button>
             </div>
+            <nav class="mobile-quick-nav fade-in" aria-label="快捷导航">
+                <a href="gallery.html">画廊</a>
+                <span aria-hidden="true">·</span>
+                <a href="moments.html">点滴</a>
+            </nav>
         </footer>
 
     </div>
@@ -562,7 +689,8 @@
 
         // "For My Wife" 现在是静态文字，不需要动态更新
         document.getElementById('day-counter').textContent = dayStr;
-        document.getElementById('unwrap-btn').textContent = `Unwrap Day ${dayStr}`;
+        document.getElementById('unwrap-btn').textContent = `拆开第 ${dayStr} 天`;
+        document.getElementById('hero-day-num').textContent = dayStr;
 
         const archiveBtn = document.getElementById('day-6000-archive');
         const showArchiveFrom = new Date('2026-05-15T00:00:00');

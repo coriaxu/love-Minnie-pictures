@@ -23,10 +23,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="css/style.css?v=9.1">
+    <link rel="stylesheet" href="css/style.css?v=9.3">
     <!-- Year in Review Poster -->
     <link rel="stylesheet" href="css/year-review.css?v=9.1">
-    <link rel="stylesheet" href="css/day-6000.css?v=10.4">
+    <link rel="stylesheet" href="css/day-6000.css?v=11.9">
 </head>
 
 <body>
@@ -91,14 +91,37 @@
                     <!-- Dynamically generated -->
                 </div>
             </div>
+            <!-- 本月小结 + 随机重温 -->
+            <div class="sidebar-extras">
+                <p class="month-digest" id="month-digest"></p>
+                <button type="button" id="memory-lane-btn" class="memory-lane-btn">
+                    <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                    <span>随机重温一封</span>
+                </button>
+            </div>
             <div class="calendar-legend">
-                <span><i class="fa-solid fa-circle" style="color: var(--accent-green);"></i> Has artwork</span>
+                <span><i class="fa-solid fa-circle" style="color: var(--love-core);"></i> Has artwork</span>
                 <span><img src="images/sunflower.svg" class="sunflower-icon" alt="🌻"> Coming soon</span>
             </div>
         </aside>
 
         <!-- === Content Area === -->
         <section class="content-area">
+            <!-- 今日情书 Hero：当前查看月份包含今天时置顶呈现 -->
+            <section id="today-hero" class="today-hero" hidden role="button" tabindex="0" aria-label="查看今天的画">
+                <div class="today-hero-media">
+                    <img id="today-hero-img" src="" alt="今日画作">
+                </div>
+                <div class="today-hero-letter">
+                    <p class="today-hero-eyebrow">For My Wife · 致熊老婆</p>
+                    <h2 class="today-hero-date" id="today-hero-date"></h2>
+                    <p class="today-hero-days" id="today-hero-days"></p>
+                    <div class="today-hero-divider" aria-hidden="true"></div>
+                    <p class="today-hero-text" id="today-hero-text"></p>
+                    <p class="today-hero-sign">Love, 浩</p>
+                    <span class="today-hero-hint" aria-hidden="true">点开重温 →</span>
+                </div>
+            </section>
             <div id="gallery-grid" class="gallery-grid" aria-live="polite"></div>
 
             <!-- Empty State (for future days) -->
@@ -210,6 +233,7 @@
                     <!-- Ruogu Mod: Label Removed -->
                     <div id="detail-description" class="detail-description"></div>
                     <div id="detail-letter" class="detail-letter"></div>
+                    <p class="detail-sign" aria-hidden="true">Love, 浩</p>
                 </div>
             </aside>
         </div>
@@ -217,10 +241,10 @@
 
     <!-- ===================== SCRIPTS ===================== -->
     <script src="js/data.js?v=10.8"></script>
-    <script src="js/script.js?v=10.1"></script>
-    <script src="js/day-6000.js?v=10.4"></script>
+    <script src="js/script.js?v=10.3"></script>
+    <script src="js/day-6000.js?v=11.9"></script>
     <!-- Anniversary Effects Engine -->
-    <script src="js/anniversary-effects.js?v=10.4"></script>
+    <script src="js/anniversary-effects.js?v=11.6"></script>
     <!-- Year in Review Poster Generator -->
     <script src="js/year-review.js?v=9.1"></script>
 </body>

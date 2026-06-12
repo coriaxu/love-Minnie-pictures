@@ -389,6 +389,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     // Event Listeners
     // ============================================================
+    // 移动端：日历是 Bottom Sheet，初始必须收起，
+    // 否则 HTML 里的 open class 会让它盖住画廊首屏。
+    // 先禁掉过渡再收起，避免首帧出现"日历滑出去"的闪现
+    if (window.matchMedia('(max-width: 600px)').matches && calendarSidebar) {
+        calendarSidebar.style.transition = 'none';
+        calendarSidebar.classList.remove('open');
+        document.body.classList.add('sidebar-closed');
+        toggleCalendarBtn?.classList.remove('active');
+        void calendarSidebar.offsetHeight;
+        calendarSidebar.style.transition = '';
+    }
+
     prevMonthBtn.addEventListener('click', () => {
         currentMonth.setMonth(currentMonth.getMonth() - 1);
         renderCalendar();
@@ -419,6 +431,22 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         requestAnimationFrame(smoothResize);
     });
+
+    // 随机重温：从历史画信里随机抽一封打开
+    const memoryLaneBtn = document.getElementById('memory-lane-btn');
+    if (memoryLaneBtn) {
+        memoryLaneBtn.addEventListener('click', () => {
+            if (!galleryData.length) return;
+            const todayISO = formatDateISO(new Date());
+            const pool = galleryData.filter(d => d.date !== todayISO);
+            const source = pool.length ? pool : galleryData;
+            const pick = source[Math.floor(Math.random() * source.length)];
+            selectDate(new Date(pick.date), { scroll: false });
+            openDetail(pick);
+        });
+        memoryLaneBtn.addEventListener('mouseenter', () => setTorchMode(true));
+        memoryLaneBtn.addEventListener('mouseleave', () => setTorchMode(false));
+    }
 
     timelinePrev.addEventListener('click', () => {
         timelineContainer.scrollBy({ left: -200, behavior: 'smooth' });
@@ -578,13 +606,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.loading = 'lazy';
                 thumb.appendChild(img);
 
-                // Add Number Badge (1-based index, Chronological)
+                // 日期角标（"6.12"），比序号更直观
                 const badge = document.createElement('span');
                 badge.className = 'thumb-badge';
-                // Using the loop index directly because 'allItems' is sorted chronologically
-                // and artwork items appear first.
-                // This ensures No.1 is the oldest (leftmost), No.N is the newest.
-                badge.textContent = index + 1;
+                badge.textContent = `${item.dateObj.getMonth() + 1}.${item.dateObj.getDate()}`;
                 thumb.appendChild(badge);
 
                 thumb.addEventListener('click', () => {
@@ -635,6 +660,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateMonthView(options = {}) {
         const { anchorDate = null } = options;
         const items = getItemsForMonth(currentMonth);
+        // 今日情书 Hero：当前月包含今天时置顶展示，今天那张从瀑布流里抽出
+        const todayItem = renderTodayHero();
+        const gridItems = todayItem ? items.filter(item => item.date !== todayItem.date) : items;
+
+        updateMonthDigest(items);
 
         if (!items.length) {
             clearBgBlur();
@@ -643,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        renderGallery(items);
+        renderGallery(gridItems, { allowEmpty: !!todayItem });
 
         const anchorDateStr = anchorDate ? formatDateISO(new Date(anchorDate)) : null;
         const hasAnchor = anchorDateStr && items.some(item => item.date === anchorDateStr);
@@ -651,15 +681,90 @@ document.addEventListener('DOMContentLoaded', () => {
         selectDate(targetDate, { scroll: false, skipMonthUpdate: true });
     }
 
+    // 侧栏本月小结："6月 · 已收到 N 封画信"
+    function updateMonthDigest(items) {
+        const digest = document.getElementById('month-digest');
+        if (!digest) return;
+        const month = currentMonth.getMonth() + 1;
+        const today = new Date();
+        const isCurrentMonth = currentMonth.getFullYear() === today.getFullYear()
+            && currentMonth.getMonth() === today.getMonth();
+        const isFuture = toUtcDay(currentMonth) > toUtcDay(today) && !items.length;
+
+        if (isFuture || !items.length) {
+            digest.innerHTML = `${month}月 · ${isFuture ? '花期未至' : '这个月还没有画信'}`;
+            return;
+        }
+        const verb = isCurrentMonth ? '已收到' : '收藏了';
+        digest.innerHTML = `${month}月 · ${verb} <strong>${items.length}</strong> 封画信`;
+    }
+
+    // ============================================================
+    // Today Hero - 今日情书置顶卡
+    // ============================================================
+    function renderTodayHero() {
+        const hero = document.getElementById('today-hero');
+        if (!hero) return null;
+
+        const today = new Date();
+        const sameMonth = currentMonth.getFullYear() === today.getFullYear()
+            && currentMonth.getMonth() === today.getMonth();
+        const todayISO = formatDateISO(today);
+        const item = sameMonth ? galleryData.find(d => d.date === todayISO) : null;
+
+        if (!item) {
+            hero.hidden = true;
+            return null;
+        }
+
+        const img = document.getElementById('today-hero-img');
+        img.src = `images/${item.filename}`;
+        img.alt = item.title || '今日画作';
+        hero.style.setProperty('--hero-bg', `url("images/${item.filename}")`);
+        document.getElementById('today-hero-date').textContent =
+            `${today.getMonth() + 1}月${today.getDate()}日`;
+        document.getElementById('today-hero-days').textContent =
+            `我们在一起的第 ${getDayNumber(today)} 天`;
+        document.getElementById('today-hero-text').textContent =
+            item.loveLetter || item.description || '';
+
+        if (!hero.dataset.bound) {
+            const openToday = () => {
+                const it = galleryData.find(d => d.date === hero.dataset.date);
+                if (!it) return;
+                selectDate(new Date(it.date), { scroll: false });
+                openDetail(it);
+            };
+            hero.addEventListener('click', openToday);
+            hero.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openToday();
+                }
+            });
+            hero.addEventListener('mouseenter', () => setTorchMode(true));
+            hero.addEventListener('mouseleave', () => setTorchMode(false));
+            hero.dataset.bound = '1';
+        }
+        hero.dataset.date = item.date;
+        hero.hidden = false;
+        return item;
+    }
+
     // ============================================================
     // Gallery Rendering
     // ============================================================
-    function renderGallery(items = galleryData) {
+    function renderGallery(items = galleryData, options = {}) {
         if (!galleryGrid) return;
         galleryGrid.innerHTML = '';
         cardByDate.clear();
 
         if (!items.length) {
+            // Hero 单独展示今天时，当月仅此一张也不算空
+            if (options.allowEmpty) {
+                if (emptyState) emptyState.style.display = 'none';
+                return;
+            }
             showEmptyState({ mode: getEmptyMode(currentMonth), date: currentMonth, scope: 'month' });
             return;
         }
@@ -673,6 +778,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         items.forEach((item, index) => {
             const card = createGalleryCard(item, index);
+            // 入场 stagger：逐张浮现，结束后清理避免干扰 hover 动效
+            card.style.animationDelay = `${Math.min(index * 55, 660)}ms`;
+            card.classList.add('card-enter');
+            card.addEventListener('animationend', () => {
+                card.classList.remove('card-enter');
+                card.style.animationDelay = '';
+            }, { once: true });
             galleryGrid.appendChild(card);
             cardByDate.set(item.date, card);
         });
@@ -715,15 +827,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const meta = document.createElement('div');
         meta.className = 'gallery-meta';
         const itemDate = new Date(item.date);
-        const dayNum = getDayNumber(itemDate);
-        // 动态计算 No.：按日期升序排列后的位置
-        const sortedByDate = [...galleryData].sort((a, b) => new Date(a.date) - new Date(b.date));
-        const chronologicalIndex = sortedByDate.findIndex(d => d.date === item.date);
-        const noNum = chronologicalIndex + 1;
-        const titleText = item.title || formatCardDateDisplay(itemDate);
+        // hover 给情话，不给编号：编号是档案信息，挪去了详情页副行
+        const prefixText = `${itemDate.getMonth() + 1}月${itemDate.getDate()}日 · 第 ${getDayNumber(itemDate)} 天`;
+        const titleText = item.loveLetter || item.title || formatCardDateDisplay(itemDate);
         meta.innerHTML = `
             <div class="gallery-meta-line">
-                <span class="meta-prefix">Day ${String(dayNum).padStart(2, '0')} · No. ${String(noNum).padStart(3, '0')}</span>
+                <span class="meta-prefix">${escapeHtml(prefixText)}</span>
                 <span class="meta-title">${escapeHtml(titleText)}</span>
             </div>
         `;
@@ -815,6 +924,12 @@ document.addEventListener('DOMContentLoaded', () => {
             targetCard.classList.add('selected');
             if (scroll) {
                 targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else if (scroll) {
+            // 今天那张由 Hero 承载，不在瀑布流里：选中今天时滚回顶部的 Hero
+            const hero = document.getElementById('today-hero');
+            if (hero && !hero.hidden && hero.dataset.date === dateStr) {
+                hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
 
@@ -1001,10 +1116,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detailImage.complete) {
             updateDetailOrientation();
         }
-        // 只显示一个日期，用 YYYY.Jan.D 格式
-        detailTitle.textContent = formatDateDisplay(new Date(item.date));
-        // 隐藏重复的小日期
-        detailDate.style.display = 'none';
+        // 信笺式：中文日期为主，副行放"第 N 天"和存档编号
+        const detailDateObj = new Date(item.date);
+        detailTitle.textContent = formatDateDisplayZh(detailDateObj);
+        detailDate.textContent =
+            `第 ${getDayNumber(detailDateObj)} 天 · 第 ${getChronoNo(item)} 封画信`;
+        detailDate.style.display = '';
 
         const description = item.description ? item.description.trim() : '';
         if (description) {
@@ -1033,26 +1150,30 @@ document.addEventListener('DOMContentLoaded', () => {
             detailClose.focus();
         }
 
-        // Add Edit Button if not exists
+        // Edit 是管理功能，只在 URL 带 ?admin=1 时显示，避免打扰观众视角
+        const isAdminMode = new URLSearchParams(window.location.search).has('admin');
         let editBtn = document.getElementById('detail-edit');
-        if (!editBtn) {
-            editBtn = document.createElement('button');
-            editBtn.id = 'detail-edit';
-            editBtn.className = 'detail-action-btn';
-            editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
-            editBtn.setAttribute('title', 'Review & Edit');
+        if (isAdminMode) {
+            if (!editBtn) {
+                editBtn = document.createElement('button');
+                editBtn.id = 'detail-edit';
+                editBtn.className = 'detail-action-btn';
+                editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+                editBtn.setAttribute('title', 'Review & Edit');
 
-            // Insert before Close button
-            const header = document.querySelector('.detail-header');
-            if (header) {
-                header.appendChild(editBtn);
+                // Insert before Close button
+                const header = document.querySelector('.detail-header');
+                if (header) {
+                    header.appendChild(editBtn);
+                }
             }
-        }
 
-        // Update Edit Link
-        editBtn.onclick = () => {
-            window.location.href = `admin.html?date=${item.date}`;
-        };
+            editBtn.onclick = () => {
+                window.location.href = `admin.html?date=${item.date}`;
+            };
+        } else if (editBtn) {
+            editBtn.remove();
+        }
     }
 
     function closeDetail() {
@@ -1265,6 +1386,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getDayNumber(date) {
         return diffDays(RELATIONSHIP_START, date) + 1;
+    }
+
+    // 按日期升序的存档序号（第 N 封画信）
+    function getChronoNo(item) {
+        const sortedByDate = [...galleryData].sort((a, b) => new Date(a.date) - new Date(b.date));
+        return sortedByDate.findIndex(d => d.date === item.date) + 1;
     }
 
     function getNoNumber(date, index) {
