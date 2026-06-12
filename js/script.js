@@ -718,9 +718,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const img = document.getElementById('today-hero-img');
+        // 按画作方向切换布局：竖图按原比例占格，信笺拿走剩余宽度
+        const applyHeroOrientation = () => {
+            if (!img.naturalWidth) return;
+            const isPortrait = img.naturalHeight > img.naturalWidth;
+            hero.classList.toggle('is-portrait', isPortrait);
+            hero.style.setProperty('--hero-ratio', `${img.naturalWidth} / ${img.naturalHeight}`);
+        };
+        img.onload = applyHeroOrientation;
         img.src = `images/${item.filename}`;
         img.alt = item.title || '今日画作';
+        if (img.complete) applyHeroOrientation();
         hero.style.setProperty('--hero-bg', `url("images/${item.filename}")`);
+        const heroLetter = hero.querySelector('.today-hero-letter');
+        if (heroLetter) heroLetter.dataset.day = String(getDayNumber(today));
         document.getElementById('today-hero-date').textContent =
             `${today.getMonth() + 1}月${today.getDate()}日`;
         document.getElementById('today-hero-days').textContent =

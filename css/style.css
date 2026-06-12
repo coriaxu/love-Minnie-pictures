@@ -874,6 +874,76 @@ body.sidebar-closed .content-area {
 }
 
 /* ============================================================
+    今日卡 · 竖版画作布局
+    画格按原始比例收窄（零模糊底浪费），信笺拿走全部剩余宽度；
+    右下大描边天数水印，把留白变成排版语言
+    ============================================================ */
+.today-hero.is-portrait {
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.today-hero.is-portrait .today-hero-media {
+    min-height: 0;
+    height: clamp(460px, 60vh, 640px);
+    aspect-ratio: var(--hero-ratio, 2 / 3);
+    max-width: min(42vw, 480px);
+}
+
+.today-hero.is-portrait .today-hero-media::before {
+    display: none;
+}
+
+.today-hero.is-portrait .today-hero-media img {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+}
+
+.today-hero.is-portrait .today-hero-letter {
+    padding: 56px clamp(48px, 6vw, 110px);
+}
+
+/* 信笺内容限宽成"信纸栏"，避免在超宽区域里散掉 */
+.today-hero.is-portrait .today-hero-letter > * {
+    max-width: 34rem;
+}
+
+.today-hero.is-portrait .today-hero-date {
+    font-size: 2.7rem;
+}
+
+.today-hero.is-portrait .today-hero-days {
+    font-size: 1rem;
+}
+
+.today-hero.is-portrait .today-hero-text {
+    font-size: 1.5rem;
+}
+
+.today-hero.is-portrait .today-hero-sign {
+    align-self: flex-start;
+    width: 34rem;
+    text-align: right;
+}
+
+/* 大描边天数水印（attr 取自 data-day），上淡下实，呼应首页 counter */
+.today-hero.is-portrait .today-hero-letter::after {
+    content: attr(data-day);
+    position: absolute;
+    right: 30px;
+    bottom: 2px;
+    font-family: 'Bodoni Moda', serif;
+    font-size: clamp(7rem, 12vw, 11.5rem);
+    line-height: 0.9;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 235, 242, 0.13);
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 52%, #000 100%);
+    mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 52%, #000 100%);
+}
+
+/* ============================================================
     GALLERY GRID - Waterfall / Masonry Layout
     ============================================================ */
 .gallery-grid {
@@ -1993,20 +2063,60 @@ body.modal-open .content-area {
         padding-left: 8px;
     }
 
-    /* === 今日情书 Hero：移动端改纵向，画上信下 === */
-    .today-hero {
+    /* === 今日情书 Hero：移动端改纵向，画上信下（竖横版同构） === */
+    .today-hero,
+    .today-hero.is-portrait {
         grid-template-columns: 1fr;
         margin: 0 0 24px;
         border-radius: 16px;
     }
 
-    .today-hero-media {
+    .today-hero-media,
+    .today-hero.is-portrait .today-hero-media {
         min-height: 0;
+        height: auto;
         max-height: 58vh;
+        aspect-ratio: auto;
+        max-width: none;
     }
 
-    .today-hero-media img {
+    .today-hero-media img,
+    .today-hero.is-portrait .today-hero-media img {
         max-height: 58vh;
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .today-hero.is-portrait .today-hero-media::before {
+        display: block;
+    }
+
+    .today-hero.is-portrait .today-hero-letter {
+        padding: 24px 20px 28px;
+    }
+
+    .today-hero.is-portrait .today-hero-letter > * {
+        max-width: none;
+    }
+
+    .today-hero.is-portrait .today-hero-date {
+        font-size: 1.7rem;
+    }
+
+    .today-hero.is-portrait .today-hero-text {
+        font-size: 1.15rem;
+    }
+
+    .today-hero.is-portrait .today-hero-sign {
+        align-self: center;
+        width: auto;
+        text-align: center;
+    }
+
+    .today-hero.is-portrait .today-hero-letter::after {
+        display: none;
     }
 
     .today-hero-letter {
