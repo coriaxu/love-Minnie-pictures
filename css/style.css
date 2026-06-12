@@ -725,6 +725,7 @@ body.sidebar-closed .content-area {
     打开画廊先收到今天：左画右信，点击进入详情
     ============================================================ */
 .today-hero {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
     margin-bottom: 40px;
@@ -736,6 +737,24 @@ body.sidebar-closed .content-area {
     cursor: none;
     transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.45s ease, border-color 0.45s ease;
     animation: heroBreath 7s ease-in-out infinite alternate;
+}
+
+/* 满幅同图氛围底：画作色彩延伸到整张卡，空白成为画的余韵 */
+.today-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(100deg,
+            rgba(8, 4, 14, 0.3) 0%,
+            rgba(8, 4, 14, 0.5) 45%,
+            rgba(8, 4, 14, 0.62) 100%),
+        var(--hero-bg, none);
+    background-size: cover;
+    background-position: center;
+    filter: blur(46px) saturate(1.3);
+    transform: scale(1.25);
+    pointer-events: none;
 }
 
 .today-hero[hidden] {
@@ -768,18 +787,6 @@ body.sidebar-closed .content-area {
     justify-content: center;
 }
 
-/* 同图模糊铺底，竖图不留生硬黑边 */
-.today-hero-media::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: var(--hero-bg, none);
-    background-size: cover;
-    background-position: center;
-    filter: blur(34px) saturate(1.2) brightness(0.5);
-    transform: scale(1.18);
-}
-
 .today-hero-media img {
     position: relative;
     max-width: 100%;
@@ -788,18 +795,16 @@ body.sidebar-closed .content-area {
     display: block;
 }
 
+/* 信笺：居中圣坛式——内容极少时，一条垂直轴线 + 对称留白即是仪式感 */
 .today-hero-letter {
     position: relative;
-    padding: 48px 42px;
+    padding: 48px 44px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
+    text-align: center;
     gap: 14px;
-    border-left: 1px solid var(--grid-line);
-    background: linear-gradient(165deg,
-            rgba(255, 240, 245, 0.07) 0%,
-            rgba(255, 215, 228, 0.025) 55%,
-            rgba(255, 240, 245, 0.05) 100%);
 }
 
 .today-hero-eyebrow {
@@ -826,10 +831,28 @@ body.sidebar-closed .content-area {
 }
 
 .today-hero-divider {
-    width: 52px;
-    height: 1px;
-    margin: 8px 0 4px;
-    background: linear-gradient(90deg, var(--love-core), transparent);
+    width: 84px;
+    height: 9px;
+    margin: 6px 0 2px;
+    /* ✦ 居中 + 两侧对称细线，轴线上的装饰锚点 */
+    background:
+        linear-gradient(90deg, transparent, var(--love-glow) 45%, transparent 55%, transparent),
+        linear-gradient(90deg, transparent 0%, var(--grid-line) 18%, transparent 38%, transparent 62%, var(--grid-line) 82%, transparent 100%);
+    background-size: 100% 1px, 100% 1px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+.today-hero-divider::after {
+    content: '✦';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.6rem;
+    color: var(--love-glow);
+    text-shadow: 0 0 8px var(--love-mist);
 }
 
 .today-hero-text {
@@ -840,6 +863,7 @@ body.sidebar-closed .content-area {
     word-break: break-word;
     /* 折行时两行字数均分，杜绝单字孤行 */
     text-wrap: balance;
+    max-width: 24em;
 }
 
 .today-hero-sign {
@@ -847,9 +871,7 @@ body.sidebar-closed .content-area {
     font-size: 1.7rem;
     color: rgba(255, 205, 220, 0.85);
     transform: rotate(-2.5deg);
-    margin-top: 6px;
-    align-self: flex-end;
-    padding-right: 8px;
+    margin-top: 4px;
 }
 
 .today-hero-hint {
@@ -877,8 +899,8 @@ body.sidebar-closed .content-area {
 
 /* ============================================================
     今日卡 · 竖版画作布局
-    画格按原始比例收窄（零模糊底浪费），信笺拿走全部剩余宽度；
-    右下大描边天数水印，把留白变成排版语言
+    画格按原始比例呈现（零空间浪费），信笺居中轴线放大一档，
+    四周空白由满幅氛围底接住
     ============================================================ */
 .today-hero.is-portrait {
     grid-template-columns: auto minmax(0, 1fr);
@@ -887,62 +909,47 @@ body.sidebar-closed .content-area {
 .today-hero.is-portrait .today-hero-media {
     min-height: 0;
     height: clamp(460px, 60vh, 640px);
-    aspect-ratio: var(--hero-ratio, 2 / 3);
-    max-width: min(42vw, 480px);
-}
-
-.today-hero.is-portrait .today-hero-media::before {
-    display: none;
+    max-width: min(42vw, 520px);
+    padding: 30px 0 30px 34px;
 }
 
 .today-hero.is-portrait .today-hero-media img {
-    width: 100%;
+    width: auto;
     height: 100%;
+    max-width: 100%;
     max-height: none;
-    object-fit: cover;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .today-hero.is-portrait .today-hero-letter {
-    padding: 56px clamp(48px, 6vw, 110px);
+    padding: 56px clamp(48px, 7vw, 130px);
+    gap: 16px;
 }
 
-/* 信笺内容限宽成"信纸栏"，避免在超宽区域里散掉 */
-.today-hero.is-portrait .today-hero-letter > * {
-    max-width: 34rem;
+.today-hero.is-portrait .today-hero-eyebrow {
+    font-size: 0.74rem;
+    letter-spacing: 0.34em;
 }
 
 .today-hero.is-portrait .today-hero-date {
-    font-size: 2.7rem;
+    font-size: 3rem;
 }
 
 .today-hero.is-portrait .today-hero-days {
     font-size: 1rem;
+    letter-spacing: 0.1em;
 }
 
 .today-hero.is-portrait .today-hero-text {
-    font-size: 1.5rem;
+    font-size: 1.55rem;
+    line-height: 2.1;
 }
 
 .today-hero.is-portrait .today-hero-sign {
-    align-self: flex-start;
-    width: 34rem;
-    text-align: right;
-}
-
-/* 大描边天数水印（attr 取自 data-day），上淡下实，呼应首页 counter */
-.today-hero.is-portrait .today-hero-letter::after {
-    content: attr(data-day);
-    position: absolute;
-    right: 30px;
-    bottom: 2px;
-    font-family: 'Bodoni Moda', serif;
-    font-size: clamp(7rem, 12vw, 11.5rem);
-    line-height: 0.9;
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(255, 235, 242, 0.13);
-    pointer-events: none;
-    -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 52%, #000 100%);
-    mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 52%, #000 100%);
+    font-size: 1.9rem;
+    margin-top: 8px;
 }
 
 /* ============================================================
@@ -1684,6 +1691,21 @@ body.modal-open .timeline-strip {
     justify-content: center;
     padding: 28px;
     min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 暗化同图底：letterbox 黑边变成画作余韵 */
+.detail-media::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--detail-bg, none);
+    background-size: cover;
+    background-position: center;
+    filter: blur(60px) brightness(0.3) saturate(1.2);
+    transform: scale(1.3);
+    pointer-events: none;
 }
 
 .detail-media img {
@@ -1693,21 +1715,39 @@ body.modal-open .timeline-strip {
     display: block;
     border-radius: 14px;
     box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
+    position: relative;
 }
 
 .detail-side {
-    background:
-        linear-gradient(168deg,
-            rgba(255, 240, 245, 0.05) 0%,
-            rgba(255, 215, 228, 0.015) 45%,
-            rgba(255, 240, 245, 0.04) 100%),
-        var(--modal-panel);
+    background: var(--modal-panel);
     border-left: 1px solid var(--grid-line);
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: hidden;
     /* 让子元素可以滚动 */
+}
+
+/* 信笺氛围底：同图深色模糊，让右栏与画作同呼吸 */
+.detail-side::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(170deg,
+            rgba(10, 5, 16, 0.62) 0%,
+            rgba(10, 5, 16, 0.78) 50%,
+            rgba(10, 5, 16, 0.88) 100%),
+        var(--detail-bg, none);
+    background-size: cover;
+    background-position: center;
+    filter: blur(50px) saturate(1.15) brightness(0.9);
+    transform: scale(1.3);
+    pointer-events: none;
+}
+
+.detail-side > * {
+    position: relative;
 }
 
 .detail-header {
@@ -1798,17 +1838,7 @@ body.modal-open .timeline-strip {
     background: rgba(255, 180, 195, 0.5);
 }
 
-/* 底部装饰：淡淡的向日葵 */
-.detail-body::after {
-    content: '🌻';
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    font-size: 3rem;
-    opacity: 0.08;
-    pointer-events: none;
-    filter: grayscale(30%);
-}
+/* 原 🌻 emoji 装饰已移除：部分渲染环境显示为诡异实心圆，且与信笺氛围底冲突 */
 
 .detail-label {
     font-family: var(--font-sans);
@@ -1836,13 +1866,23 @@ body.modal-open .timeline-strip {
     transition: font-size 0.3s ease;
 }
 
-/* 信笺落款 */
+/* 情话上方的轴线锚点 */
+.detail-letter::before {
+    content: '✦';
+    display: block;
+    font-size: 0.65rem;
+    line-height: 1;
+    color: var(--love-glow);
+    text-shadow: 0 0 8px var(--love-mist);
+    margin-bottom: 20px;
+}
+
+/* 信笺落款：跟随居中轴线 */
 .detail-sign {
     font-family: 'Pinyon Script', var(--font-sans), cursive;
     font-size: 1.6rem;
     color: rgba(255, 205, 220, 0.8);
-    text-align: right;
-    padding-right: 12px;
+    text-align: center;
     transform: rotate(-2.5deg);
     margin-top: 4px;
 }
@@ -2093,34 +2133,43 @@ body.modal-open .content-area {
         object-fit: contain;
     }
 
-    .today-hero.is-portrait .today-hero-media::before {
-        display: block;
+    .today-hero.is-portrait .today-hero-media {
+        padding: 22px 16px 0;
+    }
+
+    .today-hero.is-portrait .today-hero-media img {
+        border-radius: 10px;
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.07);
+        width: auto;
+        max-width: 100%;
     }
 
     .today-hero.is-portrait .today-hero-letter {
         padding: 24px 20px 28px;
+        gap: 10px;
     }
 
-    .today-hero.is-portrait .today-hero-letter > * {
-        max-width: none;
+    .today-hero.is-portrait .today-hero-eyebrow {
+        font-size: 0.66rem;
+        letter-spacing: 0.26em;
     }
 
     .today-hero.is-portrait .today-hero-date {
         font-size: 1.7rem;
     }
 
+    .today-hero.is-portrait .today-hero-days {
+        font-size: 0.85rem;
+    }
+
     .today-hero.is-portrait .today-hero-text {
         font-size: 1.15rem;
+        line-height: 1.9;
     }
 
     .today-hero.is-portrait .today-hero-sign {
-        align-self: center;
-        width: auto;
-        text-align: center;
-    }
-
-    .today-hero.is-portrait .today-hero-letter::after {
-        display: none;
+        font-size: 1.5rem;
+        margin-top: 2px;
     }
 
     .today-hero-letter {
@@ -2384,8 +2433,14 @@ body.modal-open .content-area {
         text-align: left;
     }
 
+    /* 移动端面板小，轴线锚点不需要 */
+    .detail-letter::before {
+        display: none;
+    }
+
     .detail-sign {
         font-size: 1.15rem;
+        text-align: right;
         padding-right: 4px;
         margin-top: 0;
     }

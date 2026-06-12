@@ -1124,6 +1124,10 @@ document.addEventListener('DOMContentLoaded', () => {
         detailImage.onload = updateDetailOrientation;
         detailImage.src = `images/${item.filename}`;
         detailImage.alt = item.title || 'Artwork detail';
+        // 弹窗信笺/图区的同图氛围底
+        if (detailDialog) {
+            detailDialog.style.setProperty('--detail-bg', `url("images/${item.filename}")`);
+        }
         if (detailImage.complete) {
             updateDetailOrientation();
         }
