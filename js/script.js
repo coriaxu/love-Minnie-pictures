@@ -742,7 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
         daysEl.innerHTML = `我们在一起的第 <span class="flip-group">${dayDigits}</span> 天`;
 
         const letterText = item.loveLetter || item.description || '';
-        document.getElementById('today-hero-text').textContent = letterText;
+        // 「♥️今日份爱你」前缀不可断行，避免"你"字单独换行
+        document.getElementById('today-hero-text').innerHTML = wrapLovePrefix(letterText);
 
         // 主题词大字行：从"♥️ 今日份爱你 XXX"抽出 XXX，末两字做金色重音
         const themeEl = document.getElementById('today-hero-theme');
@@ -1175,7 +1176,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const letterText = item.loveLetter || item.description || '这是一个特别的日子，值得被永远铭记。';
-        detailLetter.innerHTML = escapeHtml(letterText).replace(/\n/g, '<br>');
+        // 「♥️今日份爱你」前缀不可断行，避免"你"字单独换行；保留原文换行
+        detailLetter.innerHTML = wrapLovePrefix(letterText).replace(/\n/g, '<br>');
 
         // 动态字号：文字少时放大
         detailLetter.classList.remove('text-xl', 'text-2xl');
@@ -1454,6 +1456,17 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    // 「♥️今日份爱你」前缀独占第一行，主题词换到下一行。
+    // 前缀本身 nowrap 防止"你"字被单独挤下；前缀后强制 <br> 让主题词另起一行。
+    // 若没有主题词（纯前缀），则不加 <br>。
+    function wrapLovePrefix(text) {
+        const match = String(text).match(/^(♥️\s*今日份爱你)([\s\S]*)$/);
+        if (!match) return escapeHtml(text);
+        const prefix = `<span class="love-prefix" style="white-space:nowrap">${escapeHtml(match[1])}</span>`;
+        const body = match[2].replace(/^\s+/, '');  // 去掉前缀与主体间的空格
+        return body ? `${prefix}<br>${escapeHtml(body)}` : prefix;
     }
 
     // ============================================================
