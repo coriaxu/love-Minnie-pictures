@@ -42,21 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const dot = document.getElementById('dot');
 
     if (torch && dot) {
-        let mouseX = window.innerWidth / 2;
-        let mouseY = window.innerHeight / 2;
-
-        const animateCursor = () => {
-            torch.style.left = `${mouseX}px`;
-            torch.style.top = `${mouseY}px`;
-            dot.style.left = `${mouseX}px`;
-            dot.style.top = `${mouseY}px`;
-            requestAnimationFrame(animateCursor);
+        const moveCursor = (x, y) => {
+            torch.style.left = `${x}px`;
+            torch.style.top = `${y}px`;
+            dot.style.left = `${x}px`;
+            dot.style.top = `${y}px`;
         };
-        animateCursor();
+        moveCursor(window.innerWidth / 2, window.innerHeight / 2);
 
         document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+            moveCursor(e.clientX, e.clientY);
         });
     }
 
@@ -749,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
         img.alt = getArtworkLabel(item);
         hero.setAttribute('aria-label', `查看今天的画：${getArtworkLabel(item)}`);
         if (img.complete) applyHeroOrientation();
-        hero.style.setProperty('--hero-bg', `url("images/${item.filename}")`);
+        hero.style.setProperty('--hero-bg', `url("${img.src}")`);
         const heroLetter = hero.querySelector('.today-hero-letter');
         if (heroLetter) heroLetter.dataset.day = String(getDayNumber(today));
         document.getElementById('today-hero-date').textContent =
@@ -1221,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         detailImage.alt = getArtworkLabel(item);
         // 弹窗信笺/图区的同图氛围底
         if (detailDialog) {
-            detailDialog.style.setProperty('--detail-bg', `url("images/${item.filename}")`);
+            detailDialog.style.setProperty('--detail-bg', `url("${detailImage.src}")`);
         }
         if (detailImage.complete) {
             updateDetailOrientation();

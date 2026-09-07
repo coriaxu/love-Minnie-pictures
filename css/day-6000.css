@@ -483,16 +483,6 @@ body.is-day-6000 .desktop-main-nav {
     gap: 18px;
 }
 
-.d6k-lang {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    color: #8B3A4F;
-    text-decoration: none;
-    cursor: pointer;
-}
-
 .d6k-letter-btn {
     width: 44px;
     height: 44px;
@@ -832,7 +822,7 @@ body.is-day-6000 .desktop-main-nav {
     .d6k-top-bar {
         padding: 0 16px;
     }
-    .d6k-top-left, .d6k-lang {
+    .d6k-top-left {
         font-size: 0.7rem;
         letter-spacing: 0.18em;
     }

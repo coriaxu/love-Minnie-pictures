@@ -1,13 +1,7 @@
 ---
-description: Deploy any code or text changes to the live site.
+description: 发布已获授权的页面或文案修改
 ---
 
-1. Check status and push changes
-// turbo
-git status
-// turbo
-git add .
-// turbo
-git commit -m "Update: General improvements and fixes 🛠️"
-// turbo
-git push
+按 [README 的本地预览与维护](../../README.md#本地预览与维护) 执行：确认当前任务的发布授权、检查变更、完成相关验证、按明确文件清单提交推送，再核验线上结果。
+
+已有相同范围的发布授权无需重复请示；只有本地编辑要求时，不自动推送。

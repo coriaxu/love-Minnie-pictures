@@ -1,15 +1,7 @@
 ---
-description: Force a "Hard Refresh" by updating version numbers in HTML files to fix display/cache issues.
+description: 定位页面显示问题并更新受影响资源的缓存版本
 ---
 
-1. Update the version timestamp for style.css in index.html and gallery.html to the current time to bust cache.
-// turbo
-sed -i '' "s/style.css?v=[0-9]*/style.css?v=$(date +%s)/g" index.html gallery.html
+先核对实际加载的文件与版本，定位显示问题；需要修改时，仅更新受影响资源及其引用版本。不要把所有显示问题都当成缓存问题。
 
-2. Deploy the "cache busted" version
-// turbo
-git add .
-// turbo
-git commit -m "Fix: Force style refresh (Cache Busting) 🧹"
-// turbo
-git push
+验证与发布方式见 [README 的本地预览与维护](../../README.md#本地预览与维护)。

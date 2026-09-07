@@ -1,5 +1,7 @@
 # ✨ Minnie's Moments (点滴) · 设计规范与功能说明
 
+> 状态：本文件保留为设计资料，当前不接入网站。重启前先准备真实内容并确认需求；旧点滴链接转到画廊。
+
 > **"Love is not just looking at each other, it's looking in the same direction."**
 > Moments 是关于生活碎片、美食、旅行和那些不经意间闪光的日常瞬间。
 

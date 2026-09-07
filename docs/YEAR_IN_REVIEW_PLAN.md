@@ -1,5 +1,7 @@
 # 🎁 Minnie 年度回顾 (Year in Review) · 产品与技术设计文档
 
+> 状态：本文件保留为设计资料，当前不接入网站，也不会按日期自动开启。重启前先完成选片、导出和页面验证。
+
 > **版本 (Version)**: 1.0.0
 > **代号 (Codename)**: The Masterpiece
 > **负责人 (Owner)**: 若谷 (Antigravity)

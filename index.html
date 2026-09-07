@@ -14,7 +14,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Pinyon+Script&family=Cinzel:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="css/day-6000.css?v=11.9">
+    <link rel="stylesheet" href="css/day-6000.css?v=12.0">
 
     <style>
         /* --- 核心设计：Vignelli 的骨架 + 玫瑰石英星云 (The Rose Quartz Nebula) --- */
@@ -553,30 +553,6 @@
             }
         }
 
-        /* 移动端快捷导航：桌面导航隐藏后，保证画廊/点滴仍可达 */
-        .mobile-quick-nav {
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .mobile-quick-nav {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                gap: 14px;
-                margin-top: 18px;
-                font-family: 'Inter', 'LXGW WenKai Screen', sans-serif;
-                font-size: 0.8rem;
-                letter-spacing: 0.3em;
-                color: rgba(255, 235, 240, 0.45);
-            }
-
-            .mobile-quick-nav a {
-                color: rgba(255, 235, 240, 0.85);
-                text-decoration: none;
-                padding: 6px 2px;
-            }
-        }
     </style>
 </head>
 
@@ -617,7 +593,6 @@
              <nav class="desktop-main-nav">
                 <a href="index.html" class="nav-link active">Home</a>
                 <a href="gallery.html" class="nav-link">Gallery</a>
-                <a href="moments.html" class="nav-link">Moments</a>
             </nav>
 
             <div class="counter-wrap">
@@ -643,11 +618,6 @@
                     <span class="btn-label" id="unwrap-btn">拆开第 6029 天</span>
                 </button>
             </div>
-            <nav class="mobile-quick-nav fade-in" aria-label="快捷导航">
-                <a href="gallery.html">画廊</a>
-                <span aria-hidden="true">·</span>
-                <a href="moments.html">点滴</a>
-            </nav>
         </footer>
 
     </div>
@@ -658,14 +628,10 @@
         const btn = document.querySelector('.btn-minimal');
         const body = document.querySelector('body');
 
-        let mouseX = window.innerWidth / 2;
-        let mouseY = window.innerHeight / 2;
-
         // ============================================================
         // 动态日期计算
         // ============================================================
         const RELATIONSHIP_START = new Date('2009-12-10T00:00:00');
-        const PROJECT_START = new Date('2026-01-01T00:00:00');
 
         function toUtcDay(date) {
             return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
@@ -680,19 +646,9 @@
             return Math.max(1, diffDays(RELATIONSHIP_START, today) + 1);
         }
 
-        function calculateProjectNo() {
-            const today = new Date();
-            if (toUtcDay(today) < toUtcDay(PROJECT_START)) {
-                return 1;
-            }
-            return Math.max(1, diffDays(PROJECT_START, today) + 1);
-        }
-
         // 更新页面上的动态数字
         const dayNum = calculateRelationshipDay();
-        const projectNo = calculateProjectNo();
         const dayStr = String(dayNum).padStart(3, '0');
-        const noStr = String(projectNo).padStart(3, '0');
 
         // "For My Wife" 现在是静态文字，不需要动态更新
         document.getElementById('day-counter').textContent = dayStr;
@@ -723,20 +679,17 @@
             });
         }
 
-        // 使用 rAF 优化光标跟随，增加一点点惯性延迟感
-        function animateCursor() {
-            // 这里可以加一点缓动逻辑，但 CSS transition 已经处理了大部分
-            torch.style.left = mouseX + 'px';
-            torch.style.top = mouseY + 'px';
-            dot.style.left = mouseX + 'px';
-            dot.style.top = mouseY + 'px';
-            requestAnimationFrame(animateCursor);
+        // 光标移动时更新位置，无需在静止时持续逐帧写入样式。
+        function moveCursor(x, y) {
+            torch.style.left = x + 'px';
+            torch.style.top = y + 'px';
+            dot.style.left = x + 'px';
+            dot.style.top = y + 'px';
         }
-        animateCursor();
+        moveCursor(window.innerWidth / 2, window.innerHeight / 2);
 
         document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+            moveCursor(e.clientX, e.clientY);
         });
 
         btn.addEventListener('mouseenter', () => {
@@ -781,7 +734,7 @@
             }, 2000);
         }
     </script>
-    <script src="js/day-6000.js?v=11.9"></script>
+    <script src="js/day-6000.js?v=12.0"></script>
     <script src="js/anniversary-effects.js?v=11.6"></script>
 </body>
 

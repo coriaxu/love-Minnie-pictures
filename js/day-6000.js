@@ -468,13 +468,12 @@
         glow.className = 'd6k-bg-overlay';
         overlay.appendChild(glow);
 
-        // 顶部条：FOR MY WIFE | EN ❤
+        // 顶部条：FOR MY WIFE | ❤
         const topBar = document.createElement('header');
         topBar.className = 'd6k-top-bar';
         topBar.innerHTML = `
             <span class="d6k-top-left">FOR MY WIFE</span>
             <div class="d6k-top-right">
-                <a class="d6k-lang" role="button">EN</a>
                 <button class="d6k-letter-btn" id="d6k-envelope"
                         aria-label="打开 6000 天情书"
                         type="button">♥</button>
@@ -505,7 +504,6 @@
             <nav class="d6k-nav">
                 <a href="index.html" class="d6k-nav-link is-active">HOME</a>
                 <a href="gallery.html" class="d6k-nav-link">GALLERY</a>
-                <a href="moments.html" class="d6k-nav-link">MOMENTS</a>
                 <span class="d6k-nav-icon">♥</span>
             </nav>
             <span class="d6k-deco-star s1">✦</span>
