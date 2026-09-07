@@ -230,6 +230,34 @@
     cursor: pointer;
 }
 
+.empty-feed {
+    position: relative;
+    z-index: 1;
+    margin: 12vh auto 0;
+    max-width: 28rem;
+    padding: 28px 24px;
+    text-align: center;
+    border: 1px solid var(--moment-card-border);
+    border-radius: 18px;
+    background: var(--moment-card-bg);
+}
+
+.empty-feed-title {
+    margin: 0 0 10px;
+    font-family: 'Bodoni Moda', serif;
+    font-size: 1.35rem;
+    letter-spacing: 0.08em;
+    color: var(--moment-text-primary);
+}
+
+.empty-feed-copy {
+    margin: 0;
+    font-family: var(--font-sans, Inter, sans-serif);
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: var(--moment-text-secondary);
+}
+
 /* Mobile Adjustments */
 @media (max-width: 600px) {
     .app-header .page-title {

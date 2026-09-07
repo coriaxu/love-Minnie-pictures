@@ -25,9 +25,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="css/style.css?v=9.8">
+    <link rel="stylesheet" href="css/style.css?v=9.10">
     <!-- Year in Review Poster -->
-    <link rel="stylesheet" href="css/year-review.css?v=9.1">
+    <link rel="stylesheet" href="css/year-review.css?v=9.2">
     <link rel="stylesheet" href="css/day-6000.css?v=11.9">
 </head>
 
@@ -183,7 +183,7 @@
                 <i class="fa-solid fa-timeline"></i>
                 <span>点滴</span>
             </a>
-            <button class="nav-item" id="nav-settings" aria-label="设置">
+            <button type="button" class="nav-item" id="nav-settings" aria-label="设置" aria-expanded="false" aria-controls="settings-sheet">
                 <i class="fa-solid fa-gear"></i>
                 <span>设置</span>
             </button>
@@ -195,10 +195,10 @@
 
     <!-- ===================== SETTINGS BOTTOM SHEET ===================== -->
     <!-- 设置面板：包含季节主题切换 -->
-    <div class="settings-sheet" id="settings-sheet">
+    <div class="settings-sheet" id="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="gallery-settings-title" aria-hidden="true">
         <div class="settings-handle"></div>
         <div class="settings-content">
-            <h3 class="settings-title">主题设置</h3>
+            <h3 class="settings-title" id="gallery-settings-title">主题设置</h3>
             <div class="settings-section">
                 <label class="settings-label">季节主题</label>
                 <div class="theme-options" id="mobile-theme-options">
@@ -255,12 +255,12 @@
 
     <!-- ===================== SCRIPTS ===================== -->
     <script src="js/data.js?v=19.9"></script>
-    <script src="js/script.js?v=10.8"></script>
+    <script src="js/script.js?v=10.9"></script>
     <script src="js/day-6000.js?v=11.9"></script>
     <!-- Anniversary Effects Engine -->
     <script src="js/anniversary-effects.js?v=11.6"></script>
     <!-- Year in Review Poster Generator -->
-    <script src="js/year-review.js?v=9.1"></script>
+    <script src="js/year-review.js?v=9.2"></script>
 </body>
 
 </html>

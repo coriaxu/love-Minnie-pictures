@@ -51,6 +51,8 @@
         btn.id = 'year-review-btn';
         btn.innerHTML = '🎁';
         btn.setAttribute('aria-label', 'Open Year in Review');
+        btn.setAttribute('aria-hidden', 'true');
+        btn.tabIndex = -1;
         btn.addEventListener('click', openModal);
         document.body.appendChild(btn);
 
@@ -77,7 +79,12 @@
             // Small delay for animation effect
             setTimeout(() => {
                 btn.classList.add('visible');
+                btn.removeAttribute('aria-hidden');
+                btn.tabIndex = 0;
             }, 1000);
+        } else {
+            btn.setAttribute('aria-hidden', 'true');
+            btn.tabIndex = -1;
         }
     }
 

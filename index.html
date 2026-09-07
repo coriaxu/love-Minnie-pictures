@@ -19,6 +19,15 @@
     <style>
         /* --- 核心设计：Vignelli 的骨架 + 玫瑰石英星云 (The Rose Quartz Nebula) --- */
 
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
         :root {
             /* 背景 (Midnight Rose)：午夜玫瑰 - 深邃紫罗兰夜空 */
             --bg-color: #1a0b2a;
@@ -41,9 +50,7 @@
             background-color: var(--bg-color);
             font-family: 'Inter', sans-serif;
             color: white;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
+            min-height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -54,7 +61,7 @@
         /* --- 1. 氛围光场 (The Romantic Nebula) --- */
         /* 这是一团绚烂、暧昧、流动的能量 */
         .ambient-light {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -93,7 +100,7 @@
 
         /* 噪点层：天鹅绒质感 */
         .noise-overlay {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;

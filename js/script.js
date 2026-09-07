@@ -464,6 +464,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         const isModalOpen = detailModal && detailModal.classList.contains('open');
         if (isModalOpen) {
+            if (e.key === 'Tab') {
+                trapDetailFocus(e);
+                return;
+            }
             if (e.key === 'Escape') {
                 closeDetail();
                 return;
@@ -550,10 +554,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isSelected) cell.classList.add('selected');
             if (isToday) cell.classList.add('today');
 
+            const monthLabelNum = month + 1;
             if (isFuture) {
-                cell.innerHTML = '<span class="seed-icon"><img src="images/sunflower.svg" class="sunflower-icon" alt="🌻"></span>';
+                cell.innerHTML =
+                    `<span class="day-num">${day}</span>` +
+                    '<span class="seed-icon" aria-hidden="true"><img src="images/sunflower.svg" class="sunflower-icon" alt=""></span>';
+                cell.setAttribute('aria-label', `${monthLabelNum}月${day}日，尚未上画`);
             } else {
-                cell.textContent = day;
+                cell.innerHTML = `<span class="day-num">${day}</span>`;
+                cell.setAttribute(
+                    'aria-label',
+                    hasContent ? `${monthLabelNum}月${day}日，有画作` : `${monthLabelNum}月${day}日`
+                );
             }
 
             cell.addEventListener('click', () => {
@@ -591,6 +603,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        const selectedKey = formatDateISO(selectedDate);
+        const selectedIndex = allItems.findIndex(item => item.date === selectedKey);
+
         allItems.forEach((item, index) => {
             const thumb = document.createElement('div');
             thumb.className = 'timeline-thumb';
@@ -598,12 +613,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (item.isFuture) {
                 thumb.classList.add('future');
-                thumb.innerHTML = '<img src="images/sunflower.svg" class="sunflower-icon" alt="🌻">';
+                thumb.innerHTML = '<img src="images/sunflower.svg" class="sunflower-icon" alt="尚未上画">';
             } else {
                 const img = document.createElement('img');
                 img.src = `images/${item.filename}`;
-                img.alt = item.title || 'Artwork';
-                img.loading = 'lazy';
+                img.alt = getArtworkLabel(item);
+                img.decoding = 'async';
+                img.loading = Math.abs(index - Math.max(selectedIndex, 0)) <= 24 ? 'eager' : 'lazy';
+                img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
+                img.addEventListener('error', () => thumb.classList.add('is-error'));
+                if (img.complete && img.naturalWidth) img.classList.add('is-loaded');
                 thumb.appendChild(img);
 
                 // 日期角标（"6.12"），比序号更直观
@@ -727,7 +746,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         img.onload = applyHeroOrientation;
         img.src = `images/${item.filename}`;
-        img.alt = item.title || '今日画作';
+        img.alt = getArtworkLabel(item);
+        hero.setAttribute('aria-label', `查看今天的画：${getArtworkLabel(item)}`);
         if (img.complete) applyHeroOrientation();
         hero.style.setProperty('--hero-bg', `url("images/${item.filename}")`);
         const heroLetter = hero.querySelector('.today-hero-letter');
@@ -838,14 +858,14 @@ document.addEventListener('DOMContentLoaded', () => {
         card.dataset.index = index;
         card.setAttribute('tabindex', '0');
         card.setAttribute('role', 'button');
-        card.setAttribute('aria-label', item.title || 'Artwork');
+        card.setAttribute('aria-label', getArtworkLabel(item));
 
         const media = document.createElement('div');
         media.className = 'gallery-media';
 
         const img = document.createElement('img');
         img.src = `images/${item.filename}`;
-        img.alt = item.title || 'Artwork';
+        img.alt = getArtworkLabel(item);
         img.loading = 'lazy';
         img.decoding = 'async';
 
@@ -1132,6 +1152,53 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     // Detail Modal
     // ============================================================
+    let lastDetailFocus = null;
+
+    function getDetailFocusable() {
+        if (!detailModal) return [];
+        const dialog = detailModal.querySelector('.detail-dialog') || detailModal;
+        return [...dialog.querySelectorAll(
+            'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )].filter(el => el.getAttribute('aria-hidden') !== 'true');
+    }
+
+    function setBackgroundInert(isInert) {
+        if (!detailModal) return;
+        [...document.body.children].forEach(el => {
+            if (el === detailModal) return;
+            // 影院模式仍允许底栏时间轴点选换画
+            if (el.classList.contains('timeline-strip')) return;
+            if (isInert) el.setAttribute('inert', '');
+            else el.removeAttribute('inert');
+        });
+    }
+
+    function trapDetailFocus(e) {
+        const focusable = getDetailFocusable();
+        if (!focusable.length) {
+            e.preventDefault();
+            detailClose?.focus();
+            return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        const inside = detailModal.contains(active);
+
+        if (focusable.length === 1 || !inside) {
+            e.preventDefault();
+            first.focus();
+            return;
+        }
+        if (e.shiftKey && active === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && active === last) {
+            e.preventDefault();
+            first.focus();
+        }
+    }
+
     function openDetail(item) {
         if (!item || !detailModal) return;
 
@@ -1151,7 +1218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 先绑定 onload，再切换 src，避免缓存图片时错过方向识别
         detailImage.onload = updateDetailOrientation;
         detailImage.src = `images/${item.filename}`;
-        detailImage.alt = item.title || 'Artwork detail';
+        detailImage.alt = getArtworkLabel(item);
         // 弹窗信笺/图区的同图氛围底
         if (detailDialog) {
             detailDialog.style.setProperty('--detail-bg', `url("images/${item.filename}")`);
@@ -1190,6 +1257,10 @@ document.addEventListener('DOMContentLoaded', () => {
         detailModal.classList.add('open');
         detailModal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
+        if (!lastDetailFocus) {
+            lastDetailFocus = document.activeElement;
+        }
+        setBackgroundInert(true);
         if (detailClose) {
             detailClose.focus();
         }
@@ -1225,6 +1296,12 @@ document.addEventListener('DOMContentLoaded', () => {
         detailModal.classList.remove('open');
         detailModal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
+        setBackgroundInert(false);
+        const restore = lastDetailFocus;
+        lastDetailFocus = null;
+        if (restore && typeof restore.focus === 'function' && document.contains(restore)) {
+            restore.focus();
+        }
     }
 
     // ============================================================
@@ -1366,6 +1443,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}年${month}月${day}日`;
     }
 
+    function getArtworkThemeText(item) {
+        const raw = String(item.loveLetter || item.title || item.description || '');
+        const match = raw.match(/今日份爱你[,，、\s]*(.+)$/);
+        if (match) return match[1].trim();
+        return raw.replace(/^♥️\s*/, '').trim();
+    }
+
+    function getArtworkLabel(item) {
+        const dateObj = item.dateObj instanceof Date ? item.dateObj : new Date(item.date);
+        const dateLabel = formatDateDisplayZh(dateObj);
+        const theme = getArtworkThemeText(item);
+        return theme ? `${dateLabel}，${theme}` : dateLabel;
+    }
+
     function formatDateDisplayEn(date) {
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     }
@@ -1488,6 +1579,8 @@ document.addEventListener('DOMContentLoaded', () => {
         calendarOverlay?.classList.remove('show');
         settingsSheet?.classList.remove('open');
         settingsOverlay?.classList.remove('show');
+        settingsSheet?.setAttribute('aria-hidden', 'true');
+        navSettings?.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = '';
         updateNavActiveState('gallery');
     };
@@ -1520,6 +1613,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 先关闭设置面板
         settingsSheet?.classList.remove('open');
         settingsOverlay?.classList.remove('show');
+        settingsSheet?.setAttribute('aria-hidden', 'true');
+        navSettings?.setAttribute('aria-expanded', 'false');
         
         if (isOpen) {
             calendarSidebar?.classList.remove('open');
@@ -1545,11 +1640,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isOpen) {
             settingsSheet?.classList.remove('open');
             settingsOverlay?.classList.remove('show');
+            settingsSheet?.setAttribute('aria-hidden', 'true');
+            navSettings?.setAttribute('aria-expanded', 'false');
             document.body.style.overflow = '';
             updateNavActiveState('gallery');
         } else {
             settingsSheet?.classList.add('open');
             settingsOverlay?.classList.add('show');
+            settingsSheet?.setAttribute('aria-hidden', 'false');
+            navSettings?.setAttribute('aria-expanded', 'true');
             document.body.style.overflow = 'hidden';
             updateNavActiveState('settings');
             // 更新主题选项的激活状态
@@ -1569,6 +1668,8 @@ document.addEventListener('DOMContentLoaded', () => {
     settingsOverlay?.addEventListener('click', () => {
         settingsSheet?.classList.remove('open');
         settingsOverlay?.classList.remove('show');
+        settingsSheet?.setAttribute('aria-hidden', 'true');
+        navSettings?.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = '';
         updateNavActiveState('gallery');
     });
@@ -1591,6 +1692,8 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 settingsSheet?.classList.remove('open');
                 settingsOverlay?.classList.remove('show');
+                settingsSheet?.setAttribute('aria-hidden', 'true');
+                navSettings?.setAttribute('aria-expanded', 'false');
                 document.body.style.overflow = '';
                 updateNavActiveState('gallery');
             }, 300);
@@ -1600,6 +1703,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 同步桌面端主题切换按钮的事件到移动端
     themeButtons.forEach(btn => {
         btn.addEventListener('click', updateMobileThemeButtons);
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || !settingsSheet?.classList.contains('open')) return;
+        if (detailModal?.classList.contains('open')) return;
+        settingsSheet.classList.remove('open');
+        settingsOverlay?.classList.remove('show');
+        settingsSheet.setAttribute('aria-hidden', 'true');
+        navSettings?.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+        updateNavActiveState('gallery');
+        navSettings?.focus();
     });
 
     // 移动端：重写日历切换按钮行为（Header 右侧的日历图标）

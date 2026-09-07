@@ -29,12 +29,14 @@
     /* Hidden by default, shown only on Dec 31 or dev mode */
     opacity: 0;
     pointer-events: none;
+    visibility: hidden;
     transform: scale(0);
 }
 
 .year-review-trigger.visible {
     opacity: 1;
     pointer-events: auto;
+    visibility: visible;
     transform: scale(1);
 }
 

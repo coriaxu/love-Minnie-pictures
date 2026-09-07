@@ -23,9 +23,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Global Styles -->
-    <link rel="stylesheet" href="css/style.css?v=9.8">
+    <link rel="stylesheet" href="css/style.css?v=9.10">
     <!-- Moments Specific Styles -->
-    <link rel="stylesheet" href="css/moments.css?v=9.1">
+    <link rel="stylesheet" href="css/moments.css?v=9.2">
     <link rel="stylesheet" href="css/day-6000.css?v=11.9">
 </head>
 
@@ -57,7 +57,12 @@
         </nav>
 
         <div class="header-actions">
-           <!-- Theme toggle could go here -->
+            <div class="theme-toggle" role="group" aria-label="季节主题">
+                <button type="button" class="theme-btn" data-theme="spring" aria-label="春日主题">春</button>
+                <button type="button" class="theme-btn" data-theme="summer" aria-label="夏日主题">夏</button>
+                <button type="button" class="theme-btn" data-theme="autumn" aria-label="秋日主题">秋</button>
+                <button type="button" class="theme-btn" data-theme="winter" aria-label="冬日主题">冬</button>
+            </div>
         </div>
     </header>
 
@@ -100,12 +105,41 @@
                 <i class="fa-solid fa-timeline"></i>
                 <span>点滴</span>
             </a>
-            <button class="nav-item" id="nav-settings" aria-label="设置">
+            <button type="button" class="nav-item" id="nav-settings" aria-label="设置" aria-expanded="false" aria-controls="settings-sheet">
                 <i class="fa-solid fa-gear"></i>
                 <span>设置</span>
             </button>
         </div>
     </nav>
+
+    <div class="settings-sheet" id="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="moments-settings-title" aria-hidden="true">
+        <div class="settings-handle"></div>
+        <div class="settings-content">
+            <h3 class="settings-title" id="moments-settings-title">主题设置</h3>
+            <div class="settings-section">
+                <label class="settings-label">季节主题</label>
+                <div class="theme-options" id="mobile-theme-options">
+                    <button type="button" class="theme-option" data-theme="spring">
+                        <span class="theme-icon">🌸</span>
+                        <span class="theme-name">春</span>
+                    </button>
+                    <button type="button" class="theme-option" data-theme="summer">
+                        <span class="theme-icon">🌿</span>
+                        <span class="theme-name">夏</span>
+                    </button>
+                    <button type="button" class="theme-option" data-theme="autumn">
+                        <span class="theme-icon">🍂</span>
+                        <span class="theme-name">秋</span>
+                    </button>
+                    <button type="button" class="theme-option" data-theme="winter">
+                        <span class="theme-icon">❄️</span>
+                        <span class="theme-name">冬</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="settings-overlay" id="settings-overlay"></div>
 
     <!-- ===================== LIGHTBOX (Simple Overlay) ===================== -->
     <div id="lightbox" class="lightbox" aria-hidden="true">
@@ -119,7 +153,7 @@
 
     <!-- ===================== SCRIPTS ===================== -->
     <script src="js/moments_data.js?v=9.1"></script>
-    <script src="js/moments.js?v=9.1"></script>
+    <script src="js/moments.js?v=9.2"></script>
     <script src="js/day-6000.js?v=11.9"></script>
     <script src="js/anniversary-effects.js?v=11.6"></script>
     <!-- Reusing cursor logic if possible, or simple cursor shim in moments.js -->
