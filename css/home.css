@@ -1,0 +1,380 @@
+/* ============================================================
+   首页 · 月洞窗与向日葵星盘（2026-09 改版）
+
+   - 夜空紫做底，全年不变；画作只出现在中间的圆窗里。
+   - 星盘：在一起的每一天是一颗点，按黄金角排成向日葵花盘；
+     离窗最近的是今天，越往外越早；有画信的日子是一圈玫瑰色。
+   - 字体只用霞鹜文楷一种，靠字号和颜色分层：金色给时间和数字，玫瑰色给"爱"。
+   ============================================================ */
+
+:root {
+    --ink-0: #0e0817;
+    --ink-1: #150d21;
+    --paper: #f6ede4;
+    --paper-2: rgba(246, 237, 228, 0.68);
+    --paper-3: rgba(246, 237, 228, 0.4);
+    --gold: #ecd09a;
+    --gold-2: rgba(236, 208, 154, 0.6);
+    --gold-3: rgba(236, 208, 154, 0.24);
+    --font: 'LXGW WenKai Screen', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    /* 星盘直径：手机按屏宽，桌面按屏高 */
+    --disc: clamp(232px, min(90vw, 53svh), 600px);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body.home-page {
+    min-height: 100svh;
+    background: radial-gradient(120% 80% at 50% 36%, #26173a 0%, #170e25 50%, var(--ink-0) 100%) fixed;
+    background-color: var(--ink-1);
+    color: var(--paper);
+    font-family: var(--font);
+    font-weight: 400;
+    font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    /* 正常一屏放得下；系统字号调得很大时仍可以上下滑 */
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* 拆开时月洞窗放大到铺满屏幕，这段时间不出滚动条 */
+body.home-page.is-opening {
+    overflow: hidden;
+}
+
+/* 不可拆的文字单元（见 js/typeset.js） */
+.ts-u {
+    white-space: nowrap;
+}
+
+.home-sky {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.home {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    padding:
+        max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
+/* ---------------- 顶栏 ---------------- */
+.home-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    opacity: 0;
+    transition: opacity 0.9s ease;
+}
+
+.home-mark {
+    font-size: 1.02rem;
+    letter-spacing: 0.08em;
+    color: var(--gold-2);
+    white-space: nowrap;
+}
+
+.home-archive {
+    font: inherit;
+    font-size: 0.84rem;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    color: var(--paper-2);
+    background: transparent;
+    border: 1px solid var(--gold-3);
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.home-archive:hover,
+.home-archive:focus-visible {
+    color: var(--gold);
+    border-color: var(--gold-2);
+    background: rgba(236, 208, 154, 0.06);
+    outline: none;
+}
+
+.home-archive[hidden] {
+    display: none;
+}
+
+/* ---------------- 主体 ---------------- */
+.home-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(18px, 4.2svh, 44px);
+    padding: 8px 0 4px;
+}
+
+.home-disc {
+    position: relative;
+    width: var(--disc);
+    height: var(--disc);
+    flex: none;
+}
+
+.home-disc-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+/* 月洞窗 */
+.home-moon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44%;
+    height: 44%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    overflow: hidden;
+    display: block;
+    /* 画还没来时，窗里是一轮暖色满月 */
+    background: radial-gradient(circle at 42% 38%, #fff8e7 0%, #f6e4bf 36%, #dcc091 70%, #b99670 100%);
+    box-shadow:
+        0 0 0 1px rgba(236, 208, 154, 0.42),
+        0 0 44px rgba(236, 208, 154, 0.2),
+        0 0 140px rgba(236, 208, 154, 0.08);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.68s cubic-bezier(0.65, 0, 0.35, 1), box-shadow 0.6s ease;
+    will-change: transform;
+    isolation: isolate;
+}
+
+.home-moon-art {
+    position: absolute;
+    inset: -8%;
+    background-image: var(--art, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(var(--moon-blur, 6px)) saturate(1.06) brightness(0.9);
+    opacity: 0;
+    transition: opacity 1.4s ease, filter 0.6s ease, transform 0.6s ease;
+}
+
+.home-moon.has-art .home-moon-art {
+    opacity: 1;
+}
+
+/* 窗纸：中心透一点光，四周略暗，再叠一层极淡的纸纹 */
+.home-moon-paper {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(255, 250, 240, 0.12) 0%, rgba(255, 250, 240, 0) 56%, rgba(14, 8, 23, 0.3) 100%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.35'/%3E%3C/svg%3E");
+    background-size: cover, 160px 160px;
+    mix-blend-mode: soft-light;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 248, 230, 0.18),
+        inset 0 0 38px rgba(14, 8, 23, 0.42);
+    transition: opacity 0.6s ease;
+}
+
+.home-moon:hover .home-moon-art,
+.home-moon:focus-visible .home-moon-art {
+    filter: blur(calc(var(--moon-blur, 6px) * 0.45)) saturate(1.06) brightness(0.96);
+    transform: scale(0.985);
+}
+
+.home-moon:hover,
+.home-moon:focus-visible {
+    box-shadow:
+        0 0 0 1px rgba(236, 208, 154, 0.7),
+        0 0 56px rgba(236, 208, 154, 0.3),
+        0 0 160px rgba(236, 208, 154, 0.1);
+    outline: none;
+}
+
+/* ---------------- 文字 ---------------- */
+.home-words {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    max-width: 36em;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.home-greet {
+    font-weight: 400;
+    font-size: clamp(1.38rem, 5.4vw, 2.3rem);
+    line-height: 1.45;
+    letter-spacing: 0.04em;
+    text-wrap: balance;
+}
+
+.home-status {
+    transition: opacity 0.6s ease;
+}
+
+.home-status.is-pending {
+    opacity: 0;
+}
+
+.home-meta {
+    font-size: clamp(0.84rem, 3.5vw, 1rem);
+    line-height: 1.8;
+    letter-spacing: 0.06em;
+    color: var(--paper-2);
+    text-wrap: balance;
+}
+
+.home-meta .ts-sep {
+    color: var(--paper-3);
+}
+
+.home-meta .num {
+    color: var(--gold);
+}
+
+.home-cta {
+    margin-top: 10px;
+    display: inline-block;
+    padding: 13px 32px;
+    border-radius: 999px;
+    border: 1px solid var(--gold-2);
+    background: rgba(236, 208, 154, 0.06);
+    color: var(--gold);
+    font-size: 1.02rem;
+    letter-spacing: 0.18em;
+    text-decoration: none;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+
+.home-cta:hover,
+.home-cta:focus-visible {
+    background: rgba(236, 208, 154, 0.14);
+    border-color: var(--gold);
+    outline: none;
+}
+
+.home-cta:active {
+    transform: scale(0.98);
+}
+
+.home-noscript {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 40px;
+    text-align: center;
+    z-index: 2;
+}
+
+.home-noscript a {
+    color: var(--gold);
+}
+
+/* ---------------- 入场与拆开 ---------------- */
+body.is-ready .home-top,
+body.is-ready .home-words {
+    opacity: 1;
+    transform: none;
+}
+
+body.is-opening .home-top,
+body.is-opening .home-words {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+body.is-opening .home-sky,
+body.is-opening .home-disc-canvas {
+    opacity: 0;
+}
+
+body.is-opening .home-moon {
+    box-shadow: none;
+}
+
+body.is-opening .home-moon-art {
+    filter: blur(0) saturate(1) brightness(1);
+    opacity: 1;
+}
+
+body.is-opening .home-moon-paper {
+    opacity: 0;
+}
+
+/* ---------------- 横屏手机：星盘在左，文字在右 ---------------- */
+@media (orientation: landscape) and (max-height: 540px) {
+    :root {
+        --disc: min(76svh, 44vw);
+    }
+
+    .home-main {
+        flex-direction: row;
+        gap: 6vw;
+    }
+
+    .home-words {
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+
+/* ---------------- 桌面：更从容的留白 ---------------- */
+@media (min-width: 900px) {
+    .home {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
+    .home-top {
+        min-height: 52px;
+    }
+
+    .home-words {
+        gap: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}

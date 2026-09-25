@@ -9,6 +9,50 @@
  */
 
 /* ============================================================
+   纪念页专用字体：本地文件，只在纪念页用到时才下载
+   （手机不挂 VPN 时 Google Fonts 打不开，所以不再走外链）
+   ============================================================ */
+@font-face {
+    font-family: 'Bodoni Moda';
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url('../fonts/memorial/bodoni-moda-latin-wght-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('../fonts/memorial/inter-latin-wght-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url('../fonts/memorial/playfair-display-latin-wght-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Cinzel';
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url('../fonts/memorial/cinzel-latin-wght-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Pinyon Script';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/memorial/pinyon-script-latin-400-normal.woff2') format('woff2');
+}
+
+/* ============================================================
    色彩变量（与 docs/ANNIVERSARY_EFFECTS.md 同步）
    ============================================================ */
 :root {
@@ -51,9 +95,21 @@ body.d6k-active {
 }
 
 /* stage1 期间额外隐藏主页主内容（只在 stage1 这段窗口） */
-body.d6k-stage1-only .grid-container {
+body.d6k-stage1-only .grid-container,
+body.d6k-stage1-only .home {
     opacity: 0 !important;
     transition: opacity 1.4s ease;
+    pointer-events: none;
+}
+
+/* 新首页（2026-09 改版）的星盘画布与正文，纪念页播放时整体让位 */
+body.d6k-active .home-sky {
+    display: none !important;
+}
+
+body.is-day-6000 .home {
+    opacity: 0 !important;
+    visibility: hidden !important;
     pointer-events: none;
 }
 

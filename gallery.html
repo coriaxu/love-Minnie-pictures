@@ -3,84 +3,76 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minnie's 2026 · Garden of Memories</title>
-
-    <!-- Google Fonts: Bodoni Moda + Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,900;1,6..96,400&family=Inter:wght@300;400;600&display=swap"
-        rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Pinyon+Script&family=Cinzel:wght@400;700;900&display=swap"
-        rel="stylesheet">
-    <!-- 毛笔书法体：今日卡竖版大字 -->
-    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
-    <!-- LXGW WenKai (Handwritten Style) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#150d21">
+    <title>Love Minnie · 画信</title>
     <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 字体全部本地托管：手机不挂 VPN 也能打开 -->
+    <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
 
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="css/style.css?v=9.10">
-    <link rel="stylesheet" href="css/day-6000.css?v=12.0">
+    <link rel="stylesheet" href="css/style.css?v=10.0">
+    <link rel="stylesheet" href="css/day-6000.css?v=12.1">
 </head>
 
 <body>
+
+    <!-- 线条图标（替代 Font Awesome，免外链） -->
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+        <symbol id="i-prev" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" /></symbol>
+        <symbol id="i-next" viewBox="0 0 24 24"><path d="M9.5 5.5 16 12l-6.5 6.5" /></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.8" y="5.2" width="16.4" height="14.6" rx="2.6" /><path d="M3.8 10h16.4M8.2 3.4v3.6M15.8 3.4v3.6" /></symbol>
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M4.5 10.6 12 4.5l7.5 6.1v8.1a1.3 1.3 0 0 1-1.3 1.3H14.6v-5.4H9.4V20H5.8a1.3 1.3 0 0 1-1.3-1.3z" /></symbol>
+        <symbol id="i-gallery" viewBox="0 0 24 24"><rect x="3.8" y="4.8" width="16.4" height="14.4" rx="2.6" /><circle cx="9" cy="9.8" r="1.5" /><path d="m4.4 16.8 4.4-4.1 3.3 3 2.6-2.3 5.1 4.6" /></symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4.5 7.5h8.8M18.3 7.5h1.2M4.5 16.5h2.2M11.7 16.5h7.8" /><circle cx="15.8" cy="7.5" r="2.3" /><circle cx="9.2" cy="16.5" r="2.3" /></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 3.6 13.7 9 19 10.7l-5.3 1.7L12 17.8l-1.7-5.4L5 10.7 10.3 9z" /></symbol>
+        <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 20.4 10.8 19.3C6.2 15.2 3.4 12.6 3.4 9.4 3.4 6.8 5.4 4.9 8 4.9c1.5 0 2.9.7 4 1.9 1.1-1.2 2.5-1.9 4-1.9 2.6 0 4.6 1.9 4.6 4.5 0 3.2-2.8 5.8-7.4 9.9z" /></symbol>
+        <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24"><path d="M5 19l1-4.2 9.6-9.6a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L9.2 18z" /></symbol>
+    </svg>
 
     <!-- 氛围光场 (The Rose Nebula) -->
     <div class="ambient-light"></div>
     <div class="noise-overlay"></div>
 
-    <!-- SVG 滤镜：今日卡金色笔刷的毛边质感 -->
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-        <filter id="brush-rough" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="3" seed="7" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="46" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-    </svg>
-
     <!-- 动态模糊背景 (From Artwork) -->
     <div class="bg-blur" id="bg-blur"></div>
 
     <!-- 日期胶囊 (Date Anchor) -->
-    <div class="date-capsule" id="date-capsule">Day 1 · Jan 1</div>
+    <div class="date-capsule" id="date-capsule"></div>
 
-    <!-- 光标 -->
+    <!-- 鼠标光晕（仅桌面） -->
     <div class="cursor-torch" id="torch"></div>
-    <div class="cursor-dot" id="dot"></div>
 
     <!-- ===================== HEADER ===================== -->
     <header class="app-header">
-        <h1 class="logo">Love Minnie</h1>
+        <h1 class="logo"><a href="index.html" class="logo-link" aria-label="回首页">Love Minnie</a></h1>
         <nav class="month-nav">
-            <button id="prev-month" class="nav-btn" aria-label="Previous Month">
-                <i class="fa-solid fa-chevron-left"></i>
+            <button id="prev-month" class="nav-btn" aria-label="上个月">
+                <svg class="icon" aria-hidden="true"><use href="#i-prev" /></svg>
             </button>
-            <span id="current-month-label" class="month-label">January 2026</span>
-            <button id="next-month" class="nav-btn" aria-label="Next Month">
-                <i class="fa-solid fa-chevron-right"></i>
+            <span id="current-month-label" class="month-label"></span>
+            <button id="next-month" class="nav-btn" aria-label="下个月">
+                <svg class="icon" aria-hidden="true"><use href="#i-next" /></svg>
             </button>
         </nav>
-        
+
         <!-- Desktop Nav -->
         <nav class="desktop-nav">
-            <a href="index.html" class="nav-link">Home</a>
-            <a href="gallery.html" class="nav-link active">Gallery</a>
+            <a href="index.html" class="nav-link">首页</a>
+            <a href="gallery.html" class="nav-link active">画廊</a>
         </nav>
 
         <div class="header-actions">
-            <div class="theme-toggle" role="group" aria-label="Season themes">
-                <button type="button" class="theme-btn" data-theme="spring" aria-label="Spring theme">春</button>
-                <button type="button" class="theme-btn" data-theme="summer" aria-label="Summer theme">夏</button>
-                <button type="button" class="theme-btn" data-theme="autumn" aria-label="Autumn theme">秋</button>
-                <button type="button" class="theme-btn" data-theme="winter" aria-label="Winter theme">冬</button>
+            <div class="theme-toggle" role="group" aria-label="季节主题">
+                <button type="button" class="theme-btn" data-theme="spring" aria-label="春季主题">春</button>
+                <button type="button" class="theme-btn" data-theme="summer" aria-label="夏季主题">夏</button>
+                <button type="button" class="theme-btn" data-theme="autumn" aria-label="秋季主题">秋</button>
+                <button type="button" class="theme-btn" data-theme="winter" aria-label="冬季主题">冬</button>
             </div>
-            <button id="toggle-calendar" class="mobile-calendar-btn" aria-label="Toggle Calendar">
-                <i class="fa-solid fa-calendar-days"></i>
+            <button id="toggle-calendar" class="mobile-calendar-btn" aria-label="日历">
+                <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
             </button>
         </div>
     </header>
@@ -89,10 +81,10 @@
     <main class="app-container">
 
         <!-- === Calendar Sidebar === -->
-        <aside id="calendar-sidebar" class="calendar-sidebar open">
+        <aside id="calendar-sidebar" class="calendar-sidebar">
             <div class="calendar-grid">
                 <div class="weekday-header">
-                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
                 </div>
                 <div id="calendar-days" class="days-grid">
                     <!-- Dynamically generated -->
@@ -102,42 +94,37 @@
             <div class="sidebar-extras">
                 <p class="month-digest" id="month-digest"></p>
                 <button type="button" id="memory-lane-btn" class="memory-lane-btn">
-                    <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                    <svg class="icon" aria-hidden="true"><use href="#i-sparkle" /></svg>
                     <span>随机重温一封</span>
                 </button>
             </div>
             <div class="calendar-legend">
-                <span><i class="fa-solid fa-circle" style="color: var(--love-core);"></i> Has artwork</span>
-                <span><img src="images/sunflower.svg" class="sunflower-icon" alt="🌻"> Coming soon</span>
+                <span><span class="legend-heart" aria-hidden="true"></span>有画信</span>
+                <span><img src="images/sunflower.svg" class="sunflower-icon" alt="">还没到</span>
             </div>
         </aside>
 
         <!-- === Content Area === -->
         <section class="content-area">
-            <!-- 今日情书 Hero：当前查看月份包含今天时置顶呈现 -->
+            <!-- 今日画信：画在左、信在右（手机上画在上、信在下）；横图竖图同一套版式，只按画的比例分配空间 -->
             <section id="today-hero" class="today-hero" hidden role="button" tabindex="0" aria-label="查看今天的画">
-                <div class="today-hero-media">
-                    <img id="today-hero-img" src="" alt="今日画作">
+                <div class="hero-art">
+                    <img id="today-hero-img" src="" alt="今日画作" fetchpriority="high">
                 </div>
-                <div class="today-hero-letter">
-                    <p class="today-hero-eyebrow">For My Wife · 致熊老婆</p>
-                    <h2 class="today-hero-date" id="today-hero-date"></h2>
-                    <p class="today-hero-theme" id="today-hero-theme" hidden></p>
-                    <div class="today-hero-rule" aria-hidden="true"></div>
-                    <p class="today-hero-days" id="today-hero-days"></p>
-                    <div class="today-hero-rule today-hero-rule-b" aria-hidden="true"></div>
-                    <div class="today-hero-divider" aria-hidden="true"></div>
-                    <p class="today-hero-text" id="today-hero-text"></p>
-                    <p class="today-hero-sign"><span class="sign-dash" aria-hidden="true"></span>Love<span
-                            class="sign-dash" aria-hidden="true"></span></p>
-                    <span class="today-hero-hint" aria-hidden="true">点开重温 →</span>
+                <div class="hero-letter">
+                    <p class="hero-date" id="today-hero-date"></p>
+                    <h2 class="hero-title" id="today-hero-title"></h2>
+                    <span class="hero-rule" aria-hidden="true"></span>
+                    <p class="hero-sign" id="today-hero-sign"></p>
+                    <p class="hero-days" id="today-hero-days"></p>
+                    <p class="hero-note" id="today-hero-note" hidden></p>
                 </div>
             </section>
             <div id="gallery-grid" class="gallery-grid" aria-live="polite"></div>
 
             <!-- Empty State (for future days) -->
             <article id="empty-state" class="empty-state" style="display: none;">
-                <img src="images/sunflower.svg" class="sunflower-icon" alt="Waiting">
+                <img src="images/sunflower.svg" class="sunflower-icon" alt="">
                 <h2 class="empty-title" id="empty-title">花期未至</h2>
                 <p class="empty-text empty-cn" id="empty-date-text"></p>
                 <p class="empty-text empty-en" id="empty-subtext"></p>
@@ -147,36 +134,35 @@
     </main>
 
     <!-- ===================== TIMELINE STRIP ===================== -->
-    <nav class="timeline-strip">
-        <button id="timeline-prev" class="timeline-nav-btn">
-            <i class="fa-solid fa-angle-left"></i>
+    <nav class="timeline-strip" aria-label="按日期浏览">
+        <button id="timeline-prev" class="timeline-nav-btn" aria-label="往前">
+            <svg class="icon" aria-hidden="true"><use href="#i-prev" /></svg>
         </button>
         <div id="timeline-container" class="timeline-container">
             <!-- Thumbnails injected here -->
         </div>
-        <button id="timeline-next" class="timeline-nav-btn">
-            <i class="fa-solid fa-angle-right"></i>
+        <button id="timeline-next" class="timeline-nav-btn" aria-label="往后">
+            <svg class="icon" aria-hidden="true"><use href="#i-next" /></svg>
         </button>
     </nav>
 
     <!-- ===================== MOBILE BOTTOM NAVIGATION ===================== -->
-    <!-- 方案 A：极简沉浸派 - 仅在 600px 以下显示 -->
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
         <div class="nav-items">
             <button class="nav-item" id="nav-home" aria-label="返回首页">
-                <i class="fa-solid fa-house"></i>
+                <svg class="icon" aria-hidden="true"><use href="#i-home" /></svg>
                 <span>首页</span>
             </button>
             <button class="nav-item active" id="nav-gallery" aria-label="画廊">
-                <i class="fa-solid fa-images"></i>
+                <svg class="icon" aria-hidden="true"><use href="#i-gallery" /></svg>
                 <span>画廊</span>
             </button>
             <button class="nav-item" id="nav-calendar" aria-label="日历">
-                <i class="fa-regular fa-calendar"></i>
+                <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
                 <span>日历</span>
             </button>
             <button type="button" class="nav-item" id="nav-settings" aria-label="设置" aria-expanded="false" aria-controls="settings-sheet">
-                <i class="fa-solid fa-gear"></i>
+                <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>
                 <span>设置</span>
             </button>
         </div>
@@ -186,28 +172,26 @@
     <div class="calendar-overlay" id="calendar-overlay"></div>
 
     <!-- ===================== SETTINGS BOTTOM SHEET ===================== -->
-    <!-- 设置面板：包含季节主题切换 -->
     <div class="settings-sheet" id="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="gallery-settings-title" aria-hidden="true">
         <div class="settings-handle"></div>
         <div class="settings-content">
-            <h3 class="settings-title" id="gallery-settings-title">主题设置</h3>
+            <h3 class="settings-title" id="gallery-settings-title">季节主题</h3>
             <div class="settings-section">
-                <label class="settings-label">季节主题</label>
                 <div class="theme-options" id="mobile-theme-options">
                     <button type="button" class="theme-option" data-theme="spring">
-                        <span class="theme-icon">🌸</span>
+                        <span class="theme-swatch" aria-hidden="true"></span>
                         <span class="theme-name">春</span>
                     </button>
                     <button type="button" class="theme-option" data-theme="summer">
-                        <span class="theme-icon">🌿</span>
+                        <span class="theme-swatch" aria-hidden="true"></span>
                         <span class="theme-name">夏</span>
                     </button>
                     <button type="button" class="theme-option" data-theme="autumn">
-                        <span class="theme-icon">🍂</span>
+                        <span class="theme-swatch" aria-hidden="true"></span>
                         <span class="theme-name">秋</span>
                     </button>
                     <button type="button" class="theme-option" data-theme="winter">
-                        <span class="theme-icon">❄️</span>
+                        <span class="theme-swatch" aria-hidden="true"></span>
                         <span class="theme-name">冬</span>
                     </button>
                 </div>
@@ -220,37 +204,41 @@
     <div id="detail-modal" class="detail-modal" aria-hidden="true">
         <div class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title">
             <div class="detail-media">
-                <img id="detail-image" src="" alt="Artwork detail">
+                <img id="detail-image" src="" alt="">
+                <p class="detail-hint" id="detail-hint" aria-hidden="true">左右滑动，看前后几天</p>
             </div>
             <aside class="detail-side">
                 <div class="detail-header">
                     <div class="detail-meta">
-                        <div id="detail-title" class="detail-title">Untitled</div>
-                        <div id="detail-date" class="detail-date">Jan 1, 2026</div>
+                        <div id="detail-date" class="detail-date"></div>
+                        <div id="detail-sub" class="detail-sub"></div>
                     </div>
-                    <button id="detail-close" class="detail-close" type="button" aria-label="Back">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
+                    <button id="detail-close" class="detail-close" type="button" aria-label="关闭">
+                        <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
                     </button>
                 </div>
                 <div class="detail-body">
-                    <!-- Ruogu Mod: Label Removed -->
+                    <div class="detail-letter-wrap">
+                        <h2 id="detail-title" class="detail-title"></h2>
+                        <div id="detail-letter" class="detail-letter"></div>
+                        <p id="detail-sign" class="detail-sign"></p>
+                    </div>
                     <div id="detail-description" class="detail-description"></div>
-                    <div id="detail-letter" class="detail-letter"></div>
-                    <p class="detail-sign" aria-hidden="true">Love</p>
                 </div>
             </aside>
         </div>
     </div>
 
+    <!-- 轻提示（例如点到还没画的日子） -->
+    <div class="lm-toast" id="lm-toast" role="status" aria-live="polite"></div>
+
     <!-- ===================== SCRIPTS ===================== -->
     <script src="js/data.js?v=22.0"></script>
-    <script src="js/script.js?v=11.0"></script>
+    <script src="js/typeset.js?v=1.0"></script>
+    <script src="js/script.js?v=12.0"></script>
     <script src="js/day-6000.js?v=12.0"></script>
     <!-- Anniversary Effects Engine -->
-    <script src="js/anniversary-effects.js?v=11.6"></script>
+    <script src="js/anniversary-effects.js?v=11.7"></script>
 </body>
 
 </html>

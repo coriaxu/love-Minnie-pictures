@@ -36,17 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailClose = document.getElementById('detail-close');
 
     // ============================================================
-    // ROSE TORCH CURSOR LOGIC
+    // ROSE TORCH：跟随鼠标的柔光（仅桌面，鼠标本身保持系统光标）
     // ============================================================
     const torch = document.getElementById('torch');
-    const dot = document.getElementById('dot');
 
-    if (torch && dot) {
+    if (torch) {
         const moveCursor = (x, y) => {
             torch.style.left = `${x}px`;
             torch.style.top = `${y}px`;
-            dot.style.left = `${x}px`;
-            dot.style.top = `${y}px`;
         };
         moveCursor(window.innerWidth / 2, window.innerHeight / 2);
 
@@ -77,6 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const START_DATE = new Date('2026-01-01T00:00:00');
     const RELATIONSHIP_START = new Date('2009-12-10T00:00:00');
     const EMPTY_FUTURE_START = new Date('2025-12-25T00:00:00');
+    const WEEKDAYS_ZH = '日一二三四五六';
+    const TS = window.Typeset;
+
+    // "今天"：默认取本机日期；URL 加 ?date=YYYY-MM-DD 可预览指定日期的画廊（与首页一致）
+    const PREVIEW_DATE = (() => {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(new URLSearchParams(window.location.search).get('date') || '');
+        return match ? new Date(+match[1], +match[2] - 1, +match[3]) : null;
+    })();
+    const getToday = () => {
+        const d = PREVIEW_DATE ? new Date(PREVIEW_DATE) : new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    };
+    const isMobileLayout = () => window.matchMedia('(max-width: 600px)').matches;
     let currentMonth = new Date(START_DATE);
     let selectedDate = new Date(START_DATE);
     let galleryData = [];
@@ -231,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const THEME_SET = new Set(['winter', 'spring', 'summer', 'autumn']);
 
     const getSeasonalTheme = () => {
-        const month = new Date().getMonth(); // 0-11
+        const month = getToday().getMonth(); // 0-11
         // Spring: March (2), April (3), May (4)
         if (month >= 2 && month <= 4) return 'spring';
         // Summer: June (5), July (6), August (7)
@@ -338,8 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dataByDate[item.date] = item;
             });
 
-            const realToday = new Date();
-            realToday.setHours(0, 0, 0, 0);
+            const realToday = getToday();
             const todayStr = formatDateISO(realToday);
 
             let initialDate = null;
@@ -384,14 +394,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     // Event Listeners
     // ============================================================
-    // 移动端：日历是 Bottom Sheet，初始必须收起，
-    // 否则 HTML 里的 open class 会让它盖住画廊首屏。
-    // 先禁掉过渡再收起，避免首帧出现"日历滑出去"的闪现
-    if (window.matchMedia('(max-width: 600px)').matches && calendarSidebar) {
+    // 日历侧栏：只有宽屏桌面默认展开；手机（底部抽屉）和平板（浮层）默认收起。
+    // HTML 里不再写死 open，避免加载过程中日历先盖住画廊首屏再滑走。
+    if (calendarSidebar) {
+        const openByDefault = window.matchMedia('(min-width: 1025px)').matches;
         calendarSidebar.style.transition = 'none';
-        calendarSidebar.classList.remove('open');
-        document.body.classList.add('sidebar-closed');
-        toggleCalendarBtn?.classList.remove('active');
+        calendarSidebar.classList.toggle('open', openByDefault);
+        document.body.classList.toggle('sidebar-closed', !openByDefault);
+        toggleCalendarBtn?.classList.toggle('active', openByDefault);
         void calendarSidebar.offsetHeight;
         calendarSidebar.style.transition = '';
     }
@@ -409,6 +419,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     toggleCalendarBtn.addEventListener('click', () => {
+        // 手机上顶部的日历图标与底栏"日历"是同一个抽屉
+        if (isMobileLayout()) {
+            document.getElementById('nav-calendar')?.click();
+            return;
+        }
         calendarSidebar.classList.toggle('open');
         toggleCalendarBtn.classList.toggle('active');
         document.body.classList.toggle('sidebar-closed', !calendarSidebar.classList.contains('open'));
@@ -420,6 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const smoothResize = () => {
             resizeAllGalleryItems();
+            layoutHero();
             if (performance.now() - startTime < animationDuration) {
                 requestAnimationFrame(smoothResize);
             }
@@ -432,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (memoryLaneBtn) {
         memoryLaneBtn.addEventListener('click', () => {
             if (!galleryData.length) return;
-            const todayISO = formatDateISO(new Date());
+            const todayISO = formatDateISO(getToday());
             const pool = galleryData.filter(d => d.date !== todayISO);
             const source = pool.length ? pool : galleryData;
             const pick = source[Math.floor(Math.random() * source.length)];
@@ -453,7 +469,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', () => {
         window.clearTimeout(resizeTimer);
-        resizeTimer = window.setTimeout(resizeAllGalleryItems, 150);
+        resizeTimer = window.setTimeout(() => {
+            resizeAllGalleryItems();
+            layoutHero();
+            if (detailModal?.classList.contains('open')) fitDetailTitle();
+        }, 150);
     });
 
     document.addEventListener('keydown', (e) => {
@@ -513,15 +533,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
 
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'];
-        monthLabel.textContent = `${monthNames[month]} ${year}`;
+        monthLabel.textContent = `${year}年${month + 1}月`;
 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const today = getToday();
 
         for (let i = 0; i < firstDay; i++) {
             const emptyCell = document.createElement('div');
@@ -564,10 +581,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             cell.addEventListener('click', () => {
-                selectDate(cellDate);
+                const item = dataByDate[dateStr];
                 if (window.innerWidth <= 1024) {
-                    calendarSidebar.classList.remove('open');
+                    // 手机、平板：收起日历（连同遮罩、滚动锁、底栏状态一起复位）
+                    closeCalendarPanel();
                 }
+                if (item && isMobileLayout()) {
+                    // 手机上点日期就是想看那天：直接打开那一封
+                    selectDate(cellDate, { scroll: false });
+                    openDetail(item);
+                    return;
+                }
+                selectDate(cellDate);
             });
 
             calendarDays.appendChild(cell);
@@ -611,13 +636,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 thumb.innerHTML = '<img src="images/sunflower.svg" class="sunflower-icon" alt="尚未上画">';
             } else {
                 const img = document.createElement('img');
-                img.src = `images/${item.filename}`;
+                // 胶卷条只在看画时出现：先不给 src，第一次打开看画再加载，省下首屏流量
+                img.dataset.src = `images/${item.filename}`;
                 img.alt = getArtworkLabel(item);
                 img.decoding = 'async';
                 img.loading = Math.abs(index - Math.max(selectedIndex, 0)) <= 24 ? 'eager' : 'lazy';
                 img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
                 img.addEventListener('error', () => thumb.classList.add('is-error'));
-                if (img.complete && img.naturalWidth) img.classList.add('is-loaded');
+                if (timelineHydrated) hydrateThumb(img);
                 thumb.appendChild(img);
 
                 // 日期角标（"6.12"），比序号更直观
@@ -647,6 +673,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let timelineHydrated = false;
+
+    function hydrateThumb(img) {
+        if (!img.dataset.src) return;
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+        if (img.complete && img.naturalWidth) img.classList.add('is-loaded');
+    }
+
+    function hydrateTimeline() {
+        if (timelineHydrated) return;
+        timelineHydrated = true;
+        timelineContainer.querySelectorAll('img[data-src]').forEach(hydrateThumb);
+    }
+
     function getItemsForMonth(date) {
         return galleryData.filter(item =>
             item.dateObj.getFullYear() === date.getFullYear() &&
@@ -674,9 +715,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateMonthView(options = {}) {
         const { anchorDate = null } = options;
         const items = getItemsForMonth(currentMonth);
-        // 今日情书 Hero：当前月包含今天时置顶展示，今天那张从瀑布流里抽出
-        const todayItem = renderTodayHero();
-        const gridItems = todayItem ? items.filter(item => item.date !== todayItem.date) : items;
+        // 今日画信置顶：当前月包含最新一封时，把它从瀑布流里抽出来单独展示
+        const heroItem = renderTodayHero();
+        const gridItems = heroItem ? items.filter(item => item.date !== heroItem.date) : items;
 
         updateMonthDigest(items);
 
@@ -687,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        renderGallery(gridItems, { allowEmpty: !!todayItem });
+        renderGallery(gridItems, { allowEmpty: !!heroItem });
 
         const anchorDateStr = anchorDate ? formatDateISO(new Date(anchorDate)) : null;
         const hasAnchor = anchorDateStr && items.some(item => item.date === anchorDateStr);
@@ -695,105 +736,157 @@ document.addEventListener('DOMContentLoaded', () => {
         selectDate(targetDate, { scroll: false, skipMonthUpdate: true });
     }
 
-    // 侧栏本月小结："6月 · 已收到 N 封画信"
+    // ============================================================
+    // 文字排版小工具：日期、数字、短语整体换行（见 js/typeset.js）
+    // ============================================================
+    const SEP = '<span class="ts-sep"> · </span><wbr>';
+    const HEART_SVG = '<svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg>';
+    const unit = (html) => `<span class="ts-u">${html}</span>`;
+
+    // 画信文字 → 主题（标题）、是否长句、有没有"今日份爱你"、以及后面多出来的段落
+    function letterParts(item) {
+        const raw = item.loveLetter || item.description || '';
+        const { theme, ritual, rest } = TS.parseLetter(raw);
+        const title = theme || (ritual ? '今日份爱你' : '');
+        const isLong = Array.from(title.replace(/\s/g, '')).length > 16;
+        return { title, isLong, ritual: ritual && !!theme, rest };
+    }
+
+    function signHtml(parts) {
+        return HEART_SVG + (parts.ritual ? unit('今日份爱你') : '');
+    }
+
+    // 侧栏本月小结："9月 · 已收到 25 封画信"
     function updateMonthDigest(items) {
         const digest = document.getElementById('month-digest');
         if (!digest) return;
         const month = currentMonth.getMonth() + 1;
-        const today = new Date();
+        const today = getToday();
         const isCurrentMonth = currentMonth.getFullYear() === today.getFullYear()
             && currentMonth.getMonth() === today.getMonth();
         const isFuture = toUtcDay(currentMonth) > toUtcDay(today) && !items.length;
 
         if (isFuture || !items.length) {
-            digest.innerHTML = `${month}月 · ${isFuture ? '花期未至' : '这个月还没有画信'}`;
+            digest.innerHTML = unit(`${month}月`) + SEP + unit(isFuture ? '花期未至' : '这个月还没有画信');
             return;
         }
         const verb = isCurrentMonth ? '已收到' : '收藏了';
-        digest.innerHTML = `${month}月 · ${verb} <strong>${items.length}</strong> 封画信`;
+        digest.innerHTML = unit(`${month}月`) + SEP + unit(`${verb} <strong>${items.length}</strong> 封画信`);
     }
 
     // ============================================================
-    // Today Hero - 今日情书置顶卡
+    // 今日画信（置顶卡）
+    // 横图竖图同一套版式，只按画的比例分配空间：
+    //   宽卡片：画在左、信在右，信笺一栏至少 340px；
+    //   窄卡片（手机、平板竖屏）：画在上、信在下，竖图限高，保证日期和那句话在首屏。
+    // 今天的画还没上时，展示最近一封，并注明"今天这封还在路上"。
     // ============================================================
-    function renderTodayHero() {
+    function getHeroPick() {
+        const today = getToday();
+        const todayItem = dataByDate[formatDateISO(today)];
+        if (todayItem) return { item: todayItem, isToday: true };
+        const latest = galleryData.find(d => d.dateObj <= today);
+        return latest ? { item: latest, isToday: false } : null;
+    }
+
+    function layoutHero() {
+        const hero = document.getElementById('today-hero');
+        const img = document.getElementById('today-hero-img');
+        if (!hero || hero.hidden || !img) return;
+        // 画还没加载完（手机网慢）时先按 4:3 占位，把上下 / 左右版式先定下来；加载完再按真实比例重算
+        const known = img.naturalWidth > 0;
+        const ratio = known ? img.naturalWidth / img.naturalHeight : 4 / 3;
+        const portrait = ratio < 0.95;
+        hero.classList.toggle('is-portrait', known && portrait);
+        hero.classList.toggle('is-landscape', known && !portrait);
+
+        const heroWidth = hero.clientWidth;
+        const stacked = heroWidth < 720;
+        hero.classList.toggle('is-stacked', stacked);
+        const vh = window.innerHeight;
+        let artW;
+        if (stacked) {
+            const maxW = heroWidth - 32;
+            const maxH = portrait ? Math.min(vh * 0.52, 520) : vh * 0.46;
+            artW = Math.min(maxW, maxH * ratio);
+        } else {
+            const pad = 28;
+            const availW = heroWidth - 340 - pad * 2;
+            const maxH = portrait
+                ? Math.min(Math.max(vh - 220, 440), 740)
+                : Math.min(Math.max(vh - 330, 300), 560);
+            const maxW = portrait ? availW : Math.min(availW, heroWidth * 0.64 - pad * 2);
+            artW = Math.min(maxW, maxH * ratio);
+        }
+        artW = Math.max(120, Math.floor(artW));
+        hero.style.setProperty('--art-w', `${artW}px`);
+        hero.style.setProperty('--art-h', `${Math.round(artW / ratio)}px`);
+
+        const titleEl = document.getElementById('today-hero-title');
+        if (titleEl && !titleEl.classList.contains('is-long')) {
+            const chars = Array.from(titleEl.textContent.replace(/\s/g, '')).length;
+            TS.fit(titleEl, {
+                max: stacked ? (isMobileLayout() ? 34 : 40) : 44,
+                min: stacked ? 22 : 26,
+                maxLines: chars <= 10 ? 1 : 2
+            });
+        }
+    }
+
+    function renderTodayHero(forcedPick) {
         const hero = document.getElementById('today-hero');
         if (!hero) return null;
 
-        const today = new Date();
-        const sameMonth = currentMonth.getFullYear() === today.getFullYear()
-            && currentMonth.getMonth() === today.getMonth();
-        const todayISO = formatDateISO(today);
-        const item = sameMonth ? galleryData.find(d => d.date === todayISO) : null;
-
-        if (!item) {
+        const pick = forcedPick || getHeroPick();
+        const sameMonth = pick
+            && pick.item.dateObj.getFullYear() === currentMonth.getFullYear()
+            && pick.item.dateObj.getMonth() === currentMonth.getMonth();
+        if (!sameMonth) {
             hero.hidden = true;
             return null;
         }
 
+        const { item, isToday } = pick;
+        const d = item.dateObj;
+        const daysAgo = diffDays(d, getToday());
+        const label = isToday ? '今天' : (daysAgo === 1 ? '昨天' : '最近一封');
+
+        document.getElementById('today-hero-date').innerHTML =
+            `<span class="ts-u is-today">${label}</span>` + SEP +
+            unit(`${d.getMonth() + 1}月${d.getDate()}日`) + SEP +
+            unit(`星期${WEEKDAYS_ZH[d.getDay()]}`);
+
+        const parts = letterParts(item);
+        const titleEl = document.getElementById('today-hero-title');
+        titleEl.innerHTML = TS.html(parts.title);
+        titleEl.classList.toggle('is-long', parts.isLong);
+        if (parts.isLong) TS.unfit(titleEl);
+        document.getElementById('today-hero-sign').innerHTML = signHtml(parts);
+        document.getElementById('today-hero-days').innerHTML =
+            unit(`在一起的第 <span class="num">${getDayNumber(d)}</span> 天`);
+        const note = document.getElementById('today-hero-note');
+        note.hidden = isToday;
+        note.innerHTML = isToday ? '' : unit('今天这封还在路上');
+
         const img = document.getElementById('today-hero-img');
-        // 按画作方向切换布局：竖图按原比例占格，信笺拿走剩余宽度
-        const applyHeroOrientation = () => {
-            if (!img.naturalWidth) return;
-            const isPortrait = img.naturalHeight > img.naturalWidth;
-            hero.classList.toggle('is-portrait', isPortrait);
-            hero.style.setProperty('--hero-ratio', `${img.naturalWidth} / ${img.naturalHeight}`);
-        };
-        img.onload = applyHeroOrientation;
+        img.onload = layoutHero;
         img.src = `images/${item.filename}`;
         img.alt = getArtworkLabel(item);
-        hero.setAttribute('aria-label', `查看今天的画：${getArtworkLabel(item)}`);
-        if (img.complete) applyHeroOrientation();
+        hero.setAttribute('aria-label', `查看${label}的画：${getArtworkLabel(item)}`);
         hero.style.setProperty('--hero-bg', `url("${img.src}")`);
-        const heroLetter = hero.querySelector('.today-hero-letter');
-        if (heroLetter) heroLetter.dataset.day = String(getDayNumber(today));
-        document.getElementById('today-hero-date').textContent =
-            `${today.getMonth() + 1}月${today.getDate()}日`;
-
-        // 天数翻牌器："我们在一起的第 [6][0][2][9] 天"
-        const daysEl = document.getElementById('today-hero-days');
-        const dayDigits = String(getDayNumber(today)).split('')
-            .map(d => `<span class="flip-digit">${d}</span>`).join('');
-        daysEl.innerHTML = `我们在一起的第 <span class="flip-group">${dayDigits}</span> 天`;
-
-        const letterText = item.loveLetter || item.description || '';
-        // 「♥️今日份爱你」前缀不可断行，避免"你"字单独换行
-        document.getElementById('today-hero-text').innerHTML = wrapLovePrefix(letterText);
-
-        // 主题词大字行：从"♥️ 今日份爱你 XXX"抽出 XXX，末两字做金色重音
-        const themeEl = document.getElementById('today-hero-theme');
-        const themeMatch = letterText.match(/今日份爱你[,，、\s]*(.+)$/);
-        const themeText = themeMatch ? themeMatch[1].trim() : '';
-        if (themeEl) {
-            if (themeText) {
-                const chars = [...themeText];
-                if (chars.length >= 4) {
-                    const head = chars.slice(0, -2).join('');
-                    const tail = chars.slice(-2).join('');
-                    themeEl.innerHTML =
-                        `<span class="theme-head">${escapeHtml(head)}</span>` +
-                        `<span class="theme-accent">${escapeHtml(tail)}</span>`;
-                } else {
-                    themeEl.innerHTML = `<span class="theme-accent">${escapeHtml(themeText)}</span>`;
-                }
-                themeEl.hidden = false;
-            } else {
-                themeEl.hidden = true;
-            }
-        }
 
         if (!hero.dataset.bound) {
-            const openToday = () => {
-                const it = galleryData.find(d => d.date === hero.dataset.date);
+            const openHero = () => {
+                const it = galleryData.find(g => g.date === hero.dataset.date);
                 if (!it) return;
                 selectDate(new Date(it.date), { scroll: false });
                 openDetail(it);
             };
-            hero.addEventListener('click', openToday);
+            hero.addEventListener('click', openHero);
             hero.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    openToday();
+                    openHero();
                 }
             });
             hero.addEventListener('mouseenter', () => setTorchMode(true));
@@ -802,6 +895,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         hero.dataset.date = item.date;
         hero.hidden = false;
+        layoutHero();
         return item;
     }
 
@@ -883,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const itemDate = new Date(item.date);
         // hover 给情话，不给编号：编号是档案信息，挪去了详情页副行
         const prefixText = `${itemDate.getMonth() + 1}月${itemDate.getDate()}日 · 第 ${getDayNumber(itemDate)} 天`;
-        const titleText = item.loveLetter || item.title || formatCardDateDisplay(itemDate);
+        const titleText = letterParts(item).title || item.title || formatCardDateDisplay(itemDate);
         meta.innerHTML = `
             <div class="gallery-meta-line">
                 <span class="meta-prefix">${escapeHtml(prefixText)}</span>
@@ -941,9 +1035,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = dataByDate[dateStr];
 
         if (!item) {
-            // 没有内容的日期，显示空状态
-            const emptyScope = getEmptyScope(selectedDate);
-            showEmptyState({ mode: getEmptyMode(selectedDate), date: selectedDate, scope: emptyScope });
+            // 没有画的日子：整月都没画才换成空状态；否则只轻提示一句，不清空这个月的画
+            const monthHasItems = getItemsForMonth(currentMonth).length > 0;
+            if (monthHasItems) {
+                const isFutureDay = toUtcDay(selectedDate) > toUtcDay(getToday());
+                const phrase = isFutureDay ? pickEmptyPhrase('day').zh : '这一天没有画信';
+                showToast(unit(`${selectedDate.getMonth() + 1}月${selectedDate.getDate()}日`) + SEP + unit(escapeHtml(phrase)));
+            } else {
+                const emptyScope = getEmptyScope(selectedDate);
+                showEmptyState({ mode: getEmptyMode(selectedDate), date: selectedDate, scope: emptyScope });
+            }
 
             // 仍然更新选中状态
             document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
@@ -953,8 +1054,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateDateCapsuleForDate(selectedDate);
             flashDateCapsule();
 
-            // 清空背景
-            clearBgBlur();
+            if (!monthHasItems) clearBgBlur();
             return;
         }
 
@@ -1013,6 +1113,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const shortMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
         dateCapsule.textContent = `Day ${dayNum} · ${shortMonth} ${d.getDate()}`;
+    }
+
+    let toastTimer = null;
+    function showToast(html) {
+        const toast = document.getElementById('lm-toast');
+        if (!toast) return;
+        toast.innerHTML = html;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
     }
 
     function flashDateCapsule() {
@@ -1111,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const phrase = pickEmptyPhrase(resolvedScope);
             if (emptyTitle) emptyTitle.textContent = '花期未至';
             if (emptyDateText) {
-                emptyDateText.textContent = `${zhDateText} · ${phrase.zh}`;
+                emptyDateText.innerHTML = unit(escapeHtml(zhDateText)) + SEP + unit(escapeHtml(phrase.zh));
             }
             if (emptySubtext) {
                 emptySubtext.textContent = `${enDateText} · ${phrase.en}`;
@@ -1119,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (mode === 'past') {
             if (emptyTitle) emptyTitle.textContent = '旧梦微光';
             if (emptyDateText) {
-                emptyDateText.textContent = `${zhDateText} · 美好已成回忆`;
+                emptyDateText.innerHTML = unit(escapeHtml(zhDateText)) + SEP + unit('美好已成回忆');
             }
             if (emptySubtext) {
                 emptySubtext.textContent = `${enDateText} · Those days now glow in memory.`;
@@ -1194,17 +1304,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function fitDetailTitle() {
+        if (!detailTitle) return;
+        if (detailTitle.classList.contains('is-long')) {
+            TS.unfit(detailTitle);
+            return;
+        }
+        const chars = Array.from(detailTitle.textContent.replace(/\s/g, '')).length;
+        const mobile = isMobileLayout();
+        TS.fit(detailTitle, { max: mobile ? 28 : 34, min: mobile ? 20 : 22, maxLines: chars <= 10 ? 1 : 2 });
+    }
+
+    // 手机上第一次看画时提示一次可以左右滑
+    const SWIPE_HINT_KEY = 'love-minnie-swipe-hint-v1';
+    let swipeHintShown = false;
+    function maybeShowSwipeHint() {
+        if (swipeHintShown || !isMobileLayout()) return;
+        swipeHintShown = true;
+        try {
+            if (localStorage.getItem(SWIPE_HINT_KEY)) return;
+            localStorage.setItem(SWIPE_HINT_KEY, '1');
+        } catch (err) {
+            // 存储不可用时本次会话内只提示一次
+        }
+        const hint = document.getElementById('detail-hint');
+        if (!hint) return;
+        hint.classList.add('is-visible');
+        setTimeout(() => hint.classList.remove('is-visible'), 2600);
+    }
+
     function openDetail(item) {
         if (!item || !detailModal) return;
 
         const detailDialog = detailModal.querySelector('.detail-dialog');
         const updateDetailOrientation = () => {
-            if (!detailDialog) return;
-            const isPortrait = detailImage.naturalHeight > detailImage.naturalWidth;
+            if (!detailDialog || !detailImage.naturalWidth) return;
+            const isPortrait = detailImage.naturalHeight > detailImage.naturalWidth * 1.05;
             detailDialog.classList.toggle('is-portrait', isPortrait);
             detailDialog.classList.toggle('is-landscape', !isPortrait);
+            fitDetailTitle();
         };
-        
+
         // 先移除之前的方向类
         if (detailDialog) {
             detailDialog.classList.remove('is-portrait', 'is-landscape');
@@ -1218,37 +1358,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detailDialog) {
             detailDialog.style.setProperty('--detail-bg', `url("${detailImage.src}")`);
         }
-        if (detailImage.complete) {
-            updateDetailOrientation();
+
+        // 信笺：日期 → 第几天、第几封 → 主题 → 落款
+        const d = item.dateObj instanceof Date ? item.dateObj : new Date(item.date);
+        detailDate.innerHTML =
+            unit(`${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`) + SEP +
+            unit(`星期${WEEKDAYS_ZH[d.getDay()]}`);
+        const detailSub = document.getElementById('detail-sub');
+        if (detailSub) {
+            detailSub.innerHTML =
+                unit(`在一起的第 <span class="num">${getDayNumber(d)}</span> 天`) + SEP +
+                unit(`第 <span class="num">${getChronoNo(item)}</span> 封画信`);
         }
-        // 信笺式：中文日期为主，副行放"第 N 天"和存档编号
-        const detailDateObj = new Date(item.date);
-        detailTitle.textContent = formatDateDisplayZh(detailDateObj);
-        detailDate.textContent =
-            `第 ${getDayNumber(detailDateObj)} 天 · 第 ${getChronoNo(item)} 封画信`;
-        detailDate.style.display = '';
+
+        const parts = letterParts(item);
+        detailTitle.innerHTML = TS.html(parts.title || '这是一个特别的日子');
+        detailTitle.classList.toggle('is-long', parts.isLong);
+        detailLetter.innerHTML = parts.rest ? TS.html(parts.rest) : '';
+        if (detailDialog) detailDialog.classList.toggle('is-long-letter', parts.isLong || !!parts.rest);
+        const detailSign = document.getElementById('detail-sign');
+        if (detailSign) detailSign.innerHTML = signHtml(parts);
 
         const description = item.description ? item.description.trim() : '';
-        if (description) {
-            detailDescription.textContent = description;
-            detailDescription.style.display = 'block';
-        } else {
-            detailDescription.textContent = '';
-            detailDescription.style.display = 'none';
-        }
+        detailDescription.innerHTML = description && description !== (item.loveLetter || '').trim()
+            ? TS.html(description)
+            : '';
 
-        const letterText = item.loveLetter || item.description || '这是一个特别的日子，值得被永远铭记。';
-        // 「♥️今日份爱你」前缀不可断行，避免"你"字单独换行；保留原文换行
-        detailLetter.innerHTML = wrapLovePrefix(letterText).replace(/\n/g, '<br>');
-
-        // 动态字号：文字少时放大
-        detailLetter.classList.remove('text-xl', 'text-2xl');
-        const textLength = letterText.length;
-        if (textLength < 30) {
-            detailLetter.classList.add('text-2xl');
-        } else if (textLength < 80) {
-            detailLetter.classList.add('text-xl');
-        }
         detailModal.classList.add('open');
         detailModal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
@@ -1259,6 +1394,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detailClose) {
             detailClose.focus();
         }
+        if (detailImage.complete) {
+            updateDetailOrientation();
+        } else {
+            fitDetailTitle();
+        }
+        // 手机上不显示胶卷条，就不去加载它的图
+        if (!isMobileLayout()) hydrateTimeline();
+        maybeShowSwipeHint();
 
         // Edit 是管理功能，只在 URL 带 ?admin=1 时显示，避免打扰观众视角
         const isAdminMode = new URLSearchParams(window.location.search).has('admin');
@@ -1268,7 +1411,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 editBtn = document.createElement('button');
                 editBtn.id = 'detail-edit';
                 editBtn.className = 'detail-action-btn';
-                editBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+                editBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-edit"></use></svg>';
                 editBtn.setAttribute('title', 'Review & Edit');
 
                 // Insert before Close button
@@ -1393,12 +1536,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-
-        // 首次打开时显示滑动提示（3秒后消失）
-        const originalOpenDetail = openDetail;
-        let hasShownHint = false;
-        
-        // 注：这里不覆盖原函数，滑动提示通过CSS :first-time伪类或JS逻辑单独处理
     }
 
     // ============================================================
@@ -1544,17 +1681,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, '&#39;');
     }
 
-    // 「♥️今日份爱你」前缀独占第一行，主题词换到下一行。
-    // 前缀本身 nowrap 防止"你"字被单独挤下；前缀后强制 <br> 让主题词另起一行。
-    // 若没有主题词（纯前缀），则不加 <br>。
-    function wrapLovePrefix(text) {
-        const match = String(text).match(/^(♥️\s*今日份爱你)([\s\S]*)$/);
-        if (!match) return escapeHtml(text);
-        const prefix = `<span class="love-prefix" style="white-space:nowrap">${escapeHtml(match[1])}</span>`;
-        const body = match[2].replace(/^\s+/, '');  // 去掉前缀与主体间的空格
-        return body ? `${prefix}<br>${escapeHtml(body)}` : prefix;
-    }
-
     // ============================================================
     // 方案 A：移动端底部导航栏交互
     // ============================================================
@@ -1591,9 +1717,19 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (activeNav === 'settings') navSettings?.classList.add('active');
     };
 
-    // 首页按钮：返回入口页
+    // 收起日历（手机底部抽屉 / 平板浮层）：遮罩、滚动锁、底栏状态一起复位
+    function closeCalendarPanel() {
+        calendarSidebar?.classList.remove('open');
+        calendarOverlay?.classList.remove('show');
+        toggleCalendarBtn?.classList.remove('active');
+        document.body.classList.add('sidebar-closed');
+        document.body.style.overflow = '';
+        updateNavActiveState('gallery');
+    }
+
+    // 首页按钮：返回入口页（预览日期一并带上）
     navHome?.addEventListener('click', () => {
-        window.location.href = 'index.html';
+        window.location.href = PREVIEW_DATE ? `index.html?date=${formatDateISO(PREVIEW_DATE)}` : 'index.html';
     });
 
     // 画廊按钮：关闭所有面板，回到画廊视图
@@ -1712,12 +1848,38 @@ document.addEventListener('DOMContentLoaded', () => {
         navSettings?.focus();
     });
 
-    // 移动端：重写日历切换按钮行为（Header 右侧的日历图标）
-    if (window.innerWidth <= 600) {
-        toggleCalendarBtn?.removeEventListener('click', () => {});
-        toggleCalendarBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            navCalendar?.click(); // 委托给底部导航栏的日历按钮
-        });
+    // ============================================================
+    // 排版自检：URL 带 ?lmdev=1 时暴露钩子，可逐封渲染今日卡和看画页，
+    // 批量检查断行（正常访问不受影响）
+    // ============================================================
+    if (new URLSearchParams(window.location.search).has('lmdev')) {
+        const imageReady = (img) => (img.complete && img.naturalWidth)
+            ? Promise.resolve()
+            : new Promise(resolve => {
+                img.addEventListener('load', resolve, { once: true });
+                img.addEventListener('error', resolve, { once: true });
+            });
+        window.__LM = {
+            dates: () => galleryData.map(d => d.date),
+            async hero(dateStr) {
+                const item = dataByDate[dateStr];
+                if (!item) return false;
+                closeDetail();
+                currentMonth = new Date(item.dateObj);
+                renderTodayHero({ item, isToday: true });
+                await imageReady(document.getElementById('today-hero-img'));
+                layoutHero();
+                return true;
+            },
+            async detail(dateStr) {
+                const item = dataByDate[dateStr];
+                if (!item) return false;
+                openDetail(item);
+                await imageReady(detailImage);
+                fitDetailTitle();
+                return true;
+            },
+            close: closeDetail
+        };
     }
 });

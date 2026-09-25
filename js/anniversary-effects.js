@@ -40,7 +40,8 @@
             date: '12-10',
             name: '恋爱纪念日',
             type: 'A',
-            title: '16 Years of Love',
+            // 2009-12-10 在一起，年数按当年自动算（2026 年是第 17 年）
+            title: () => `${new Date().getFullYear() - 2009} Years of Love`,
             effect: 'golden-shapes',
             colors: ['#D4A574', '#F5DEB3', '#C9A86C', '#FFFAF0']
         },
@@ -165,12 +166,13 @@
         `;
 
         const text = document.createElement('h1');
-        text.textContent = title;
+        text.textContent = typeof title === 'function' ? title() : title;
         text.style.cssText = `
-            font-family: 'Bodoni Moda', 'LXGW WenKai Screen', serif;
+            font-family: 'LXGW WenKai Screen', 'PingFang SC', serif;
             font-size: clamp(2rem, 8vw, 5rem);
             font-weight: 400;
-            font-style: italic;
+            letter-spacing: 0.04em;
+            text-wrap: balance;
             color: ${colors[0]};
             text-shadow: 
                 0 0 20px ${colors[0]}80,
