@@ -8,108 +8,63 @@
     <title>Love Minnie · 画信</title>
     <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
 
-    <!-- 字体全部本地托管：手机不挂 VPN 也能打开 -->
+    <!-- 字体全部本地托管：手机不挂 VPN 也能打开。Bodoni Moda / Pinyon Script 的 @font-face 在 day-6000.css -->
+    <link rel="preload" href="fonts/memorial/bodoni-moda-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
-
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="css/style.css?v=11.0">
+    <link rel="stylesheet" href="css/style.css?v=12.0">
     <link rel="stylesheet" href="css/day-6000.css?v=12.1">
 </head>
 
-<body>
+<body class="gallery-page" data-view="today">
 
     <!-- 线条图标（替代 Font Awesome，免外链） -->
     <svg class="icon-sprite" aria-hidden="true" focusable="false">
         <symbol id="i-prev" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" /></symbol>
         <symbol id="i-next" viewBox="0 0 24 24"><path d="M9.5 5.5 16 12l-6.5 6.5" /></symbol>
-        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.8" y="5.2" width="16.4" height="14.6" rx="2.6" /><path d="M3.8 10h16.4M8.2 3.4v3.6M15.8 3.4v3.6" /></symbol>
         <symbol id="i-home" viewBox="0 0 24 24"><path d="M4.5 10.6 12 4.5l7.5 6.1v8.1a1.3 1.3 0 0 1-1.3 1.3H14.6v-5.4H9.4V20H5.8a1.3 1.3 0 0 1-1.3-1.3z" /></symbol>
-        <symbol id="i-gallery" viewBox="0 0 24 24"><rect x="3.8" y="4.8" width="16.4" height="14.4" rx="2.6" /><circle cx="9" cy="9.8" r="1.5" /><path d="m4.4 16.8 4.4-4.1 3.3 3 2.6-2.3 5.1 4.6" /></symbol>
-        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4.5 7.5h8.8M18.3 7.5h1.2M4.5 16.5h2.2M11.7 16.5h7.8" /><circle cx="15.8" cy="7.5" r="2.3" /><circle cx="9.2" cy="16.5" r="2.3" /></symbol>
+        <symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /></symbol>
+        <symbol id="i-corridor" viewBox="0 0 24 24"><rect x="2.5" y="7" width="6" height="10" rx="1" /><rect x="10" y="5" width="11.5" height="14" rx="1" /></symbol>
+        <symbol id="i-almanac" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.2" /><circle cx="12" cy="7" r="2.2" /><circle cx="18" cy="7" r="2.2" /><circle cx="6" cy="13.5" r="2.2" /><circle cx="12" cy="13.5" r="2.2" /><circle cx="18" cy="13.5" r="2.2" /><circle cx="6" cy="20" r="1.4" /><circle cx="12" cy="20" r="1.4" /></symbol>
         <symbol id="i-sparkle" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 3.6 13.7 9 19 10.7l-5.3 1.7L12 17.8l-1.7-5.4L5 10.7 10.3 9z" /></symbol>
         <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 20.4 10.8 19.3C6.2 15.2 3.4 12.6 3.4 9.4 3.4 6.8 5.4 4.9 8 4.9c1.5 0 2.9.7 4 1.9 1.1-1.2 2.5-1.9 4-1.9 2.6 0 4.6 1.9 4.6 4.5 0 3.2-2.8 5.8-7.4 9.9z" /></symbol>
         <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></symbol>
         <symbol id="i-edit" viewBox="0 0 24 24"><path d="M5 19l1-4.2 9.6-9.6a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L9.2 18z" /></symbol>
         <symbol id="i-expand" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" /></symbol>
-        <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v13M6.5 13 12 18.5 17.5 13" /></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13M13 6.5 18.5 12 13 17.5" /></symbol>
+        <!-- 季节的花：海棠四瓣、荷叶、桂花簇、梅花五瓣 -->
+        <symbol id="i-spring" viewBox="0 0 12 12"><g fill="currentColor" stroke="none"><circle cx="6" cy="3.1" r="2" /><circle cx="8.9" cy="6" r="2" /><circle cx="6" cy="8.9" r="2" /><circle cx="3.1" cy="6" r="2" /></g></symbol>
+        <symbol id="i-summer" viewBox="0 0 12 12"><path fill="currentColor" stroke="none" d="M6 1.2a4.8 4.8 0 1 0 4.8 4.8H6z" /></symbol>
+        <symbol id="i-autumn" viewBox="0 0 12 12"><g fill="currentColor" stroke="none"><circle cx="6" cy="3" r="1.6" /><circle cx="3" cy="7" r="1.6" /><circle cx="9" cy="7" r="1.6" /><circle cx="6" cy="9.6" r="1.2" /></g></symbol>
+        <symbol id="i-winter" viewBox="0 0 12 12"><g fill="currentColor" stroke="none"><circle cx="6" cy="2.8" r="1.7" /><circle cx="9.1" cy="5.1" r="1.7" /><circle cx="7.9" cy="8.8" r="1.7" /><circle cx="4.1" cy="8.8" r="1.7" /><circle cx="2.9" cy="5.1" r="1.7" /></g></symbol>
     </svg>
 
-    <!-- 氛围光场 (The Rose Nebula) -->
+    <!-- 氛围：紫夜光场 + 噪点 + 今天那幅画的色调 -->
     <div class="ambient-light"></div>
     <div class="noise-overlay"></div>
-
-    <!-- 动态模糊背景 (From Artwork) -->
     <div class="bg-blur" id="bg-blur"></div>
-
-    <!-- 日期胶囊 (Date Anchor) -->
-    <div class="date-capsule" id="date-capsule"></div>
-
-    <!-- 鼠标光晕（仅桌面） -->
     <div class="cursor-torch" id="torch"></div>
 
-    <!-- ===================== HEADER ===================== -->
-    <header class="app-header">
-        <h1 class="logo"><a href="index.html" class="logo-link" aria-label="回首页">LOVE MINNIE</a></h1>
-        <nav class="month-nav">
-            <button id="prev-month" class="nav-btn" aria-label="上个月">
-                <svg class="icon" aria-hidden="true"><use href="#i-prev" /></svg>
-            </button>
-            <span id="current-month-label" class="month-label"></span>
-            <button id="next-month" class="nav-btn" aria-label="下个月">
-                <svg class="icon" aria-hidden="true"><use href="#i-next" /></svg>
-            </button>
+    <!-- ===================== 顶栏 ===================== -->
+    <header class="lm-header">
+        <a href="index.html" class="lm-mark" id="lm-home-link" aria-label="回首页">LOVE MINNIE</a>
+        <nav class="lm-tabs" aria-label="画廊">
+            <a href="#today" class="lm-tab" data-view="today">今日</a>
+            <a href="#corridor" class="lm-tab" data-view="corridor">长廊</a>
+            <a href="#calendar" class="lm-tab" data-view="calendar">画历</a>
         </nav>
-
-        <!-- Desktop Nav -->
-        <nav class="desktop-nav">
-            <a href="index.html" class="nav-link">首页</a>
-            <a href="gallery.html" class="nav-link active">画廊</a>
-        </nav>
-
-        <div class="header-actions">
-            <div class="theme-toggle" role="group" aria-label="季节主题">
-                <button type="button" class="theme-btn" data-theme="spring" aria-label="春季主题">春</button>
-                <button type="button" class="theme-btn" data-theme="summer" aria-label="夏季主题">夏</button>
-                <button type="button" class="theme-btn" data-theme="autumn" aria-label="秋季主题">秋</button>
-                <button type="button" class="theme-btn" data-theme="winter" aria-label="冬季主题">冬</button>
-            </div>
-            <button id="toggle-calendar" class="mobile-calendar-btn" aria-label="日历">
-                <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
+        <div class="lm-header-end">
+            <button type="button" class="lm-season" id="season-btn" aria-haspopup="dialog" aria-controls="season-sheet">
+                <svg class="lm-season-flower" aria-hidden="true"><use href="#i-autumn" /></svg>
+                <span id="season-label">秋 · 桂</span>
             </button>
         </div>
     </header>
 
-    <!-- ===================== MAIN LAYOUT ===================== -->
-    <main class="app-container">
-
-        <!-- === Calendar Sidebar === -->
-        <aside id="calendar-sidebar" class="calendar-sidebar">
-            <div class="calendar-grid">
-                <div class="weekday-header">
-                    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-                </div>
-                <div id="calendar-days" class="days-grid">
-                    <!-- Dynamically generated -->
-                </div>
-            </div>
-            <!-- 本月小结 + 随机重温 -->
-            <div class="sidebar-extras">
-                <p class="month-digest" id="month-digest"></p>
-                <button type="button" id="memory-lane-btn" class="memory-lane-btn">
-                    <svg class="icon" aria-hidden="true"><use href="#i-sparkle" /></svg>
-                    <span>随机重温一封</span>
-                </button>
-            </div>
-            <div class="calendar-legend">
-                <span><span class="legend-heart" aria-hidden="true"></span>有画信</span>
-                <span><img src="images/sunflower.svg" class="sunflower-icon" alt="">还没到</span>
-            </div>
-        </aside>
-
-        <!-- === Content Area === -->
-        <section class="content-area">
-            <!-- 今日画信：细金框的画 + 压在右下角的信（邮戳、落款、印章），画下是这个月的月相尺；
-                 窄屏画在上、信压在画的下沿。横图竖图同一套版式，只按画的比例分配空间 -->
+    <main class="lm-main">
+        <!-- ===================== 今日 ===================== -->
+        <section class="lm-view view-today" id="view-today" aria-label="今日画信">
+            <!-- 今日画信：细金框的画 + 旁边一封信（邮戳、落款、印章），画下是这个月的月相尺；
+                 窄屏画在上、信在下。横图竖图同一套版式，只按画的比例分配空间 -->
             <section id="today-hero" class="today-hero" hidden aria-label="今日画信">
                 <div class="hero-stage">
                     <button type="button" class="hero-art" id="today-hero-art" aria-label="看大图">
@@ -135,19 +90,18 @@
                                 <svg class="icon" aria-hidden="true"><use href="#i-expand" /></svg>
                                 看大图
                             </button>
-                            <button type="button" class="hero-action" id="today-hero-walk">
-                                这个月的其他画信
-                                <svg class="icon" aria-hidden="true"><use href="#i-down" /></svg>
-                            </button>
+                            <a href="#corridor" class="hero-action" id="today-hero-walk">
+                                沿长廊往回走
+                                <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+                            </a>
                         </div>
                     </div>
                     <div class="hero-ruler" id="today-hero-ruler"></div>
                 </div>
             </section>
-            <div id="gallery-grid" class="gallery-grid" aria-live="polite"></div>
 
-            <!-- Empty State (for future days) -->
-            <article id="empty-state" class="empty-state" style="display: none;">
+            <!-- 一封画信都没有时 -->
+            <article id="empty-state" class="empty-state" hidden>
                 <img src="images/sunflower.svg" class="sunflower-icon" alt="">
                 <h2 class="empty-title" id="empty-title">花期未至</h2>
                 <p class="empty-text empty-cn" id="empty-date-text"></p>
@@ -155,76 +109,112 @@
             </article>
         </section>
 
+        <!-- ===================== 长廊 ===================== -->
+        <section class="lm-view view-corridor" id="view-corridor" aria-labelledby="corridor-title" hidden>
+            <div class="view-head">
+                <div class="view-title-row">
+                    <h1 class="view-title" id="corridor-title">长廊</h1>
+                    <p class="view-sub">沿着时间往回走，一步一天</p>
+                </div>
+                <nav class="month-chips" id="corridor-months" aria-label="跳到某个月"></nav>
+            </div>
+            <div class="corridor-scroll" id="corridor-scroll" tabindex="0" aria-label="画信长廊，左右滚动"></div>
+            <div class="corridor-foot">
+                <span class="corridor-end num" id="corridor-start"></span>
+                <div class="corridor-track">
+                    <div class="corridor-marks" id="corridor-marks" aria-hidden="true"></div>
+                    <input type="range" class="corridor-range" id="corridor-range" min="0" max="1000" value="0" step="1" aria-label="在长廊里快速移动">
+                </div>
+                <span class="corridor-end num" id="corridor-end"></span>
+                <span class="corridor-hint" id="corridor-hint">滚轮或拖动，沿长廊往回走</span>
+            </div>
+        </section>
+
+        <!-- ===================== 画历 ===================== -->
+        <section class="lm-view view-calendar" id="view-calendar" aria-labelledby="cal-month" hidden>
+            <aside class="cal-side">
+                <div class="cal-head">
+                    <h1 class="cal-month" id="cal-month"></h1>
+                    <div class="cal-nav">
+                        <button type="button" class="cal-nav-btn" id="cal-prev">
+                            <svg class="icon" aria-hidden="true"><use href="#i-prev" /></svg>
+                            <span id="cal-prev-label"></span>
+                        </button>
+                        <button type="button" class="cal-nav-btn" id="cal-next">
+                            <span id="cal-next-label"></span>
+                            <svg class="icon" aria-hidden="true"><use href="#i-next" /></svg>
+                        </button>
+                    </div>
+                </div>
+                <p class="cal-en" id="cal-en"></p>
+                <p class="cal-count" id="cal-count"></p>
+                <div class="cal-special" id="cal-special-wrap">
+                    <p class="cal-special-title">这个月的特别日子</p>
+                    <ul class="cal-special-list" id="cal-special"></ul>
+                </div>
+                <button type="button" class="cal-random" id="memory-lane-btn">
+                    <svg class="icon" aria-hidden="true"><use href="#i-sparkle" /></svg>
+                    <span>随机重温一封</span>
+                </button>
+            </aside>
+            <div class="cal-board">
+                <div class="cal-weekdays" aria-hidden="true">
+                    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                </div>
+                <div class="cal-grid" id="cal-grid"></div>
+            </div>
+        </section>
     </main>
 
-    <!-- ===================== TIMELINE STRIP ===================== -->
+    <!-- ===================== 手机底栏 ===================== -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="画廊">
+        <div class="nav-items">
+            <a class="nav-item" href="index.html" id="nav-home">
+                <svg class="icon" aria-hidden="true"><use href="#i-home" /></svg>
+                <span>首页</span>
+            </a>
+            <a class="nav-item" href="#today" data-view="today">
+                <svg class="icon" aria-hidden="true"><use href="#i-today" /></svg>
+                <span>今日</span>
+            </a>
+            <a class="nav-item" href="#corridor" data-view="corridor">
+                <svg class="icon" aria-hidden="true"><use href="#i-corridor" /></svg>
+                <span>长廊</span>
+            </a>
+            <a class="nav-item" href="#calendar" data-view="calendar">
+                <svg class="icon" aria-hidden="true"><use href="#i-almanac" /></svg>
+                <span>画历</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- ===================== 胶卷条（看画时出现） ===================== -->
     <nav class="timeline-strip" aria-label="按日期浏览">
         <button id="timeline-prev" class="timeline-nav-btn" aria-label="往前">
             <svg class="icon" aria-hidden="true"><use href="#i-prev" /></svg>
         </button>
-        <div id="timeline-container" class="timeline-container">
-            <!-- Thumbnails injected here -->
-        </div>
+        <div id="timeline-container" class="timeline-container"></div>
         <button id="timeline-next" class="timeline-nav-btn" aria-label="往后">
             <svg class="icon" aria-hidden="true"><use href="#i-next" /></svg>
         </button>
     </nav>
 
-    <!-- ===================== MOBILE BOTTOM NAVIGATION ===================== -->
-    <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-        <div class="nav-items">
-            <button class="nav-item" id="nav-home" aria-label="返回首页">
-                <svg class="icon" aria-hidden="true"><use href="#i-home" /></svg>
-                <span>首页</span>
-            </button>
-            <button class="nav-item active" id="nav-gallery" aria-label="画廊">
-                <svg class="icon" aria-hidden="true"><use href="#i-gallery" /></svg>
-                <span>画廊</span>
-            </button>
-            <button class="nav-item" id="nav-calendar" aria-label="日历">
-                <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
-                <span>日历</span>
-            </button>
-            <button type="button" class="nav-item" id="nav-settings" aria-label="设置" aria-expanded="false" aria-controls="settings-sheet">
-                <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>
-                <span>设置</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- 日历 Bottom Sheet 遮罩层 -->
-    <div class="calendar-overlay" id="calendar-overlay"></div>
-
-    <!-- ===================== SETTINGS BOTTOM SHEET ===================== -->
-    <div class="settings-sheet" id="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="gallery-settings-title" aria-hidden="true">
-        <div class="settings-handle"></div>
-        <div class="settings-content">
-            <h3 class="settings-title" id="gallery-settings-title">季节主题</h3>
-            <div class="settings-section">
-                <div class="theme-options" id="mobile-theme-options">
-                    <button type="button" class="theme-option" data-theme="spring">
-                        <span class="theme-swatch" aria-hidden="true"></span>
-                        <span class="theme-name">春</span>
-                    </button>
-                    <button type="button" class="theme-option" data-theme="summer">
-                        <span class="theme-swatch" aria-hidden="true"></span>
-                        <span class="theme-name">夏</span>
-                    </button>
-                    <button type="button" class="theme-option" data-theme="autumn">
-                        <span class="theme-swatch" aria-hidden="true"></span>
-                        <span class="theme-name">秋</span>
-                    </button>
-                    <button type="button" class="theme-option" data-theme="winter">
-                        <span class="theme-swatch" aria-hidden="true"></span>
-                        <span class="theme-name">冬</span>
-                    </button>
-                </div>
+    <!-- ===================== 四季 ===================== -->
+    <div class="season-overlay" id="season-overlay"></div>
+    <div class="season-sheet" id="season-sheet" role="dialog" aria-modal="true" aria-labelledby="season-title" aria-hidden="true">
+        <div class="season-head">
+            <div>
+                <h2 class="season-title" id="season-title">四季</h2>
+                <p class="season-sub">季节只换花，不换夜。默认跟着日期走。</p>
             </div>
+            <button type="button" class="season-close" id="season-close" aria-label="关闭">
+                <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+            </button>
         </div>
+        <div class="season-options" id="season-options" role="radiogroup" aria-label="季节"></div>
     </div>
-    <div class="settings-overlay" id="settings-overlay"></div>
 
-    <!-- ===================== DETAIL MODAL ===================== -->
+    <!-- ===================== 看画 ===================== -->
     <div id="detail-modal" class="detail-modal" aria-hidden="true">
         <div class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title">
             <div class="detail-media">
@@ -264,7 +254,7 @@
     <!-- ===================== SCRIPTS ===================== -->
     <script src="js/data.js?v=22.9"></script>
     <script src="js/typeset.js?v=1.0"></script>
-    <script src="js/script.js?v=12.2"></script>
+    <script src="js/script.js?v=13.0"></script>
     <script src="js/day-6000.js?v=12.0"></script>
     <!-- Anniversary Effects Engine -->
     <script src="js/anniversary-effects.js?v=11.7"></script>

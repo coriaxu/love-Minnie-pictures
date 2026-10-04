@@ -1,6 +1,6 @@
 /* ============================================================
-   THE ETERNAL ROSE EDITION: "Vignelli + Nebula"
-   Rose Quartz Emotional Palette + Strict Modernist Grid
+   Love Minnie · 画廊（星夜园林，2026-10）
+   今日画信 · 长廊 · 画历 · 看画 · 四季
    ============================================================ */
 
 /* ============================================================
@@ -207,53 +207,6 @@ input {
     transition: background-image 0.8s ease, background-color 0.8s ease;
 }
 
-/* --- Date Capsule (Context Anchor) --- */
-/* 已隐藏：徐老师不需要这个功能 */
-.date-capsule {
-    display: none !important;
-}
-
-.date-capsule.capsule-flash {
-    animation: capsuleFlash 0.6s ease;
-}
-
-/* Show date capsule when sidebar is closed */
-body.sidebar-closed .date-capsule {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-@keyframes capsuleFlash {
-    0% {
-        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-        border-color: var(--grid-line);
-    }
-
-    50% {
-        box-shadow: 0 0 18px var(--love-glow);
-        border-color: var(--love-glow);
-    }
-
-    100% {
-        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-        border-color: var(--grid-line);
-    }
-}
-
-@keyframes pulse {
-    0% {
-        opacity: 0.7;
-        transform: translate(-50%, -50%) scale(0.95);
-        filter: hue-rotate(0deg);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.1);
-        filter: hue-rotate(10deg);
-    }
-}
-
 /* 噪点层 */
 .noise-overlay {
     position: fixed;
@@ -292,452 +245,183 @@ h3 {
 }
 
 /* ============================================================
-    HEADER (Vignelli: Minimalist Grid)
-    ============================================================ */
-.app-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: transparent;
-    /* Let the nebula show through */
-    border-bottom: 1px solid var(--grid-line);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 40px;
-    z-index: 100;
+   画廊骨架（2026-10 星夜园林）
+   顶栏：LOVE MINNIE · 今日 / 长廊 / 画历 · 季节标；
+   三个视图共用一套看画弹窗和胶卷条，手机上顶栏的三个入口挪到底栏。
+   ============================================================ */
+body.gallery-page {
+    min-height: 100svh;
 }
 
-.logo {
+/* 季节窗形：春海棠窗、夏扇面窗（放在 1.3 : 1 的框里）、秋八角窗、冬梅花窗。
+   画历里"今天"那一格和四季面板用它们 */
+:root {
+    --shape-spring: polygon(100.0% 50.0%,99.8% 53.3%,99.3% 56.5%,98.4% 59.6%,97.2% 62.7%,95.7% 65.5%,93.9% 68.2%,91.9% 70.7%,89.6% 72.9%,87.1% 74.8%,84.5% 76.5%,81.8% 77.9%,78.9% 78.9%,77.9% 81.8%,76.5% 84.5%,74.8% 87.1%,72.9% 89.6%,70.7% 91.9%,68.2% 93.9%,65.5% 95.7%,62.7% 97.2%,59.6% 98.4%,56.5% 99.3%,53.3% 99.8%,50.0% 100.0%,46.7% 99.8%,43.5% 99.3%,40.4% 98.4%,37.3% 97.2%,34.5% 95.7%,31.8% 93.9%,29.3% 91.9%,27.1% 89.6%,25.2% 87.1%,23.5% 84.5%,22.1% 81.8%,21.1% 78.9%,18.2% 77.9%,15.5% 76.5%,12.9% 74.8%,10.4% 72.9%,8.1% 70.7%,6.1% 68.2%,4.3% 65.5%,2.8% 62.7%,1.6% 59.6%,0.7% 56.5%,0.2% 53.3%,0.0% 50.0%,0.2% 46.7%,0.7% 43.5%,1.6% 40.4%,2.8% 37.3%,4.3% 34.5%,6.1% 31.8%,8.1% 29.3%,10.4% 27.1%,12.9% 25.2%,15.5% 23.5%,18.2% 22.1%,21.1% 21.1%,22.1% 18.2%,23.5% 15.5%,25.2% 12.9%,27.1% 10.4%,29.3% 8.1%,31.8% 6.1%,34.5% 4.3%,37.3% 2.8%,40.4% 1.6%,43.5% 0.7%,46.7% 0.2%,50.0% 0.0%,53.3% 0.2%,56.5% 0.7%,59.6% 1.6%,62.7% 2.8%,65.5% 4.3%,68.2% 6.1%,70.7% 8.1%,72.9% 10.4%,74.8% 12.9%,76.5% 15.5%,77.9% 18.2%,78.9% 21.1%,81.8% 22.1%,84.5% 23.5%,87.1% 25.2%,89.6% 27.1%,91.9% 29.3%,93.9% 31.8%,95.7% 34.5%,97.2% 37.3%,98.4% 40.4%,99.3% 43.5%,99.8% 46.7%);
+    --shape-summer: polygon(0.0% 57.1%,1.8% 53.4%,3.7% 49.8%,5.8% 46.4%,8.0% 43.2%,10.4% 40.1%,12.9% 37.2%,15.5% 34.5%,18.3% 32.0%,21.1% 29.7%,24.1% 27.6%,27.1% 25.7%,30.3% 24.1%,33.4% 22.8%,36.7% 21.6%,40.0% 20.7%,43.3% 20.1%,46.6% 19.7%,50.0% 19.6%,53.4% 19.7%,56.7% 20.1%,60.0% 20.7%,63.3% 21.6%,66.6% 22.8%,69.7% 24.1%,72.9% 25.7%,75.9% 27.6%,78.9% 29.7%,81.7% 32.0%,84.5% 34.5%,87.1% 37.2%,89.6% 40.1%,92.0% 43.2%,94.2% 46.4%,96.3% 49.8%,98.2% 53.4%,100.0% 57.1%,69.0% 80.4%,67.6% 77.6%,66.0% 75.1%,64.1% 72.8%,62.1% 70.8%,59.8% 69.2%,57.5% 67.9%,55.1% 66.9%,52.5% 66.3%,50.0% 66.1%,47.5% 66.3%,44.9% 66.9%,42.5% 67.9%,40.2% 69.2%,37.9% 70.8%,35.9% 72.8%,34.0% 75.1%,32.4% 77.6%,31.0% 80.4%);
+    --shape-autumn: polygon(100.0% 70.7%, 70.7% 100.0%, 29.3% 100.0%, 0.0% 70.7%, 0.0% 29.3%, 29.3% 0.0%, 70.7% 0.0%, 100.0% 29.3%);
+    --shape-winter: polygon(97.8% 50.0%,96.6% 53.1%,95.1% 55.9%,93.3% 58.6%,91.2% 61.0%,89.4% 63.4%,90.0% 66.6%,90.1% 69.8%,89.9% 73.0%,89.2% 76.2%,88.2% 79.3%,86.7% 82.2%,85.0% 85.0%,82.8% 87.4%,80.4% 89.7%,77.8% 91.5%,74.9% 93.1%,71.8% 94.2%,68.6% 95.0%,65.4% 95.4%,62.2% 95.4%,58.9% 94.9%,55.8% 94.1%,52.8% 92.9%,50.0% 91.3%,47.2% 92.9%,44.2% 94.1%,41.1% 94.9%,37.8% 95.4%,34.6% 95.4%,31.4% 95.0%,28.2% 94.2%,25.1% 93.1%,22.2% 91.5%,19.6% 89.7%,17.2% 87.4%,15.0% 85.0%,13.3% 82.2%,11.8% 79.3%,10.8% 76.2%,10.1% 73.0%,9.9% 69.8%,10.0% 66.6%,10.6% 63.4%,8.8% 61.0%,6.7% 58.6%,4.9% 55.9%,3.4% 53.1%,2.2% 50.0%,1.5% 46.8%,1.2% 43.6%,1.3% 40.3%,1.8% 37.1%,2.7% 33.9%,3.9% 30.9%,5.6% 28.1%,7.6% 25.5%,9.9% 23.2%,12.4% 21.2%,15.2% 19.5%,18.2% 18.2%,21.3% 17.2%,24.4% 16.7%,26.5% 14.8%,28.1% 12.0%,30.0% 9.4%,32.2% 7.0%,34.7% 5.0%,37.5% 3.2%,40.4% 1.8%,43.5% 0.8%,46.7% 0.2%,50.0% 0.0%,53.3% 0.2%,56.5% 0.8%,59.6% 1.8%,62.5% 3.2%,65.3% 5.0%,67.8% 7.0%,70.0% 9.4%,71.9% 12.0%,73.5% 14.8%,75.6% 16.7%,78.7% 17.2%,81.8% 18.2%,84.8% 19.5%,87.6% 21.2%,90.1% 23.2%,92.4% 25.5%,94.4% 28.1%,96.1% 30.9%,97.3% 33.9%,98.2% 37.1%,98.7% 40.3%,98.8% 43.6%,98.5% 46.8%);
+    --win-shape: var(--shape-spring);
+    --win-wide: 0%;
+}
+
+:root[data-theme='summer'] {
+    --win-shape: var(--shape-summer);
+    --win-wide: 15%;
+}
+
+:root[data-theme='autumn'] {
+    --win-shape: var(--shape-autumn);
+}
+
+:root[data-theme='winter'] {
+    --win-shape: var(--shape-winter);
+}
+
+/* ---------------- 顶栏 ---------------- */
+.lm-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    min-height: 76px;
+    padding: max(10px, env(safe-area-inset-top)) max(40px, env(safe-area-inset-right)) 10px max(40px, env(safe-area-inset-left));
+    background: linear-gradient(180deg, rgba(21, 13, 33, 0.94) 0%, rgba(21, 13, 33, 0.78) 70%, rgba(21, 13, 33, 0) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.lm-mark {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     font-family: var(--font-num);
     font-size: 0.94rem;
-    font-weight: 400;
     letter-spacing: 0.34em;
     color: rgba(236, 208, 154, 0.82);
-    white-space: nowrap;
-}
-
-.logo-link {
-    color: inherit;
     text-decoration: none;
+    white-space: nowrap;
     transition: color 0.3s ease;
 }
 
-.logo-link:hover,
-.logo-link:focus-visible {
+.lm-mark:hover,
+.lm-mark:focus-visible {
     color: var(--ink-gold);
+    outline: none;
 }
 
-.month-nav {
+.lm-tabs {
     display: flex;
     align-items: center;
-    gap: 20px;
-}
-
-.month-label {
-    font-family: var(--font-num);
-    font-size: 1.2rem;
-    font-weight: 400;
-    letter-spacing: 0.06em;
-    min-width: 160px;
-    text-align: center;
-    white-space: nowrap;
-    color: var(--text-primary);
-}
-
-.nav-btn,
-.mobile-calendar-btn {
-    background: transparent;
-    border: 1px solid var(--grid-line);
-    color: var(--text-primary);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    /* Soft circles */
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
-}
-
-.nav-btn:hover,
-.mobile-calendar-btn:hover {
-    background: var(--surface-glass-hover);
-    border-color: var(--love-glow);
-    transform: scale(1.1);
-    box-shadow: 0 0 15px var(--love-glow);
-}
-
-.mobile-calendar-btn.active {
-    background: var(--love-core);
-    color: var(--on-accent);
-    box-shadow: 0 0 15px var(--love-glow);
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.theme-toggle {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px;
-    border-radius: 999px;
-    border: 1px solid var(--grid-line);
-    background: var(--surface-glass);
-}
-
-.theme-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-muted);
-    font-family: var(--font-serif);
-    font-size: 0.75rem;
-    line-height: 1;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.theme-btn:hover {
-    background: var(--surface-glass-hover);
-    color: var(--text-primary);
-}
-
-.theme-btn.active {
-    background: var(--love-core);
-    color: var(--on-accent);
-    box-shadow: 0 0 12px var(--love-glow);
-    border-color: transparent;
-}
-
-/* ============================================================
-    MAIN LAYOUT
-    ============================================================ */
-.app-container {
-    position: absolute;
-    top: 80px;
-    bottom: 20px;
-    /* Reduced from 100px since timeline strip is now hidden by default */
-    left: 0;
-    right: 0;
-    display: flex;
-    overflow: hidden;
-}
-
-/* === CALENDAR SIDEBAR (Glass Panel) === */
-.calendar-sidebar {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 380px;
-    padding: 30px;
-    background: transparent;
-    /* Totally transparent */
-    /* border-right: 1px solid var(--grid-line); Removed border */
-    background: linear-gradient(to right, rgba(10, 2, 5, 0.9), transparent);
-    display: flex;
-    flex-direction: column;
-    z-index: 50;
-    transform: translateX(-100%);
-    /* Default Hidden */
-    transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-}
-
-.calendar-sidebar.open {
-    transform: translateX(0);
-    /* Show */
-    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
-}
-
-.calendar-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    /* 由内容决定高度，把下方空间让给 sidebar-extras */
-    flex: 0 0 auto;
-}
-
-/* === 侧栏下半区：本月小结 + 随机重温 === */
-.sidebar-extras {
-    margin-top: auto;
-    padding: 18px 4px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.month-digest {
-    font-family: var(--font-sans);
-    font-size: 0.84rem;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    text-align: center;
-}
-
-.month-digest strong {
-    color: var(--ink-gold);
-    font-weight: 400;
-}
-
-.memory-lane-btn {
-    border: 1px solid var(--grid-line);
-    background: var(--surface-glass);
-    color: var(--text-main);
-    border-radius: 999px;
-    padding: 12px 18px;
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: all 0.35s ease;
-}
-
-.memory-lane-btn .icon {
-    width: 1em;
-    height: 1em;
-    color: var(--ink-gold);
-    transition: transform 0.35s ease;
-}
-
-.memory-lane-btn span {
-    white-space: nowrap;
-}
-
-.memory-lane-btn:hover {
-    border-color: var(--love-glow);
-    background: var(--surface-glass-hover);
-    box-shadow: 0 0 18px var(--love-mist);
-    color: var(--text-primary);
-}
-
-.memory-lane-btn:hover .icon {
-    transform: rotate(-12deg) scale(1.15);
-}
-
-.weekday-header {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    font-family: var(--font-sans);
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-}
-
-.days-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
     gap: 8px;
-    overflow-y: auto;
-    padding-right: 5px;
 }
 
-/* Custom Scrollbar for Sidebar */
-.days-grid::-webkit-scrollbar {
-    width: 4px;
-}
-
-.days-grid::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.days-grid::-webkit-scrollbar-thumb {
-    background: var(--grid-line);
-    border-radius: 2px;
-}
-
-.day-cell {
-    aspect-ratio: 1;
-    display: flex;
+.lm-tab {
+    display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
+    gap: 5px;
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 1rem;
+    letter-spacing: 0.16em;
     color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.3s ease;
 }
 
-.day-cell .day-num {
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    z-index: 1;
-}
-
-.day-cell.reveal {
-    animation: dayReveal 0.4s ease both;
-    animation-delay: var(--reveal-delay, 0ms);
-    will-change: transform, opacity;
-}
-
-@keyframes dayReveal {
-    from {
-        opacity: 0;
-        transform: translateY(6px) scale(0.98);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.day-cell:hover {
-    background: var(--surface-glass-hover);
-    color: var(--text-primary);
-    transform: scale(1.1);
-    box-shadow: 0 0 10px var(--love-glow);
-}
-
-.day-cell.has-content {
-    color: var(--text-primary);
-}
-
-/* 有画信的日子：日期下一颗小心形（SVG 蒙版，避免手机把 ❤ 渲染成红色 emoji） */
-.day-cell.has-content::after {
+.lm-tab::after {
     content: '';
-    position: absolute;
-    bottom: 3px;
-    left: 50%;
-    width: 7px;
-    height: 7px;
-    transform: translateX(-50%);
-    background: var(--ink-rose);
-    -webkit-mask: var(--heart-mask) center / contain no-repeat;
-    mask: var(--heart-mask) center / contain no-repeat;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: transparent;
+    transition: background 0.3s ease;
 }
 
-.day-cell.selected.has-content::after {
-    background: var(--on-accent);
+.lm-tab:hover,
+.lm-tab:focus-visible {
+    color: var(--text-primary);
+    outline: none;
 }
 
-.day-cell.selected {
-    background: var(--love-core);
-    color: var(--on-accent);
-    box-shadow: 0 0 15px var(--love-glow);
-}
-
-.day-cell.today {
-    border: 1px solid var(--grid-line);
-}
-
-.day-cell.future {
-    opacity: 1;
-    /* Parent filter removed */
-}
-
-.day-cell.future .day-num {
-    font-size: 0.9rem;
-    font-weight: 400;
+.lm-tab.is-active {
     color: var(--text-primary);
 }
 
-.day-cell.future .seed-icon {
-    position: absolute;
-    bottom: 0;
-    pointer-events: none;
-    opacity: 0.75;
+.lm-tab.is-active::after {
+    background: var(--ink-gold);
 }
 
-.day-cell.future .sunflower-icon {
-    width: 9px;
-    height: 9px;
-}
-
-.day-cell.empty {
-    visibility: hidden;
-}
-
-.seed-icon {
-    font-size: 0.8rem;
-    opacity: 1;
+.lm-header-end {
+    justify-self: end;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 10px;
 }
 
-.sunflower-icon {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    /* Ruogu Mod: 炼金术 CSS 滤镜 - 将灰图变金图 */
-    /* Sepia(1) + Saturate(large) = Gold */
-    filter: var(--sunflower-filter);
-    transition: all 0.5s ease;
-}
-
-/* 增强悬停效果 */
-.day-cell.future:hover .sunflower-icon {
-    filter: var(--sunflower-filter-hover);
-    transform: scale(1.1);
-}
-
-.day-cell.today:not(.selected) {
-    border: 1px solid var(--grid-line);
-}
-
-/* Calendar Legend */
-.calendar-legend {
-    /* 底部锚定交给 sidebar-extras（margin-top:auto），legend 跟随其后 */
-    margin-top: 0;
-    padding-top: 20px;
-    display: flex;
-    gap: 20px;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    justify-content: center;
-    border-top: 1px solid var(--grid-line);
-}
-
-.calendar-legend span {
-    display: flex;
+.lm-season {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--love-glow);
+    background: transparent;
+    color: var(--love-core);
+    font: inherit;
+    font-size: 0.88rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-.calendar-legend .legend-heart {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    background: var(--ink-rose);
-    -webkit-mask: var(--heart-mask) center / contain no-repeat;
-    mask: var(--heart-mask) center / contain no-repeat;
+.lm-season:hover,
+.lm-season:focus-visible {
+    background: var(--love-mist);
+    border-color: var(--love-core);
+    outline: none;
 }
 
-.calendar-legend .sunflower-icon {
-    width: 16px;
-    height: 16px;
+.lm-season-flower {
+    width: 12px;
+    height: 12px;
+    flex: none;
 }
 
-/* ============================================================
-    CONTENT AREA
-    ============================================================ */
-.content-area {
-    flex: 1;
+/* ---------------- 视图 ---------------- */
+.lm-main {
     position: relative;
-    overflow-y: auto;
-    display: block;
-    padding: 32px 48px 60px calc(var(--sidebar-width) + 40px);
+    padding: 8px max(40px, env(safe-area-inset-right)) 56px max(40px, env(safe-area-inset-left));
 }
 
-body.sidebar-closed .content-area {
-    padding-left: 80px;
+.lm-view[hidden] {
+    display: none !important;
+}
+
+.view-today {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-top: 12px;
+}
+
+.empty-state[hidden] {
+    display: none;
+}
+
+.view-today .empty-state {
+    position: relative;
+    inset: auto;
+    min-height: 62svh;
+    background: none;
+    gap: 6px;
 }
 
 /* ============================================================
@@ -1202,371 +886,1022 @@ button.ruler-day:focus-visible {
 }
 
 /* ============================================================
-    GALLERY GRID - Waterfall / Masonry Layout
+    长廊 · CORRIDOR
+    所有画信从今天往回排成一条横向的长廊：画同高、宽随比例，
+    每个月开头竖排一个月份；画下是日期、星期、那天的月相和主题。
+    桌面滚轮自动横着走；手机一屏一幅、吸附居中。
     ============================================================ */
-.gallery-grid {
-    display: grid;
-    /* 3 columns for balanced waterfall effect */
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    /* Small row units for precise height calculation */
-    grid-auto-rows: 10px;
-    /* Dense packing fills gaps automatically */
-    grid-auto-flow: dense;
-    /* Comfortable gap between cards */
-    gap: 20px;
-    align-items: start;
-    padding-bottom: 40px;
+.view-corridor {
+    /* 画的高度：跟着屏幕高和宽一起走，大屏上能同时看见两三幅 */
+    --cor-h: clamp(240px, min(100svh - 380px, 26vw), 500px);
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100svh - 140px);
+    margin: 0 calc(-1 * max(40px, env(safe-area-inset-left)));
 }
 
-.gallery-card {
-    position: relative;
-    border-radius: 16px;
-    overflow: hidden;
+.view-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px 32px;
+    padding: 4px 56px 0;
+}
+
+.view-title-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+}
+
+.view-title {
+    font-size: 2.5rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+}
+
+.view-sub {
+    font-size: 0.94rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.month-chips {
+    display: flex;
+    gap: 6px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.month-chips::-webkit-scrollbar {
+    display: none;
+}
+
+.month-chip {
+    flex: none;
+    min-height: 40px;
+    padding: 0 15px;
+    border-radius: 999px;
+    border: 1px solid var(--grid-line);
     background: transparent;
-    border: 1px solid var(--border-subtle);
-    box-shadow: 0 0 0 1px var(--border-subtle), 0 0 18px rgba(0, 0, 0, 0.35);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.86rem;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
     cursor: pointer;
+    transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
 }
 
-/* Waterfall: All cards flow naturally, no forced column spanning */
-/* .gallery-card.is-landscape rule removed for true waterfall effect */
-
-.gallery-card:hover {
-    transform: translateY(-6px);
-    border-color: var(--love-glow);
-    box-shadow: 0 0 0 1px var(--love-glow), 0 24px 60px rgba(0, 0, 0, 0.6);
+.month-chip:hover,
+.month-chip:focus-visible {
+    color: var(--text-primary);
+    border-color: var(--ink-gold-soft);
+    outline: none;
 }
 
-.gallery-card.selected {
-    border-color: var(--love-core);
-    box-shadow: 0 0 0 1px var(--love-glow), 0 20px 50px rgba(0, 0, 0, 0.6);
+.month-chip.is-active {
+    color: var(--ink-gold);
+    border-color: var(--ink-gold);
+    background: rgba(236, 208, 154, 0.08);
 }
 
-.gallery-media {
-    width: 100%;
-    height: 100%;
-    aspect-ratio: var(--card-ratio, 4 / 3);
-    background: rgba(0, 0, 0, 0.35);
+.corridor-scroll {
+    flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    gap: 44px;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 28px 56px 22px;
+    scroll-padding-inline: 56px;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    outline: none;
 }
 
-.gallery-media img {
+.corridor-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.corridor-scroll:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--ink-gold-soft);
+}
+
+.cor-month {
+    flex: none;
+    height: var(--cor-h);
+    margin-bottom: 80px;
+    padding-right: 28px;
+    border-right: 1px solid var(--grid-line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    scroll-snap-align: start;
+}
+
+.cor-month-cn {
+    writing-mode: vertical-rl;
+    font-size: 3.2rem;
+    line-height: 1;
+    letter-spacing: 0.18em;
+    color: var(--ink-gold);
+}
+
+.cor-month-year {
+    font-family: var(--font-num);
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    color: var(--ink-gold-soft);
+}
+
+.cor-month-count {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.cor-item {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: calc(var(--cor-h) * var(--r, 1.7778));
+    padding: 0;
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: zoom-in;
+    scroll-snap-align: start;
+}
+
+.cor-frame {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--cor-h);
+    border-radius: 2px;
+    overflow: hidden;
+    background: rgba(13, 8, 22, 0.5);
+    box-shadow: 0 0 0 1px rgba(236, 208, 154, 0.2), 0 40px 70px -36px rgba(0, 0, 0, 0.8);
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.42s ease;
+}
+
+.cor-bg {
+    display: none;
+}
+
+.cor-img {
+    position: relative;
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
-    transform: scale(1);
-    transition: transform 0.4s ease;
-}
-
-.gallery-card:hover .gallery-media img {
-    transform: scale(1.02);
-}
-
-.gallery-meta {
-    position: absolute;
-    inset: auto 0 0 0;
-    padding: 16px;
-    text-align: left;
-    background: linear-gradient(180deg,
-            rgba(5, 2, 3, 0) 0%,
-            rgba(5, 2, 3, 0.55) 40%,
-            rgba(5, 2, 3, 0.9) 100%);
     opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    pointer-events: none;
+    transition: opacity 0.5s ease;
 }
 
-.gallery-card:hover .gallery-meta,
-.gallery-card:focus-visible .gallery-meta {
+.cor-img.is-loaded {
     opacity: 1;
-    transform: translateY(0);
 }
 
-.gallery-meta-line {
+/* 跳到远处的月份：先暗下去，换好位置再亮起来 */
+.corridor-scroll {
+    transition: opacity 0.18s ease;
+}
+
+.corridor-scroll.is-jumping {
+    opacity: 0;
+}
+
+.cor-item:hover .cor-frame,
+.cor-item:focus-visible .cor-frame {
+    transform: translateY(-6px);
+    box-shadow: 0 0 0 1px rgba(236, 208, 154, 0.5), 0 50px 80px -36px rgba(0, 0, 0, 0.85);
+}
+
+.cor-item:focus-visible {
+    outline: none;
+}
+
+.cor-item.is-today .cor-frame {
+    box-shadow: 0 0 0 1px var(--ink-gold), 0 0 46px var(--love-mist), 0 40px 70px -36px rgba(0, 0, 0, 0.8);
+}
+
+.cor-cap {
+    display: block;
+    min-width: 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--grid-line);
+}
+
+.cor-cap-row {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    color: var(--text-primary);
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.gallery-meta-line .meta-title {
-    font-family: var(--font-serif);
-    font-size: 1.02rem;
+.cor-when {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.cor-date {
+    font-family: var(--font-num);
+    font-size: 1.25rem;
+    line-height: 1;
+    color: var(--ink-gold);
+}
+
+.cor-wd {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.cor-tag {
+    font-size: 0.76rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-rose);
+}
+
+.cor-moon {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--night-3);
+}
+
+.cor-title {
+    display: block;
+    margin-top: 8px;
+    font-size: 1.06rem;
     letter-spacing: 0.04em;
-    max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text-primary);
 }
 
-.gallery-meta-line .meta-prefix {
-    font-family: var(--font-sans);
+.corridor-foot {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    padding: 0 56px 6px;
+}
+
+.corridor-end {
     font-size: 0.76rem;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.16em;
+    color: var(--ink-gold-soft);
     white-space: nowrap;
-    color: var(--text-muted);
 }
 
-.gallery-card:focus-visible {
-    outline: 2px solid var(--love-glow);
-    outline-offset: 4px;
+.corridor-end:first-child {
+    color: var(--ink-gold);
 }
 
-/* 入场动画：backwards 让 delay 期间保持隐藏，动画后移除类零残留 */
-.gallery-card.card-enter {
-    animation: cardReveal 0.65s cubic-bezier(0.19, 1, 0.22, 1) backwards;
-}
-
-@keyframes cardReveal {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-}
-
-.day-card {
+.corridor-track {
     position: relative;
+    flex: 1 1 320px;
+    padding-top: 16px;
+}
+
+.corridor-marks {
+    position: absolute;
+    left: 7px;
+    right: 7px;
+    top: 0;
+    height: 16px;
+}
+
+.corridor-mark {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    padding: 0;
+    background: none;
+    border: 0;
+    font: inherit;
+    font-size: 11px;
+    line-height: 14px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: var(--ink-gold-soft);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.corridor-mark:hover {
+    color: var(--ink-gold);
+}
+
+/* 两个标签挨得太近：后一个抬到上面一行 */
+.corridor-mark.is-up {
+    top: -15px;
+}
+
+.corridor-mark.is-love {
+    color: var(--ink-rose);
+}
+
+.corridor-mark.is-love:hover {
+    color: var(--love-core);
+}
+
+.corridor-range {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
     width: 100%;
-    height: 100%;
-    perspective: 2000px;
+    height: 24px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.corridor-range::-webkit-slider-runnable-track {
+    height: 1px;
+    background: rgba(236, 208, 154, 0.26);
+}
+
+.corridor-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -6.5px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--ink-gold);
+    box-shadow: 0 0 12px rgba(236, 208, 154, 0.6);
+}
+
+.corridor-range::-moz-range-track {
+    height: 1px;
+    background: rgba(236, 208, 154, 0.26);
+}
+
+.corridor-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--ink-gold);
+    box-shadow: 0 0 12px rgba(236, 208, 154, 0.6);
+}
+
+.corridor-range:focus-visible {
+    outline: none;
+}
+
+.corridor-range:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px rgba(236, 208, 154, 0.28);
+}
+
+.corridor-hint {
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    white-space: nowrap;
 }
 
 /* ============================================================
-    FLIP CARD 3D STRUCTURE
+    画历 · ALMANAC
+    一个月的圆窗：每天一扇窗，窗里是那天的画；
+    生日海棠色描边、纪念日金色描边、满月在日期前点一颗金点；
+    "今天"那一格换成当季的窗形（海棠窗 / 扇面窗 / 八角窗 / 梅花窗）。
     ============================================================ */
-.flip-container {
-    width: 100%;
-    height: 100%;
+.view-calendar {
+    max-width: 1320px;
+    margin: 0 auto;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: 40px 64px;
+    padding: 16px 16px 0;
 }
 
-.flip-card {
-    width: 100%;
-    height: 95vh;
-    /* Larger - dominate viewport */
-    max-width: 95vw;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
-}
-
-.flip-card.flipped {
-    transform: rotateY(180deg);
-}
-
-.flip-front,
-.flip-back {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-}
-
-.flip-front {
-    background: transparent;
-    z-index: 2;
-}
-
-.card-image-wrapper {
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
-
-.card-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    /* No background - let blur show through */
-    filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.7));
-}
-
-.flip-back {
-    /* Dark textured back */
-    background: #0f080a;
-    transform: rotateY(180deg);
-    z-index: 1;
+.cal-side {
+    flex: 1 1 280px;
+    max-width: 360px;
+    min-width: 0;
     display: flex;
+    flex-direction: column;
+}
+
+.cal-head {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.cal-month {
+    font-size: clamp(4rem, 8vw, 7rem);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+/* 十一月、十二月：三个字收一档，不折行 */
+.cal-month.is-long {
+    font-size: clamp(3.2rem, 6vw, 5.4rem);
+}
+
+.cal-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.cal-nav-btn {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
     border: 1px solid var(--grid-line);
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.88rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background 0.3s ease;
 }
 
-/* Subtle pink glow on hover */
-.flip-card:hover .flip-front {
-    box-shadow: 0 0 30px var(--love-glow);
+.cal-nav-btn .icon {
+    width: 16px;
+    height: 16px;
+    color: var(--ink-gold);
 }
 
-/* Flip Indicator (Corner) */
-.flip-front::before {
-    content: '';
-    position: absolute;
-    bottom: 30px;
-    right: 30px;
+.cal-nav-btn:hover:not(:disabled),
+.cal-nav-btn:focus-visible {
+    border-color: var(--ink-gold-soft);
+    background: rgba(236, 208, 154, 0.06);
+    outline: none;
+}
+
+.cal-nav-btn:disabled {
+    opacity: 0.32;
+    cursor: default;
+}
+
+.cal-en {
+    margin-top: 22px;
+    font-family: var(--font-num);
+    font-size: 0.8rem;
+    letter-spacing: 0.36em;
+    color: rgba(236, 208, 154, 0.75);
+}
+
+.cal-count {
+    margin-top: 18px;
+    font-size: 1.2rem;
+    letter-spacing: 0.04em;
+    text-wrap: balance;
+}
+
+.cal-count .num {
+    font-family: var(--font-num);
+    color: var(--ink-rose);
+}
+
+.cal-special {
+    margin-top: 40px;
+}
+
+.cal-special[hidden] {
+    display: none;
+}
+
+.cal-special-title {
+    font-size: 0.86rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+}
+
+.cal-special-list {
+    list-style: none;
+    margin-top: 10px;
+}
+
+.cal-special-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 56px;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid rgba(236, 208, 154, 0.12);
+    background: none;
+    color: var(--text-primary);
+    font: inherit;
+    text-align: left;
+}
+
+button.cal-special-item {
+    cursor: pointer;
+}
+
+button.cal-special-item:hover .cal-special-name,
+button.cal-special-item:focus-visible .cal-special-name {
+    color: var(--ink-gold);
+}
+
+button.cal-special-item:focus-visible {
+    outline: none;
+}
+
+.cal-special-thumb {
+    flex: none;
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-    border-radius: 0 0 4px 0;
-    opacity: 0.5;
-    transition: opacity 0.3s;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 1.5px var(--ink-gold);
+}
+
+.cal-special-item.is-love .cal-special-thumb {
+    box-shadow: 0 0 0 1.5px var(--ink-rose);
+}
+
+.cal-special-moon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cal-special-moon::before {
+    content: '';
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ink-gold);
+    box-shadow: 0 0 14px rgba(236, 208, 154, 0.5);
+}
+
+/* 还没有画信的生日、纪念日：一个空心圈，和满月区分开 */
+.cal-special-moon.is-ring::before {
+    width: 18px;
+    height: 18px;
+    background: none;
+    border: 1.5px solid var(--ink-gold);
+    box-shadow: none;
+}
+
+.cal-special-item.is-love .cal-special-moon.is-ring::before {
+    border-color: var(--ink-rose);
+}
+
+.cal-special-date {
+    flex: none;
+    width: 46px;
+    font-family: var(--font-num);
+    font-size: 0.94rem;
+    color: var(--ink-gold);
+}
+
+.cal-special-item.is-love .cal-special-date {
+    color: var(--ink-rose);
+}
+
+.cal-special-name {
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.cal-random {
+    align-self: flex-start;
+    margin-top: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 22px;
+    border-radius: 999px;
+    border: 1px solid var(--ink-gold-soft);
+    background: rgba(236, 208, 154, 0.06);
+    color: var(--ink-gold);
+    font: inherit;
+    font-size: 0.94rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.cal-random[hidden] {
+    display: none;
+}
+
+.cal-random .icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.35s ease;
+}
+
+.cal-random:hover,
+.cal-random:focus-visible {
+    background: rgba(236, 208, 154, 0.14);
+    border-color: var(--ink-gold);
+    outline: none;
+}
+
+.cal-random:hover .icon {
+    transform: rotate(-12deg) scale(1.15);
+}
+
+.cal-board {
+    flex: 999 1 560px;
+    min-width: 0;
+}
+
+.cal-weekdays,
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    column-gap: 12px;
+}
+
+.cal-weekdays {
+    text-align: center;
+    font-size: 0.86rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+
+.cal-grid {
+    margin-top: 18px;
+    row-gap: 16px;
+}
+
+.cal-day {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    padding: 2px 0;
+    background: none;
+    border: 0;
+    color: var(--text-primary);
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cal-day.is-blank {
+    visibility: hidden;
     pointer-events: none;
 }
 
-.flip-card:hover .flip-front::before {
-    opacity: 1;
+.cal-win {
+    position: relative;
+    display: block;
+    width: min(84px, 100%);
+    aspect-ratio: 1;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Back Return Indicator */
-.flip-back::after {
-    content: 'Tap to Return';
+.cal-win-edge,
+.cal-win-art {
     position: absolute;
-    bottom: 30px;
-    font-family: var(--font-sans);
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    opacity: 0.5;
+    clip-path: circle(50%);
 }
 
-.letter-content p {
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    line-height: 1.8;
-    color: rgba(255, 235, 240, 0.9);
-    margin: 0;
-    font-style: normal;
-    text-align: left;
-    opacity: 0.9;
+.cal-win-edge {
+    inset: 0;
+    background: rgba(236, 208, 154, 0.26);
+    transition: background 0.3s ease;
 }
 
-.letter-signature {
-    text-align: right;
-    margin-top: 30px;
-}
-
-.letter-signature span {
-    font-family: var(--font-serif);
-    font-size: 1.1rem;
-    color: var(--love-glow);
-    font-style: italic;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Full-Screen Image Background - Now Centered */
-.card-image-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
+.cal-win-art {
+    inset: 1px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: transparent;
+    background: rgba(13, 8, 22, 0.55);
 }
 
-.card-image {
-    position: relative;
-    z-index: 1;
-    max-width: 90%;
-    max-height: 80%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 4px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+.cal-win-art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-/* Card Info Section - Minimalist Bottom Left */
-.card-info {
+.cal-day:hover .cal-win,
+.cal-day:focus-visible .cal-win {
+    transform: scale(1.06);
+}
+
+.cal-day:focus-visible {
+    outline: none;
+}
+
+.cal-day:hover .cal-win-edge,
+.cal-day:focus-visible .cal-win-edge {
+    background: var(--ink-gold);
+}
+
+.cal-num {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-num);
+    font-size: 0.94rem;
+    line-height: 1;
+    color: rgba(246, 237, 228, 0.74);
+}
+
+.cal-num::before,
+.cal-num::after {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+.cal-day.is-full .cal-num::before {
+    background: var(--ink-gold);
+}
+
+.cal-day.is-empty .cal-win-edge {
+    background: rgba(236, 208, 154, 0.1);
+}
+
+.cal-day.is-empty .cal-win-art {
+    background: rgba(13, 8, 22, 0.45);
+}
+
+.cal-day.is-future .cal-win-edge {
+    background: rgba(236, 208, 154, 0.08);
+}
+
+.cal-day.is-future .cal-win-art {
+    background: rgba(13, 8, 22, 0.22);
+}
+
+.cal-day.is-future .cal-num {
+    opacity: 0.55;
+}
+
+.cal-day.is-love .cal-win-edge {
+    background: var(--ink-rose);
+}
+
+.cal-day.is-gold .cal-win-edge {
+    background: var(--ink-gold);
+}
+
+.cal-day.is-love .cal-win-art,
+.cal-day.is-gold .cal-win-art {
+    inset: 2.5px;
+}
+
+/* 有描边的窗（生日、纪念日、今天）里面要是实的，不然描边色会透满整扇窗 */
+.cal-day.is-love .cal-win-art,
+.cal-day.is-gold .cal-win-art,
+.cal-day.is-today .cal-win-art {
+    background: #1a1128;
+}
+
+.cal-day.is-love .cal-num {
+    color: var(--ink-rose);
+}
+
+.cal-day.is-gold .cal-num {
+    color: var(--ink-gold);
+}
+
+.cal-heart {
     position: absolute;
-    bottom: 120px;
-    right: 30px;
-    left: auto;
-    transform: none;
-    z-index: 10;
-    text-align: right;
-    padding: 0;
-    background: none;
-    border: none;
-    max-width: 600px;
-    width: auto;
-    color: #FFFFFF;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-    pointer-events: none;
-}
-
-.card-title {
-    font-family: var(--font-serif);
-    font-size: 2.5rem;
-    margin-bottom: 4px;
-    color: #FFFFFF;
-    font-weight: 700;
-    mix-blend-mode: exclusion;
-}
-
-.card-meta {
+    top: -3px;
+    right: calc(50% - min(42px, 50%) - 6px);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--bg-color);
+    box-shadow: 0 0 0 1px var(--ink-rose);
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-    font-weight: 400;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--love-glow);
-    justify-content: flex-end;
+    justify-content: center;
+    color: var(--ink-rose);
+    z-index: 1;
 }
 
-.card-description {
-    font-family: var(--font-sans);
+.cal-heart .icon {
+    width: 12px;
+    height: 12px;
+}
+
+/* 今天：当季的窗形 + 当季的光晕 */
+.cal-day.is-today .cal-win {
+    filter: drop-shadow(0 0 12px var(--love-glow));
+}
+
+.cal-day.is-today .cal-win-edge,
+.cal-day.is-today .cal-win-art {
+    clip-path: var(--win-shape);
+}
+
+.cal-day.is-today .cal-win-edge {
+    left: calc(-1 * var(--win-wide));
+    right: calc(-1 * var(--win-wide));
+    background: var(--love-core);
+}
+
+.cal-day.is-today .cal-win-art {
+    inset: 2.5px calc(2.5px - var(--win-wide));
+}
+
+.cal-day.is-today .cal-num {
+    color: var(--love-core);
+}
+
+/* ============================================================
+    四季面板：季节只换花，不换夜
+    ============================================================ */
+.season-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 340;
+    background: rgba(8, 4, 14, 0.62);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.season-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.season-sheet {
+    position: fixed;
+    z-index: 350;
+    left: 50%;
+    top: 50%;
+    width: min(760px, calc(100vw - 32px));
+    max-height: calc(100svh - 48px);
+    overflow-y: auto;
+    padding: 30px 30px 28px;
+    border-radius: 24px;
+    border: 1px solid rgba(236, 208, 154, 0.18);
+    background: rgba(21, 13, 33, 0.97);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+    transform: translate(-50%, -46%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.4s;
+}
+
+.season-sheet.open {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.season-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.season-title {
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+}
+
+.season-sub {
+    margin-top: 8px;
+    font-size: 0.88rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.season-close {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(236, 208, 154, 0.3);
+    background: transparent;
+    color: var(--ink-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.season-close:hover,
+.season-close:focus-visible {
+    border-color: var(--ink-gold);
+    outline: none;
+}
+
+.season-options {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 26px;
+}
+
+.season-opt {
+    --opt: var(--ink-gold);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 18px 8px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(236, 208, 154, 0.14);
+    background: rgba(246, 237, 228, 0.03);
+    color: var(--text-primary);
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+}
+
+.season-opt[data-season='spring'] { --opt: #f3aebf; }
+.season-opt[data-season='summer'] { --opt: #a8d8c2; }
+.season-opt[data-season='autumn'] { --opt: #ebc06f; }
+.season-opt[data-season='winter'] { --opt: #c8d6f2; }
+
+.season-opt:hover,
+.season-opt:focus-visible {
+    border-color: rgba(236, 208, 154, 0.42);
+    outline: none;
+}
+
+.season-opt[aria-checked='true'] {
+    border-color: var(--opt);
+    background: rgba(246, 237, 228, 0.07);
+}
+
+.season-win {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    clip-path: circle(50%);
+    background: linear-gradient(145deg, var(--opt) 0%, rgba(246, 237, 228, 0.18) 100%);
+}
+
+.season-opt[data-season='auto'] .season-win {
+    background: conic-gradient(#f3aebf 0 25%, #a8d8c2 0 50%, #ebc06f 0 75%, #c8d6f2 0);
+}
+
+.season-opt[data-season='spring'] .season-win { clip-path: var(--shape-spring); }
+.season-opt[data-season='summer'] .season-win { width: 83px; clip-path: var(--shape-summer); }
+.season-opt[data-season='autumn'] .season-win { clip-path: var(--shape-autumn); }
+.season-opt[data-season='winter'] .season-win { clip-path: var(--shape-winter); }
+
+.season-name {
     font-size: 1rem;
-    font-weight: 300;
-    color: #efefef;
-    max-width: 100%;
-    margin: 0;
-    line-height: 1.5;
-    opacity: 0.8;
+    letter-spacing: 0.08em;
+    color: var(--opt);
+}
+
+.season-opt[data-season='auto'] .season-name {
+    color: var(--text-primary);
+}
+
+.season-when {
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.season-when .num {
+    font-family: var(--font-num);
 }
 
 /* Empty State */
@@ -1582,28 +1917,6 @@ button.ruler-day:focus-visible {
     justify-content: center;
     text-align: center;
     background: var(--bg-deep);
-}
-
-.empty-icon {
-    font-size: 4rem;
-    color: var(--love-mist);
-    margin-bottom: 20px;
-    opacity: 0.7;
-    animation: gentlePulse 3s ease-in-out infinite;
-}
-
-@keyframes gentlePulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-        opacity: 0.6;
-    }
-
-    50% {
-        transform: scale(1.05);
-        opacity: 0.9;
-    }
 }
 
 .empty-title {
@@ -1709,105 +2022,6 @@ body.modal-open .timeline-strip {
 
 .timeline-container::-webkit-scrollbar {
     display: none;
-}
-
-/* ============================================================
-   Desktop Navigation
-   ============================================================ */
-/* Moments 页中央标题：绝对居中，与左 logo / 右导航解耦（防撞，见 findings 导航防撞指南） */
-.page-title {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    white-space: nowrap;
-}
-
-.page-title .en {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 1.2rem;
-    color: var(--text-primary);
-}
-
-.page-title .cn {
-    font-family: var(--font-sans);
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    color: var(--text-muted);
-}
-
-.desktop-nav {
-    display: none; /* Hidden on mobile */
-    gap: 30px;
-    margin-left: 40px;
-}
-
-.nav-link {
-    font-family: var(--font-sans);
-    font-size: 0.95rem;
-    letter-spacing: 0.12em;
-    white-space: nowrap;
-    color: rgba(255, 255, 255, 0.6);
-    text-decoration: none;
-    transition: color 0.3s ease;
-    position: relative;
-    padding: 5px 0;
-}
-
-.nav-link:hover,
-.nav-link.active {
-    color: #fff;
-}
-
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: var(--ink-gold);
-}
-
-/* 平板宽度下"首页 / 画廊"会和居中的月份撞在一起：1000px 以上才显示（窄屏靠 Logo 回首页） */
-@media (min-width: 1000px) {
-    .desktop-nav {
-        display: flex;
-        align-items: center;
-        /* 绝对定位到右侧，避免与居中的 month-nav 重叠 */
-        position: absolute;
-        right: 240px; /* 给 header-actions 留出更多空间 */
-        top: 50%;
-        transform: translateY(-50%);
-    }
-}
-
-@media (min-width: 768px) {
-    .app-header {
-        justify-content: space-between;
-        position: relative; /* 为绝对定位的子元素提供参照 */
-    }
-    
-    .app-header .logo {
-        margin-right: 0;
-    }
-
-    /* If month nav exists, center it */
-    .month-nav {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    .header-actions {
-        margin-left: 0; /* Let flexbox space-between handle it or margin-left auto */
-    }
 }
 
 /* Timeline Thumbnail (Rothko Soft Edges) */
@@ -2219,425 +2433,10 @@ body.modal-open {
     overflow: hidden;
 }
 
-body.modal-open .content-area {
-    overflow: hidden;
-}
-
 /* 竖图：画区收窄一些，展签照旧在右下 */
 .detail-dialog.is-portrait {
     width: min(1100px, 100%);
     max-height: 920px;
-}
-
-/* ============================================================
-   RESPONSIVE DESIGN
-   ============================================================ */
-@media (max-width: 1024px) {
-    .app-container {
-        padding: 0;
-    }
-
-    .calendar-sidebar {
-        position: fixed;
-        top: 70px;
-        left: 0;
-        right: 0;
-        bottom: 100px;
-        z-index: 80;
-        border-radius: 0;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        overflow-y: auto;
-    }
-
-    .calendar-sidebar.open {
-        transform: translateX(0);
-    }
-
-    .mobile-calendar-btn {
-        display: block;
-    }
-
-    .content-area {
-        padding: 24px 24px 80px;
-    }
-
-    body.sidebar-closed .content-area {
-        padding-left: 24px;
-    }
-
-    .gallery-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 900px) {
-    .gallery-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    /* 窄屏看画：画在上，展签压在画的下沿；画拿走剩下的全部空间 */
-    .detail-modal {
-        padding: 72px 24px 140px;
-    }
-
-    .detail-dialog,
-    .detail-dialog.is-portrait {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0;
-        width: 100%;
-        max-height: none;
-    }
-
-    .detail-media {
-        flex: 1 1 auto;
-        width: 100%;
-    }
-
-    .detail-side {
-        flex: none;
-        align-self: center;
-        width: min(520px, calc(100% - 32px));
-        max-height: 42%;
-        margin-top: 14px;
-    }
-}
-
-
-@media (max-width: 600px) {
-    /* ============================================================
-       方案 A：极简沉浸派 - 移动端专属样式
-       ============================================================ */
-
-    /* === Header 极简化 === */
-    .app-header {
-        padding: 0 12px;
-        height: 52px;
-        justify-content: center;
-        /* 居中布局 */
-    }
-
-    /* 隐藏 Logo - 手机端不需要 */
-    .logo {
-        display: none !important;
-    }
-
-    /* 隐藏季节切换 - 移入底部导航设置 */
-    .theme-toggle {
-        display: none !important;
-    }
-
-    /* 月份导航居中显示 */
-    .month-nav {
-        flex: 1;
-        justify-content: center;
-        gap: 16px;
-    }
-
-    .month-label {
-        font-size: 1.05rem;
-        min-width: 130px;
-        font-weight: 400;
-    }
-
-    /* 导航按钮增大触摸区域 */
-    .nav-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 0.9rem;
-    }
-
-    /* 日历按钮移到右侧 */
-    .header-actions {
-        position: absolute;
-        right: 12px;
-        gap: 8px;
-    }
-
-    .mobile-calendar-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 1rem;
-    }
-
-    /* === 主容器适配底部导航栏 === */
-    .app-container {
-        padding: 0;
-        bottom: 64px;
-        /* 为底部导航栏留出空间 */
-    }
-
-    /* === 画廊 2 列瀑布流 === */
-    .content-area {
-        padding: 12px 8px 20px;
-    }
-
-    body.sidebar-closed .content-area {
-        padding-left: 8px;
-    }
-
-    /* === 今日画信：手机上字号收一档 === */
-    .today-hero {
-        margin: 2px 0 34px;
-    }
-
-    .hero-title {
-        font-size: 40px;
-    }
-
-    .hero-title.is-long {
-        font-size: 1.08rem;
-        line-height: 1.9;
-    }
-
-    .hero-sign {
-        font-size: 0.96rem;
-    }
-
-    .hero-date,
-    .hero-days {
-        font-size: 0.84rem;
-    }
-
-    .gallery-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
-
-    .gallery-card {
-        border-radius: 12px;
-    }
-
-    .gallery-meta {
-        padding: 10px;
-    }
-
-    .gallery-meta-line .meta-prefix {
-        font-size: 0.5rem;
-    }
-
-    .gallery-meta-line .meta-title {
-        font-size: 0.85rem;
-    }
-
-    /* === Timeline 底部隐藏 === */
-    .timeline-strip {
-        display: none;
-        /* 移动端隐藏横向时间轴，用底部导航代替 */
-    }
-
-    /* === 日历改为 Bottom Sheet === */
-    .calendar-sidebar {
-        position: fixed;
-        top: auto;
-        bottom: 64px;
-        /* 底部导航栏上方 */
-        left: 0;
-        right: 0;
-        width: 100%;
-        height: 60vh;
-        max-height: 500px;
-        border-radius: 24px 24px 0 0;
-        padding: 20px 16px;
-        background: rgba(10, 5, 12, 0.98);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
-        transform: translateY(100%);
-        transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-        z-index: 200;
-    }
-
-    .calendar-sidebar.open {
-        transform: translateY(0);
-    }
-
-    /* Bottom Sheet 拖动把手 */
-    .calendar-sidebar::before {
-        content: '';
-        position: absolute;
-        top: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 36px;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 2px;
-    }
-
-    .calendar-grid {
-        padding-top: 12px;
-    }
-
-    /* 日历单元格触摸优化 */
-    .day-cell {
-        aspect-ratio: 1;
-        font-size: 1rem;
-        min-width: 40px;
-        min-height: 40px;
-    }
-
-    .weekday-header {
-        font-size: 0.86rem;
-        margin-bottom: 16px;
-        font-weight: 400;
-    }
-
-    .days-grid {
-        gap: 6px;
-    }
-
-    /* === 底部导航栏 === */
-    .mobile-bottom-nav {
-        display: flex !important;
-    }
-
-    /* === Flip Card / Letter on Mobile === */
-    .flip-back {
-        padding: 20px;
-    }
-
-    .letter-container {
-        padding: 30px 20px;
-        max-width: 100%;
-    }
-
-    .letter-title {
-        font-size: 1.5rem;
-    }
-
-    .letter-content {
-        padding: 20px 15px;
-        margin: 20px 0;
-    }
-
-    .letter-content p {
-        font-size: 1rem;
-        line-height: 1.8;
-    }
-
-    .letter-signature span {
-        font-size: 0.95rem;
-    }
-
-    .flip-hint-back {
-        bottom: 20px;
-        padding: 10px 20px;
-        font-size: 0.8rem;
-    }
-
-    /* === Welcome / 入口页 on Mobile === */
-    .welcome-content {
-        padding: 20px;
-    }
-
-    .welcome-flower {
-        width: 80px;
-        height: 80px;
-    }
-
-    .welcome-title {
-        font-size: 1.8rem;
-        letter-spacing: 2px;
-        margin-bottom: 40px;
-    }
-
-    .enter-btn {
-        padding: 14px 32px;
-        font-size: 1rem;
-    }
-
-    /* === 隐藏桌面端光标 === */
-    .cursor-torch,
-    .cursor-dot {
-        display: none !important;
-    }
-
-    body {
-        cursor: auto;
-        /* 恢复默认光标 */
-    }
-
-    /* === 看画：全屏，画在上、展签在下，互不遮挡 === */
-    .detail-modal {
-        /* 高于 .mobile-bottom-nav(300)：看画时全屏沉浸 */
-        z-index: 400;
-        padding:
-            max(62px, calc(env(safe-area-inset-top) + 56px)) 14px max(16px, env(safe-area-inset-bottom));
-    }
-
-    .detail-dialog,
-    .detail-dialog.is-portrait {
-        justify-content: center;
-    }
-
-    /* 画和展签连成一组、在屏幕上居中，中间不留空 */
-    .detail-media {
-        flex: 0 1 auto;
-        height: auto;
-        min-height: 0;
-    }
-
-    .detail-media img {
-        max-height: calc(100svh - 300px);
-        padding: 6px;
-    }
-
-    /* 长信：给展签多留空间 */
-    .detail-dialog.is-long-letter .detail-media img {
-        max-height: 44svh;
-    }
-
-    .detail-hint {
-        display: block;
-    }
-
-    .detail-side {
-        width: calc(100% - 20px);
-        max-height: 48svh;
-        margin-top: 12px;
-    }
-
-    .detail-postmark {
-        top: -16px;
-        right: -6px;
-        width: 64px;
-        height: 64px;
-    }
-
-    .detail-header {
-        padding: 20px 20px 0;
-    }
-
-    .detail-close {
-        top: max(12px, env(safe-area-inset-top));
-        right: 12px;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-    }
-
-    .detail-body {
-        padding: 12px 20px 18px;
-    }
-
-    .detail-title {
-        font-size: 28px;
-    }
-
-    .detail-title.is-long {
-        font-size: 1.02rem;
-    }
-
-    .detail-letter {
-        font-size: 0.92rem;
-        line-height: 1.85;
-    }
-
-    .detail-hand {
-        font-size: 1.6rem;
-    }
 }
 
 /* ============================================================
@@ -2684,6 +2483,9 @@ body.modal-open .content-area {
     letter-spacing: 0.08em;
     white-space: nowrap;
     font-family: var(--font-sans);
+    text-decoration: none;
+    min-width: 64px;
+    min-height: 48px;
     cursor: pointer;
     transition: all 0.2s ease;
     -webkit-tap-highlight-color: transparent;
@@ -2708,186 +2510,6 @@ body.modal-open .content-area {
     transform: scale(0.92);
 }
 
-/* 日历遮罩层 */
-.calendar-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 150;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.calendar-overlay.show {
-    display: block;
-    opacity: 1;
-}
-
-/* ============================================================
-   设置面板 Bottom Sheet (Mobile Settings)
-   ============================================================ */
-.settings-sheet {
-    display: none;
-    position: fixed;
-    bottom: 64px;
-    left: 0;
-    right: 0;
-    height: auto;
-    max-height: 50vh;
-    background: rgba(10, 5, 12, 0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px 24px 0 0;
-    padding: 16px 20px 24px;
-    transform: translateY(100%);
-    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-    z-index: 200;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
-}
-
-.settings-sheet.open {
-    transform: translateY(0);
-}
-
-.settings-handle {
-    width: 36px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-    margin: 0 auto 16px;
-}
-
-.settings-title {
-    font-family: var(--font-serif);
-    font-size: 1.1rem;
-    color: var(--text-primary);
-    margin-bottom: 16px;
-    text-align: center;
-}
-
-.settings-section {
-    margin-bottom: 16px;
-}
-
-.settings-label {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-.theme-options {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-}
-
-.theme-option {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 12px 8px;
-    background: var(--surface-glass);
-    border: 1px solid var(--grid-line);
-    border-radius: 12px;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* 季节色块（替代 🌸🌿🍂❄️ emoji） */
-.theme-option .theme-swatch {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
-}
-
-.theme-option[data-theme='spring'] .theme-swatch {
-    background: radial-gradient(circle at 35% 35%, #ffd3df, #e0719a);
-}
-
-.theme-option[data-theme='summer'] .theme-swatch {
-    background: radial-gradient(circle at 35% 35%, #d6f5c8, #6fbf86);
-}
-
-.theme-option[data-theme='autumn'] .theme-swatch {
-    background: radial-gradient(circle at 35% 35%, #ffe2b0, #d9953f);
-}
-
-.theme-option[data-theme='winter'] .theme-swatch {
-    background: radial-gradient(circle at 35% 35%, #e1edff, #7fa5e6);
-}
-
-.theme-option .theme-name {
-    font-size: 0.9rem;
-    font-family: var(--font-sans);
-}
-
-.theme-option.active {
-    background: var(--surface-glass-hover);
-    border-color: var(--love-core);
-    color: var(--text-primary);
-    box-shadow: 0 0 14px var(--love-mist);
-}
-
-.theme-option:active {
-    transform: scale(0.95);
-}
-
-.settings-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 150;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.settings-overlay.show {
-    display: block;
-    opacity: 1;
-}
-
-@media (max-width: 600px) {
-    .settings-sheet {
-        display: block;
-    }
-}
-
-/* ============================================================
-   PORTRAIT MODE LAYOUT (Centered - Unified)
-   ============================================================ */
-/* Ensure portrait images are just centered nicely without split layout */
-.day-card.is-portrait .card-image-wrapper {
-    width: 100% !important;
-    right: 0 !important;
-    left: 0 !important;
-    justify-content: center !important;
-    padding: 0 !important;
-}
-
-.day-card.is-portrait .card-image {
-    max-height: 85vh;
-    max-width: auto;
-    /* Let height dictate width to maintain aspect ratio */
-}
-
-/* On mobile, ensure it fits */
-@media (max-width: 768px) {
-    .day-card.is-portrait .card-image {
-        max-height: 70vh;
-        max-width: 90%;
-    }
-}
-
 /* Sunflower Icon */
 .sunflower-icon {
     width: 36px;
@@ -2900,13 +2522,6 @@ body.modal-open .content-area {
 
 .sunflower-icon:hover {
     transform: scale(1.1);
-}
-
-/* Larger icon for empty state */
-.empty-icon .sunflower-icon {
-    width: 96px;
-    height: 96px;
-    filter: var(--sunflower-filter) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
 /* Timeline specific adjustment */
@@ -3193,5 +2808,544 @@ body.modal-open .content-area {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+@media (max-width: 1100px) {
+    .lm-header {
+        padding-left: max(24px, env(safe-area-inset-left));
+        padding-right: max(24px, env(safe-area-inset-right));
+    }
+
+    .lm-main {
+        padding-left: max(24px, env(safe-area-inset-left));
+        padding-right: max(24px, env(safe-area-inset-right));
+    }
+
+    .view-corridor {
+        --cor-h: clamp(260px, min(100svh - 420px, 56vw), 460px);
+        margin: 0 calc(-1 * max(24px, env(safe-area-inset-left)));
+    }
+
+    .view-head,
+    .corridor-foot {
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+
+    .corridor-scroll {
+        padding-left: 32px;
+        padding-right: 32px;
+        scroll-padding-inline: 32px;
+    }
+}
+
+@media (max-width: 900px) {
+    /* 窄屏看画：画在上，展签在画下面；画拿走剩下的全部空间 */
+    .detail-modal {
+        padding: 72px 24px 140px;
+    }
+
+    .detail-dialog,
+    .detail-dialog.is-portrait {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+        max-height: none;
+    }
+
+    .detail-media {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .detail-side {
+        flex: none;
+        align-self: center;
+        width: min(520px, calc(100% - 32px));
+        max-height: 42%;
+        margin-top: 14px;
+    }
+
+    /* 画历：月份一行，下面是圆窗，再下面是特别日子（平板竖屏和手机共用） */
+    .view-calendar {
+        gap: 0;
+        padding: 8px 0 0;
+    }
+
+    .cal-side {
+        display: contents;
+    }
+
+    .cal-head {
+        flex: 0 0 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .cal-en,
+    .cal-count {
+        flex: 0 0 100%;
+    }
+
+    .cal-board {
+        flex: 0 0 100%;
+        order: 2;
+        margin-top: 24px;
+    }
+
+    .cal-special {
+        flex: 0 0 100%;
+        order: 3;
+        margin-top: 32px;
+    }
+
+    .cal-random {
+        flex: 0 0 auto;
+        order: 4;
+        margin-top: 22px;
+    }
+}
+
+/* 手机横屏、矮窗口：长廊收紧上下，让一整幅画留在一屏里 */
+@media (min-width: 601px) and (max-height: 520px) {
+    .lm-header {
+        min-height: 56px;
+        padding-top: max(4px, env(safe-area-inset-top));
+        padding-bottom: 4px;
+    }
+
+    .lm-main {
+        padding-bottom: 8px;
+    }
+
+    .view-corridor {
+        --cor-h: max(140px, calc(100svh - 250px));
+        min-height: calc(100svh - 72px);
+    }
+
+    .view-head {
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .view-title-row {
+        flex: none;
+    }
+
+    .view-title {
+        font-size: 1.6rem;
+        white-space: nowrap;
+    }
+
+    .view-sub {
+        display: none;
+    }
+
+    .month-chips {
+        min-width: 0;
+    }
+
+    .month-chip {
+        min-height: 36px;
+    }
+
+    .corridor-scroll {
+        padding-top: 12px;
+        padding-bottom: 18px;
+    }
+
+    .cor-month {
+        gap: 8px;
+        margin-bottom: 72px;
+    }
+
+    .cor-month-cn {
+        font-size: 1.6rem;
+    }
+
+    .cor-month-year {
+        display: none;
+    }
+
+    .cor-item {
+        gap: 10px;
+    }
+
+    .cor-cap {
+        padding-top: 8px;
+    }
+
+    .cor-title {
+        margin-top: 4px;
+        font-size: 0.94rem;
+    }
+}
+
+@media (max-width: 600px) {
+    /* === 顶栏：手机上只留 LOVE MINNIE 和季节标，三个入口在底栏 === */
+    .lm-header {
+        grid-template-columns: minmax(0, 1fr) auto;
+        min-height: 56px;
+        padding: max(6px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 6px max(18px, env(safe-area-inset-left));
+    }
+
+    .lm-mark {
+        font-size: 0.76rem;
+        letter-spacing: 0.3em;
+    }
+
+    .lm-tabs {
+        display: none;
+    }
+
+    .lm-season {
+        padding: 0 14px;
+        font-size: 0.82rem;
+    }
+
+    .lm-main {
+        padding: 4px max(12px, env(safe-area-inset-right)) calc(84px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left));
+    }
+
+    /* === 今日画信：手机上字号收一档 === */
+    .view-today {
+        padding-top: 4px;
+    }
+
+    .today-hero {
+        margin: 2px 0 24px;
+    }
+
+    .hero-title {
+        font-size: 40px;
+    }
+
+    .hero-title.is-long {
+        font-size: 1.08rem;
+        line-height: 1.9;
+    }
+
+    .hero-sign {
+        font-size: 0.96rem;
+    }
+
+    .hero-date,
+    .hero-days {
+        font-size: 0.84rem;
+    }
+
+    /* === 长廊：一屏一幅，吸附居中；画放在同一幅画的深色晕染里 === */
+    .view-corridor {
+        --cor-h: clamp(220px, calc(100svh - 440px), 440px);
+        min-height: calc(100svh - 150px);
+        margin: 0 calc(-1 * max(12px, env(safe-area-inset-left)));
+    }
+
+    .view-head {
+        padding: 6px 20px 0;
+        gap: 12px;
+    }
+
+    .view-title {
+        font-size: 2rem;
+    }
+
+    .view-sub {
+        font-size: 0.84rem;
+    }
+
+    .month-chip {
+        min-height: 44px;
+    }
+
+    .corridor-scroll {
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px calc(50vw - 150px) 12px;
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline: calc(50vw - 150px);
+    }
+
+    .cor-item {
+        width: 300px;
+        scroll-snap-align: center;
+    }
+
+    .cor-bg {
+        display: block;
+        position: absolute;
+        left: -10%;
+        top: -10%;
+        width: 120%;
+        height: 120%;
+        object-fit: cover;
+        filter: blur(26px) brightness(0.42);
+    }
+
+    .cor-img {
+        object-fit: contain;
+    }
+
+    .cor-item:hover .cor-frame {
+        transform: none;
+    }
+
+    /* 一屏一幅时竖排月份会被切掉半个：月份交给顶上的月份条 */
+    .cor-month {
+        display: none;
+    }
+
+    /* 进度条整行，起止日期在它下面左右各一个 */
+    .corridor-foot {
+        padding: 10px 20px 0;
+        gap: 2px 12px;
+    }
+
+    .corridor-track {
+        flex: 0 0 100%;
+        order: 1;
+    }
+
+    .corridor-end {
+        order: 2;
+    }
+
+    #corridor-end {
+        margin-left: auto;
+    }
+
+    .corridor-hint {
+        display: none;
+    }
+
+    .corridor-end {
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+    }
+
+    /* === 画历：字号和间距收一档（版式见 900px 那段） === */
+    .view-calendar {
+        padding: 4px 4px 0;
+    }
+
+    .cal-month,
+    .cal-month.is-long {
+        font-size: 3rem;
+    }
+
+    .cal-nav-btn {
+        padding: 0 12px;
+        font-size: 0.82rem;
+    }
+
+    .cal-en {
+        margin-top: 12px;
+        font-size: 0.7rem;
+        letter-spacing: 0.3em;
+    }
+
+    .cal-count {
+        margin-top: 10px;
+        font-size: 1.02rem;
+    }
+
+    .cal-board {
+        margin-top: 18px;
+    }
+
+    .cal-special {
+        margin-top: 26px;
+    }
+
+    .cal-random {
+        margin-top: 18px;
+    }
+
+    .cal-weekdays,
+    .cal-grid {
+        column-gap: 6px;
+    }
+
+    .cal-weekdays {
+        font-size: 0.78rem;
+    }
+
+    .cal-grid {
+        row-gap: 10px;
+    }
+
+    .cal-day {
+        gap: 6px;
+    }
+
+    .cal-num {
+        font-size: 0.8rem;
+        gap: 3px;
+    }
+
+    .cal-num::before,
+    .cal-num::after {
+        width: 4px;
+        height: 4px;
+    }
+
+    .cal-heart {
+        width: 16px;
+        height: 16px;
+        top: -4px;
+        right: -2px;
+    }
+
+    .cal-heart .icon {
+        width: 9px;
+        height: 9px;
+    }
+
+    /* === 四季面板：从底部升起 === */
+    .season-sheet {
+        left: 0;
+        right: 0;
+        top: auto;
+        bottom: 0;
+        width: auto;
+        max-height: 86svh;
+        padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+        border-radius: 24px 24px 0 0;
+        transform: translateY(100%);
+    }
+
+    .season-sheet.open {
+        transform: translateY(0);
+    }
+
+    .season-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .season-opt[data-season='auto'] {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 14px;
+        padding: 12px 16px;
+        text-align: left;
+    }
+
+    .season-opt[data-season='auto'] .season-win {
+        width: 40px;
+        height: 40px;
+    }
+
+    .season-win {
+        width: 56px;
+        height: 56px;
+    }
+
+    .season-opt[data-season='summer'] .season-win {
+        width: 73px;
+    }
+
+    /* === 底栏 === */
+    .mobile-bottom-nav {
+        display: flex !important;
+    }
+
+    /* === 胶卷条：手机上不出现，用左右滑代替 === */
+    .timeline-strip {
+        display: none;
+    }
+
+    /* === 隐藏桌面端光标 === */
+    .cursor-torch {
+        display: none !important;
+    }
+
+    /* === 看画：全屏，画在上、展签在下，互不遮挡 === */
+    .detail-modal {
+        /* 高于 .mobile-bottom-nav(300)：看画时全屏沉浸 */
+        z-index: 400;
+        padding:
+            max(62px, calc(env(safe-area-inset-top) + 56px)) 14px max(16px, env(safe-area-inset-bottom));
+    }
+
+    .detail-dialog,
+    .detail-dialog.is-portrait {
+        justify-content: center;
+    }
+
+    /* 画和展签连成一组、在屏幕上居中，中间不留空 */
+    .detail-media {
+        flex: 0 1 auto;
+        height: auto;
+        min-height: 0;
+    }
+
+    .detail-media img {
+        max-height: calc(100svh - 300px);
+        padding: 6px;
+    }
+
+    /* 长信：给展签多留空间 */
+    .detail-dialog.is-long-letter .detail-media img {
+        max-height: 44svh;
+    }
+
+    .detail-hint {
+        display: block;
+    }
+
+    .detail-side {
+        width: calc(100% - 20px);
+        max-height: 48svh;
+        margin-top: 12px;
+    }
+
+    .detail-postmark {
+        top: -16px;
+        right: -6px;
+        width: 64px;
+        height: 64px;
+    }
+
+    .detail-header {
+        padding: 20px 20px 0;
+    }
+
+    .detail-close {
+        top: max(12px, env(safe-area-inset-top));
+        right: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .detail-body {
+        padding: 12px 20px 18px;
+    }
+
+    .detail-title {
+        font-size: 28px;
+    }
+
+    .detail-title.is-long {
+        font-size: 1.02rem;
+    }
+
+    .detail-letter {
+        font-size: 0.92rem;
+        line-height: 1.85;
+    }
+
+    .detail-hand {
+        font-size: 1.6rem;
     }
 }
