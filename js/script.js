@@ -809,23 +809,22 @@ document.addEventListener('DOMContentLoaded', () => {
         hero.classList.toggle('is-portrait', known && portrait);
         hero.classList.toggle('is-landscape', known && !portrait);
 
+        // 宽卡片：画在左，信纸一栏 367px（再压住画框衬边 13px，不压画）；窄卡片：画在上、信在下
         const heroWidth = hero.clientWidth;
-        const stacked = heroWidth < 720;
+        const stacked = heroWidth < 820;
         hero.classList.toggle('is-stacked', stacked);
         const vh = window.innerHeight;
         let artW;
         if (stacked) {
-            const maxW = heroWidth - 32;
-            const maxH = portrait ? Math.min(vh * 0.52, 520) : vh * 0.46;
+            const maxW = heroWidth - 14;
+            const maxH = portrait ? Math.min(vh * 0.56, 560) : vh * 0.5;
             artW = Math.min(maxW, maxH * ratio);
         } else {
-            const pad = 28;
-            const availW = heroWidth - 340 - pad * 2;
+            const availW = heroWidth - 367 - 26;
             const maxH = portrait
-                ? Math.min(Math.max(vh - 220, 440), 740)
-                : Math.min(Math.max(vh - 330, 300), 560);
-            const maxW = portrait ? availW : Math.min(availW, heroWidth * 0.64 - pad * 2);
-            artW = Math.min(maxW, maxH * ratio);
+                ? Math.min(Math.max(vh - 240, 440), 760)
+                : Math.min(Math.max(vh - 330, 320), 600);
+            artW = Math.min(availW, maxH * ratio);
         }
         artW = Math.max(120, Math.floor(artW));
         hero.style.setProperty('--art-w', `${artW}px`);
@@ -835,10 +834,119 @@ document.addEventListener('DOMContentLoaded', () => {
         if (titleEl && !titleEl.classList.contains('is-long')) {
             const chars = Array.from(titleEl.textContent.replace(/\s/g, '')).length;
             TS.fit(titleEl, {
-                max: stacked ? (isMobileLayout() ? 34 : 40) : 44,
-                min: stacked ? 22 : 26,
-                maxLines: chars <= 10 ? 1 : 2
+                max: stacked ? (isMobileLayout() ? 40 : 46) : 56,
+                min: stacked ? 24 : 28,
+                maxLines: chars <= 8 ? 1 : 2
             });
+        }
+    }
+
+    // ------------------------------------------------------------
+    // 邮戳、月相、印章：今日画信和看画的展签共用
+    // ------------------------------------------------------------
+    const pad2 = (n) => String(n).padStart(2, '0');
+    let postmarkSeq = 0;
+    function postmarkSvg(d, no, dayNo) {
+        const id = `lm-pm-${++postmarkSeq}`;
+        const ring = `LOVE MINNIE · ${d.getFullYear()} · ${pad2(d.getMonth() + 1)} · ${pad2(d.getDate())} · NO. ${no} ·`;
+        return `<svg viewBox="0 0 112 112" aria-hidden="true" focusable="false">` +
+            `<defs><path id="${id}" d="M56,56 m-44.5,0 a44.5,44.5 0 1,1 89,0 a44.5,44.5 0 1,1 -89,0"/></defs>` +
+            '<circle cx="56" cy="56" r="52" fill="#f4eadf" stroke="#b4455d" stroke-width="1.6"/>' +
+            '<circle cx="56" cy="56" r="37" fill="none" stroke="#b4455d" stroke-width="1"/>' +
+            `<text font-family="Bodoni Moda, serif" font-size="8.5" letter-spacing="2" fill="#b4455d"><textPath href="#${id}" textLength="272" lengthAdjust="spacing">${ring}</textPath></text>` +
+            `<text x="56" y="61" text-anchor="middle" font-family="Bodoni Moda, serif" font-size="22" fill="#b4455d">${dayNo}</text>` +
+            '<text x="56" y="73" text-anchor="middle" font-family="Bodoni Moda, serif" font-size="6.5" letter-spacing="2" fill="#b4455d">DAYS</text>' +
+            '</svg>';
+    }
+
+    // 月相：按月龄估算被照亮的比例；上半月亮在右，下半月亮在左
+    const SYNODIC = 29.530588853;
+    const NEW_MOON_REF = Date.UTC(2000, 0, 6, 18, 14);
+    function moonLit(date) {
+        const days = (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12) - NEW_MOON_REF) / 86400000;
+        const age = ((days % SYNODIC) + SYNODIC) % SYNODIC;
+        return { lit: (1 - Math.cos((2 * Math.PI * age) / SYNODIC)) / 2, waxing: age < SYNODIC / 2 };
+    }
+    function moonStyle(phase, size) {
+        const { lit, waxing } = phase;
+        if (lit <= 0.5) {
+            return { bg: 'var(--night-3)', shadow: `inset ${waxing ? '-' : ''}${(lit * size).toFixed(1)}px 0 0 0 var(--ink-gold)` };
+        }
+        return { bg: 'var(--ink-gold)', shadow: `inset ${waxing ? '' : '-'}${((1 - lit) * size).toFixed(1)}px 0 0 0 var(--night-3)` };
+    }
+
+    // 印章：同一封信只盖一次（记在这台设备上），第二次打开时它已经在那儿了
+    const STAMP_KEY = 'love-minnie-stamped-v1';
+    function maybeStamp(seal, date) {
+        if (!seal) return;
+        seal.classList.remove('is-stamping');
+        let stamped = [];
+        try {
+            stamped = JSON.parse(localStorage.getItem(STAMP_KEY) || '[]');
+        } catch (err) {
+            stamped = [];
+        }
+        if (!Array.isArray(stamped) || stamped.includes(date)) return;
+        void seal.offsetWidth; // 重新触发动画
+        seal.classList.add('is-stamping');
+        stamped.push(date);
+        try {
+            localStorage.setItem(STAMP_KEY, JSON.stringify(stamped.slice(-120)));
+        } catch (err) {
+            // 隐私模式存不下也没关系，最多下次再盖一次
+        }
+    }
+
+    // 月相尺：这个月每天的真实月相；有画信的日子是按钮，点开就是那一封
+    const MONTH_CN = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+    function renderHeroRuler(current) {
+        const ruler = document.getElementById('today-hero-ruler');
+        if (!ruler) return;
+        const y = current.dateObj.getFullYear();
+        const m = current.dateObj.getMonth();
+        const daysIn = new Date(y, m + 1, 0).getDate();
+        const todayStr = formatDateISO(getToday());
+        const phases = [];
+        let fullDay = 1;
+        for (let day = 1; day <= daysIn; day++) {
+            const ph = moonLit(new Date(y, m, day));
+            phases.push(ph);
+            if (ph.lit > phases[fullDay - 1].lit) fullDay = day;
+        }
+        let count = 0;
+        const cells = phases.map((ph, i) => {
+            const day = i + 1;
+            const iso = `${y}-${pad2(m + 1)}-${pad2(day)}`;
+            const item = iso <= todayStr ? dataByDate[iso] : null;
+            if (item) count++;
+            const isToday = iso === todayStr;
+            const moon = moonStyle(ph, 13);
+            const shadow = isToday ? `${moon.shadow}, 0 0 0 3px var(--bg-color), 0 0 0 4px var(--ink-gold)` : moon.shadow;
+            const cls = ['ruler-day'];
+            if (item) cls.push('has-letter');
+            if (iso > todayStr) cls.push('is-future');
+            if (iso === current.date) cls.push('is-current');
+            const mark = day === fullDay ? '望' : (isToday ? '今' : '');
+            const inner =
+                `<span class="ruler-mark" aria-hidden="true">${mark}</span>` +
+                `<span class="ruler-moon" aria-hidden="true" style="background:${moon.bg};box-shadow:${shadow}"></span>` +
+                `<span class="ruler-num">${day}</span>` +
+                '<span class="ruler-dot" aria-hidden="true"></span>';
+            if (!item) return `<span class="${cls.join(' ')}">${inner}</span>`;
+            const label = escapeHtml(`${m + 1}月${day}日，${letterParts(item).title || '画信'}`);
+            return `<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${label}">${inner}</button>`;
+        });
+        ruler.innerHTML =
+            '<div class="hero-ruler-head">' +
+            `<span>${MONTH_CN[m]} · <span class="num">${y}</span></span>` +
+            `<span class="ruler-sum">已收到 <span class="num">${count}</span> 封 · 满月在 <span class="num">${m + 1}.${fullDay}</span></span>` +
+            '</div>' +
+            `<div class="hero-ruler-days">${cells.join('')}</div>`;
+        // 手机上月相尺横向滚动：把这一封挪到看得见的位置
+        const cur = ruler.querySelector('.is-current');
+        const strip = ruler.querySelector('.hero-ruler-days');
+        if (cur && strip && strip.scrollWidth > strip.clientWidth) {
+            strip.scrollLeft = Math.max(0, cur.offsetLeft - strip.clientWidth / 2);
         }
     }
 
@@ -859,11 +967,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const d = item.dateObj;
         const daysAgo = diffDays(d, getToday());
         const label = isToday ? '今天' : (daysAgo === 1 ? '昨天' : '最近一封');
+        const no = getChronoNo(item);
+        const dayNo = getDayNumber(d);
 
-        document.getElementById('today-hero-date').innerHTML =
-            `<span class="ts-u is-today">${label}</span>` + SEP +
-            unit(`${d.getMonth() + 1}月${d.getDate()}日`) + SEP +
-            unit(`星期${WEEKDAYS_ZH[d.getDay()]}`);
+        document.getElementById('today-hero-postmark').innerHTML = postmarkSvg(d, no, dayNo);
+        document.getElementById('today-hero-no').innerHTML = unit(`第 <span class="num">${no}</span> 封画信`);
+        const note = document.getElementById('today-hero-note');
+        note.hidden = isToday;
+        note.textContent = isToday ? '' : `今天这封还在路上，这是${label === '昨天' ? '昨天' : '最近'}的`;
 
         const parts = letterParts(item);
         const titleEl = document.getElementById('today-hero-title');
@@ -871,35 +982,42 @@ document.addEventListener('DOMContentLoaded', () => {
         titleEl.classList.toggle('is-long', parts.isLong);
         if (parts.isLong) TS.unfit(titleEl);
         document.getElementById('today-hero-sign').innerHTML = signHtml(parts);
+        document.getElementById('today-hero-date').innerHTML =
+            unit(`<span class="num">${d.getFullYear()}</span> 年 <span class="num">${d.getMonth() + 1}</span> 月 <span class="num">${d.getDate()}</span> 日`) + SEP +
+            unit(`星期${WEEKDAYS_ZH[d.getDay()]}`);
         document.getElementById('today-hero-days').innerHTML =
-            unit(`在一起的第 <span class="num">${getDayNumber(d)}</span> 天`);
-        const note = document.getElementById('today-hero-note');
-        note.hidden = isToday;
-        note.innerHTML = isToday ? '' : unit('今天这封还在路上');
+            unit(`在一起的第 <span class="num">${dayNo}</span> 天`);
 
         const img = document.getElementById('today-hero-img');
         img.onload = layoutHero;
         img.src = `images/${item.filename}`;
         img.alt = getArtworkLabel(item);
-        hero.setAttribute('aria-label', `查看${label}的画：${getArtworkLabel(item)}`);
-        hero.style.setProperty('--hero-bg', `url("${img.src}")`);
+        const art = document.getElementById('today-hero-art');
+        art.setAttribute('aria-label', `看大图：${label}的画，${getArtworkLabel(item)}`);
+        hero.setAttribute('aria-label', `${label}的画信`);
+
+        maybeStamp(document.getElementById('today-hero-seal'), item.date);
+        renderHeroRuler(item);
 
         if (!hero.dataset.bound) {
-            const openHero = () => {
-                const it = galleryData.find(g => g.date === hero.dataset.date);
+            const openItem = (it) => {
                 if (!it) return;
                 selectDate(new Date(it.date), { scroll: false });
                 openDetail(it);
             };
-            hero.addEventListener('click', openHero);
-            hero.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openHero();
-                }
+            const openHero = () => openItem(galleryData.find(g => g.date === hero.dataset.date));
+            art.addEventListener('click', openHero);
+            art.addEventListener('mouseenter', () => setTorchMode(true));
+            art.addEventListener('mouseleave', () => setTorchMode(false));
+            document.getElementById('today-hero-open').addEventListener('click', openHero);
+            document.getElementById('today-hero-walk').addEventListener('click', () => {
+                const target = galleryGrid && galleryGrid.children.length ? galleryGrid : emptyState;
+                target?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
             });
-            hero.addEventListener('mouseenter', () => setTorchMode(true));
-            hero.addEventListener('mouseleave', () => setTorchMode(false));
+            document.getElementById('today-hero-ruler').addEventListener('click', (event) => {
+                const btn = event.target.closest('button[data-date]');
+                if (btn) openItem(dataByDate[btn.dataset.date]);
+            });
             hero.dataset.bound = '1';
         }
         hero.dataset.date = item.date;
@@ -1363,10 +1481,8 @@ document.addEventListener('DOMContentLoaded', () => {
         detailImage.onload = updateDetailOrientation;
         detailImage.src = `images/${item.filename}`;
         detailImage.alt = getArtworkLabel(item);
-        // 弹窗信笺/图区的同图氛围底
-        if (detailDialog) {
-            detailDialog.style.setProperty('--detail-bg', `url("${detailImage.src}")`);
-        }
+        // 看画的同图氛围底：铺满整个屏幕
+        detailModal.style.setProperty('--detail-bg', `url("${detailImage.src}")`);
 
         // 信笺：日期 → 第几天、第几封 → 主题 → 落款
         const d = item.dateObj instanceof Date ? item.dateObj : new Date(item.date);
@@ -1387,6 +1503,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detailDialog) detailDialog.classList.toggle('is-long-letter', parts.isLong || !!parts.rest);
         const detailSign = document.getElementById('detail-sign');
         if (detailSign) detailSign.innerHTML = signHtml(parts);
+        const detailPostmark = document.getElementById('detail-postmark');
+        if (detailPostmark) detailPostmark.innerHTML = postmarkSvg(d, getChronoNo(item), getDayNumber(d));
+        maybeStamp(document.getElementById('detail-seal'), item.date);
 
         const description = item.description ? item.description.trim() : '';
         detailDescription.innerHTML = description && description !== (item.loveLetter || '').trim()
