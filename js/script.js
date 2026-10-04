@@ -354,8 +354,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let initialDate = null;
 
+            // 0. 从首页月轮选中某天进来（?day=YYYY-MM-DD）：直接打开那一封，不越过"今天"
+            const requestedDay = new URLSearchParams(window.location.search).get('day') || '';
+            const requestedItem = /^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && requestedDay <= todayStr
+                ? dataByDate[requestedDay] || null
+                : null;
+
             // 1. First priority: Check if today has artwork
-            if (dataByDate[todayStr]) {
+            if (requestedItem) {
+                initialDate = requestedItem.dateObj;
+            } else if (dataByDate[todayStr]) {
                 initialDate = realToday;
             } else {
                 // 2. Second priority: Find the most recent artwork that's <= today
@@ -385,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCalendar();
             renderTimeline();
             updateMonthView({ anchorDate: selectedDate });
+            if (requestedItem) openDetail(requestedItem);
         })
         .catch(err => {
             console.error('Error loading data:', err);

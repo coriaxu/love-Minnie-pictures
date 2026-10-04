@@ -25,10 +25,10 @@
 | `data.json` | 画廊数据源，按日期降序保存 |
 | `data.js`、`js/data.js` | 发布脚本生成的兼容数据文件，随数据源同步；不要独立编辑或删除 |
 | `images/` | 已发布画作及画廊图标 |
-| `index.html`、`js/home.js`、`css/home.css` | 首页：月洞窗与向日葵星盘，以及纪念日存档入口 |
+| `index.html`、`js/home.js`、`css/home.css` | 首页「星夜园林」：左边时间、中间星盘与月洞窗、右边话；月洞窗点开或按住散雾，月轮可转回最近三十天；纪念日存档入口 |
 | `gallery.html`、`js/script.js`、`css/style.css` | 今日画信、历史浏览、日历、影院模式和主题切换 |
 | `js/typeset.js` | 中文断行：日期、数字、短语整体换行，杜绝孤字 |
-| `fonts/` | 本地字体：`wenkai/` 霞鹜文楷（全站唯一字体），`memorial/` 仅 6000 天纪念页使用 |
+| `fonts/` | 本地字体：`wenkai/` 霞鹜文楷（所有中文），`memorial/` 6000 天纪念页使用，其中 Bodoni Moda 也给首页的数字和英文小标 |
 | `js/day-6000.js`、`css/day-6000.css` | 6000 天纪念页 |
 | `js/anniversary-effects.js` | 纪念日触发与效果 |
 | `candidates/` | 候选画与排期素材 |
@@ -50,6 +50,7 @@ python3 -m http.server 5177 --bind 127.0.0.1
 - 6000 天完整预览：<http://127.0.0.1:5177/?d6k=1&d6kDev=1>
 - 分阶段预览：使用 `?d6k=stage1`、`?d6k=stage2` 或 `?d6k=stage3`。
 - 按日期预览首页和画廊：加 `?date=YYYY-MM-DD`，例如 `?date=2026-09-26` 可看"今天这封还在路上"的样子。
+- 直接打开某一封：画廊加 `?day=YYYY-MM-DD`（首页月轮选中某天后点开就是这个链接），不会越过"今天"。
 - 排版自检：画廊加 `?lmdev=1` 会暴露 `window.__LM`，可逐封渲染今日卡和看画页，批量检查断行。
 
 画作日更按 Skill 完成数据与线上图片核验即可。修改页面后，检查桌面和手机布局，以及受影响的导航、画作详情、日历或纪念页交互。
