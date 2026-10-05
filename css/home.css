@@ -1,25 +1,41 @@
 /* ============================================================
-   首页 · 月洞窗与向日葵星盘（2026-09 改版）
+   首页 · 星夜园林（2026-10 改版）
 
-   - 夜空紫做底，全年不变；画作只出现在中间的圆窗里。
-   - 星盘：在一起的每一天是一颗点，按黄金角排成向日葵花盘；
-     离窗最近的是今天，越往外越早；有画信的日子是一圈玫瑰色。
-   - 字体只用霞鹜文楷一种，靠字号和颜色分层：金色给时间和数字，玫瑰色给"爱"。
+   - 版式：左边是时间，中间是画，右边是话；手机上话在上、画在下。
+   - 夜空紫做底，全年不变；季节只换强调色（季节标、今天那颗星的光晕）。
+   - 星盘：在一起的每一天是一颗点，按黄金角排成向日葵花盘，越往外越早。
+   - 月轮：月洞窗外一圈 30 颗点，是最近三十天，今天在正上方，逆时针往回。
+   - 字体：霞鹜文楷说话；Bodoni Moda 只给数字和英文小标（@font-face 在 day-6000.css，同样是本地文件）。
+     金色给时间和数字，玫瑰色给"爱"。
    ============================================================ */
 
 :root {
-    --ink-0: #0e0817;
+    --ink-0: #0d0816;
     --ink-1: #150d21;
+    --ink-3: #2b1f40;
     --paper: #f6ede4;
-    --paper-2: rgba(246, 237, 228, 0.68);
-    --paper-3: rgba(246, 237, 228, 0.4);
+    --paper-2: rgba(246, 237, 228, 0.72);
+    --paper-3: rgba(246, 237, 228, 0.58);
+    --paper-4: rgba(246, 237, 228, 0.3);
     --gold: #ecd09a;
-    --gold-2: rgba(236, 208, 154, 0.6);
+    --gold-2: rgba(236, 208, 154, 0.62);
     --gold-3: rgba(236, 208, 154, 0.24);
+    --rose: #f3aebf;
+    --accent: #ebc06f;
+    --accent-glow: rgba(235, 192, 111, 0.55);
     --font: 'LXGW WenKai Screen', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-    /* 星盘直径：手机按屏宽，桌面按屏高 */
-    --disc: clamp(232px, min(90vw, 53svh), 600px);
+    --font-num: 'Bodoni Moda', 'LXGW WenKai Screen', serif;
+    /* 星盘直径：手机按屏宽，桌面按屏高（见下方断点） */
+    --disc: clamp(232px, min(88vw, 46svh), 600px);
+    /* 月轮上一颗点的直径 */
+    --dot: max(3px, calc(var(--disc) * 0.0085));
 }
+
+/* 季节只换强调色 */
+body[data-season='spring'] { --accent: #f3aebf; --accent-glow: rgba(243, 174, 191, 0.55); }
+body[data-season='summer'] { --accent: #a8d8c2; --accent-glow: rgba(168, 216, 194, 0.5); }
+body[data-season='autumn'] { --accent: #ebc06f; --accent-glow: rgba(235, 192, 111, 0.55); }
+body[data-season='winter'] { --accent: #c8d6f2; --accent-glow: rgba(200, 214, 242, 0.5); }
 
 *,
 *::before,
@@ -36,7 +52,7 @@ body {
 
 body.home-page {
     min-height: 100svh;
-    background: radial-gradient(120% 80% at 50% 36%, #26173a 0%, #170e25 50%, var(--ink-0) 100%) fixed;
+    background: radial-gradient(110% 80% at 50% 44%, #28183c 0%, #170e25 55%, var(--ink-0) 100%) fixed;
     background-color: var(--ink-1);
     color: var(--paper);
     font-family: var(--font);
@@ -59,6 +75,11 @@ body.home-page.is-opening {
     white-space: nowrap;
 }
 
+.num {
+    font-family: var(--font-num);
+    font-variant-numeric: lining-nums;
+}
+
 .home-sky {
     position: fixed;
     inset: 0;
@@ -76,7 +97,7 @@ body.home-page.is-opening {
     flex-direction: column;
     min-height: 100svh;
     padding:
-        max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+        max(12px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
 }
 
 /* ---------------- 顶栏 ---------------- */
@@ -84,28 +105,83 @@ body.home-page.is-opening {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 40px;
+    gap: 16px;
+    min-height: 44px;
     opacity: 0;
     transition: opacity 0.9s ease;
 }
 
 .home-mark {
-    font-size: 1.02rem;
-    letter-spacing: 0.08em;
-    color: var(--gold-2);
+    font-family: var(--font-num);
+    font-size: 0.76rem;
+    letter-spacing: 0.32em;
+    color: rgba(236, 208, 154, 0.82);
     white-space: nowrap;
 }
 
+.home-top-end {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.home-top-link {
+    display: none;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 1rem;
+    letter-spacing: 0.16em;
+    color: var(--paper-2);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+.home-top-link:hover,
+.home-top-link:focus-visible {
+    color: var(--paper);
+    outline: none;
+}
+
+/* 季节标：只是告诉她现在是哪一季，不可点 */
+.home-season {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 13px;
+    border-radius: 999px;
+    border: 1px solid var(--gold-3);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+}
+
+.home-season[hidden] {
+    display: none;
+}
+
+.home-season svg {
+    width: 11px;
+    height: 11px;
+    fill: currentColor;
+}
+
 .home-archive {
+    display: none;
     font: inherit;
-    font-size: 0.84rem;
+    font-size: 0.88rem;
     letter-spacing: 0.12em;
     white-space: nowrap;
     color: var(--paper-2);
     background: transparent;
     border: 1px solid var(--gold-3);
     border-radius: 999px;
-    padding: 6px 14px;
+    min-height: 44px;
+    padding: 0 18px;
     cursor: pointer;
     transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
 }
@@ -119,25 +195,46 @@ body.home-page.is-opening {
 }
 
 .home-archive[hidden] {
-    display: none;
+    display: none !important;
 }
 
-/* ---------------- 主体 ---------------- */
+/* ---------------- 主体（手机：话 → 星盘 → 转盘按钮） ---------------- */
 .home-main {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(18px, 4.2svh, 44px);
-    padding: 8px 0 4px;
+    gap: clamp(14px, 2.6svh, 28px);
+    padding: 6px 0 4px;
+}
+
+.home-time {
+    display: none;
+}
+
+.home-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(8px, 1.6svh, 16px);
 }
 
 .home-disc {
+    --hold: 0;
     position: relative;
     width: var(--disc);
     height: var(--disc);
     flex: none;
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.is-turning .home-disc {
+    cursor: grabbing;
 }
 
 .home-disc-canvas {
@@ -147,6 +244,99 @@ body.home-page.is-opening {
     height: 100%;
     pointer-events: none;
     transition: opacity 0.5s ease;
+}
+
+/* 星盘外的一圈细金线和刻字，像星盘仪的外环 */
+.home-orbit {
+    position: absolute;
+    left: -7.7%;
+    top: -7.7%;
+    width: 115.4%;
+    height: 115.4%;
+    overflow: visible;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.2s ease 0.3s;
+}
+
+.home-orbit-line {
+    fill: none;
+    stroke: rgba(236, 208, 154, 0.13);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.home-orbit-text {
+    display: none;
+    font-family: var(--font-num);
+    font-size: 12px;
+    letter-spacing: 4px;
+    fill: rgba(236, 208, 154, 0.45);
+}
+
+/* 月轮 */
+.home-ring {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.home-ring-dot {
+    position: absolute;
+    width: var(--dot);
+    height: var(--dot);
+    margin: calc(var(--dot) / -2) 0 0 calc(var(--dot) / -2);
+    border-radius: 50%;
+    background-color: rgba(243, 176, 192, 0.82);
+    opacity: 0;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+body.ring-ready .home-ring-dot {
+    animation: ring-in 0.5s ease both;
+    animation-delay: calc(var(--i, 0) * 24ms);
+}
+
+@keyframes ring-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.home-ring-dot.is-empty {
+    background-color: rgba(244, 230, 200, 0.22);
+}
+
+.home-ring-dot.is-special {
+    background-color: #f7bccb;
+    transform: scale(1.3);
+}
+
+.home-ring-dot.is-today {
+    background-color: var(--gold);
+    transform: scale(1.45);
+}
+
+.home-ring-dot.is-selected {
+    background-color: #ffe6a8;
+    transform: scale(2.1);
+    box-shadow:
+        0 0 0 calc(var(--dot) * 0.8) rgba(236, 208, 154, 0.16),
+        0 0 calc(var(--dot) * 3.5) var(--accent-glow);
+}
+
+/* 月洞窗外的金线：平时是一圈淡金，按住时沿窗边走一圈 */
+.home-moon-halo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: calc(44% + 10px);
+    height: calc(44% + 10px);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: conic-gradient(var(--gold) calc(var(--hold) * 1turn), var(--gold-3) 0);
+    box-shadow: 0 0 calc(12px + var(--hold) * 40px) rgba(236, 208, 154, calc(0.06 + var(--hold) * 0.3));
+    pointer-events: none;
+    transition: box-shadow 0.5s ease;
 }
 
 /* 月洞窗 */
@@ -162,14 +352,21 @@ body.home-page.is-opening {
     display: block;
     /* 画还没来时，窗里是一轮暖色满月 */
     background: radial-gradient(circle at 42% 38%, #fff8e7 0%, #f6e4bf 36%, #dcc091 70%, #b99670 100%);
-    box-shadow:
-        0 0 0 1px rgba(236, 208, 154, 0.42),
-        0 0 44px rgba(236, 208, 154, 0.2),
-        0 0 140px rgba(236, 208, 154, 0.08);
+    box-shadow: 0 0 44px rgba(236, 208, 154, 0.2), 0 0 140px rgba(236, 208, 154, 0.08);
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
     transition: transform 0.68s cubic-bezier(0.65, 0, 0.35, 1), box-shadow 0.6s ease;
     will-change: transform;
     isolation: isolate;
+    animation: moon-breathe 4.8s ease-in-out infinite;
+}
+
+@keyframes moon-breathe {
+    0%, 100% { box-shadow: 0 0 40px rgba(236, 208, 154, 0.16), 0 0 120px rgba(236, 208, 154, 0.06); }
+    50% { box-shadow: 0 0 64px rgba(236, 208, 154, 0.3), 0 0 170px rgba(236, 208, 154, 0.1); }
 }
 
 .home-moon-art {
@@ -179,13 +376,19 @@ body.home-page.is-opening {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    filter: blur(var(--moon-blur, 6px)) saturate(1.06) brightness(0.9);
+    filter: blur(calc(var(--moon-blur, 6px) * (1 - var(--hold)))) saturate(1.06) brightness(calc(0.9 + var(--hold) * 0.1));
     opacity: 0;
-    transition: opacity 1.4s ease, filter 0.6s ease, transform 0.6s ease;
+    transition: opacity 1.4s ease, filter 0.5s ease, transform 0.6s ease;
 }
 
 .home-moon.has-art .home-moon-art {
     opacity: 1;
+}
+
+/* 转月轮换画时，旧画先淡一下 */
+.home-moon.is-swapping .home-moon-art {
+    opacity: 0.3;
+    transition: opacity 0.18s ease, filter 0.5s ease;
 }
 
 /* 窗纸：中心透一点光，四周略暗，再叠一层极淡的纸纹 */
@@ -201,30 +404,124 @@ body.home-page.is-opening {
     box-shadow:
         inset 0 0 0 1px rgba(255, 248, 230, 0.18),
         inset 0 0 38px rgba(14, 8, 23, 0.42);
-    transition: opacity 0.6s ease;
+    opacity: calc(1 - var(--hold));
+    transition: opacity 0.5s ease;
 }
 
-.home-moon:hover .home-moon-art,
-.home-moon:focus-visible .home-moon-art {
-    filter: blur(calc(var(--moon-blur, 6px) * 0.45)) saturate(1.06) brightness(0.96);
-    transform: scale(0.985);
+/* 按住时雾跟着手走，不要过渡 */
+body.is-holding .home-moon-art,
+body.is-holding .home-moon-paper,
+body.is-holding .home-moon-halo {
+    transition: none;
 }
 
-.home-moon:hover,
+@media (hover: hover) {
+    .home-moon:hover .home-moon-art {
+        filter: blur(calc(var(--moon-blur, 6px) * 0.45 * (1 - var(--hold)))) saturate(1.06) brightness(0.96);
+        transform: scale(0.985);
+    }
+}
+
 .home-moon:focus-visible {
-    box-shadow:
-        0 0 0 1px rgba(236, 208, 154, 0.7),
-        0 0 56px rgba(236, 208, 154, 0.3),
-        0 0 160px rgba(236, 208, 154, 0.1);
+    outline: 1px solid var(--gold);
+    outline-offset: 8px;
+}
+
+/* ---------------- 手机：前一天 / 提示 / 后一天 ---------------- */
+.home-dial {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: min(100%, calc(var(--disc) + 24px));
+}
+
+.home-dial-btn {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(236, 208, 154, 0.26);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.3s ease, border-color 0.3s ease;
+}
+
+.home-dial-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.4;
+}
+
+.home-dial-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.home-dial-btn:focus-visible {
     outline: none;
+    border-color: var(--gold);
+}
+
+.home-dial-hint {
+    flex: 1;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    letter-spacing: 0.06em;
+    color: var(--paper-3);
+}
+
+body.is-away .home-hint-idle {
+    display: none;
+}
+
+.home-back {
+    font: inherit;
+    font-size: 0.88rem;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    color: var(--gold);
+    background: rgba(236, 208, 154, 0.06);
+    border: 1px solid var(--gold-2);
+    border-radius: 999px;
+    min-height: 40px;
+    padding: 0 20px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.home-back:hover,
+.home-back:focus-visible {
+    background: rgba(236, 208, 154, 0.14);
+    border-color: var(--gold);
+    outline: none;
+}
+
+.home-back[hidden] {
+    display: none !important;
 }
 
 /* ---------------- 文字 ---------------- */
 .home-words {
+    order: -1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     text-align: center;
     max-width: 36em;
     opacity: 0;
@@ -234,8 +531,8 @@ body.home-page.is-opening {
 
 .home-greet {
     font-weight: 400;
-    font-size: clamp(1.38rem, 5.4vw, 2.3rem);
-    line-height: 1.45;
+    font-size: clamp(1.32rem, 6.4vw, 2.3rem);
+    line-height: 1.5;
     letter-spacing: 0.04em;
     text-wrap: balance;
 }
@@ -249,15 +546,15 @@ body.home-page.is-opening {
 }
 
 .home-meta {
-    font-size: clamp(0.84rem, 3.5vw, 1rem);
+    font-size: clamp(0.8rem, 3.4vw, 1rem);
     line-height: 1.8;
     letter-spacing: 0.06em;
-    color: var(--paper-2);
+    color: var(--paper-3);
     text-wrap: balance;
 }
 
 .home-meta .ts-sep {
-    color: var(--paper-3);
+    color: var(--paper-4);
 }
 
 .home-meta .num {
@@ -265,19 +562,31 @@ body.home-page.is-opening {
 }
 
 .home-cta {
-    margin-top: 10px;
-    display: inline-block;
-    padding: 13px 32px;
+    display: none;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+    min-height: 54px;
+    padding: 0 30px;
     border-radius: 999px;
     border: 1px solid var(--gold-2);
     background: rgba(236, 208, 154, 0.06);
     color: var(--gold);
-    font-size: 1.02rem;
-    letter-spacing: 0.18em;
+    font-size: 1.06rem;
+    letter-spacing: 0.16em;
     text-decoration: none;
     white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
     transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+
+.home-cta svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.4;
+    transition: transform 0.3s ease;
 }
 
 .home-cta:hover,
@@ -287,8 +596,182 @@ body.home-page.is-opening {
     outline: none;
 }
 
+.home-cta:hover svg {
+    transform: translateX(3px);
+}
+
 .home-cta:active {
     transform: scale(0.98);
+}
+
+.home-words .home-back {
+    display: none;
+}
+
+.home-back-quiet {
+    background: transparent;
+    border-color: var(--gold-3);
+    color: var(--paper-2);
+}
+
+.home-hints {
+    display: none;
+    list-style: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.home-hints li {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    font-size: 0.88rem;
+    letter-spacing: 0.04em;
+    color: var(--paper-3);
+}
+
+.home-hints svg {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--gold-2);
+    stroke-width: 1.3;
+}
+
+/* 系统开了"减少动态效果"：没有按住散雾，只保留点开 */
+body.is-reduced .home-hint-hold {
+    display: none;
+}
+
+/* ---------------- 时间（桌面左栏） ---------------- */
+.home-time {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+    text-align: right;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.home-time-label {
+    font-size: 1rem;
+    letter-spacing: 0.24em;
+    color: var(--paper-3);
+}
+
+.home-time-num {
+    font-family: var(--font-num);
+    font-size: clamp(5.4rem, 8.4vw, 7.8rem);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+    color: var(--gold);
+    font-variant-numeric: lining-nums;
+}
+
+.home-time-since {
+    font-size: 0.94rem;
+    letter-spacing: 0.12em;
+    color: var(--paper-3);
+}
+
+.home-time-since .num {
+    letter-spacing: 0.06em;
+}
+
+.home-time-rule {
+    width: 48px;
+    height: 1px;
+    background: rgba(236, 208, 154, 0.32);
+    margin: 14px 0 6px;
+}
+
+.home-time-letter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.94rem;
+    color: rgba(246, 237, 228, 0.78);
+}
+
+.home-time-letter[hidden] {
+    display: none;
+}
+
+.home-time-letter .num {
+    color: var(--rose);
+}
+
+.home-heart {
+    width: 14px;
+    height: 14px;
+    fill: var(--rose);
+}
+
+.home-time-moon {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+    letter-spacing: 0.06em;
+    color: var(--paper-3);
+}
+
+/* 那天的真实月相：box-shadow 由 js/home.js 按月龄算 */
+.home-moon-phase {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--ink-3);
+}
+
+/* ---------------- 底部 ---------------- */
+.home-foot-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 6px;
+}
+
+.home-foot-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 0.94rem;
+    letter-spacing: 0.14em;
+    color: var(--paper-2);
+    background: none;
+    border: 0;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.home-foot-link[hidden] {
+    display: none;
+}
+
+.home-foot-link + .home-foot-link::before {
+    content: '·';
+    color: var(--paper-4);
+    margin: 0 14px 0 -14px;
+}
+
+.home-foot {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0 6px;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    color: var(--paper-3);
 }
 
 .home-noscript {
@@ -306,24 +789,35 @@ body.home-page.is-opening {
 
 /* ---------------- 入场与拆开 ---------------- */
 body.is-ready .home-top,
-body.is-ready .home-words {
+body.is-ready .home-words,
+body.is-ready .home-time,
+body.is-ready .home-orbit {
     opacity: 1;
     transform: none;
 }
 
 body.is-opening .home-top,
-body.is-opening .home-words {
+body.is-opening .home-words,
+body.is-opening .home-time,
+body.is-opening .home-dial,
+body.is-opening .home-foot,
+body.is-opening .home-foot-nav {
     opacity: 0;
     transform: translateY(-6px);
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 body.is-opening .home-sky,
-body.is-opening .home-disc-canvas {
+body.is-opening .home-disc-canvas,
+body.is-opening .home-orbit,
+body.is-opening .home-ring,
+body.is-opening .home-moon-halo {
     opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 body.is-opening .home-moon {
+    animation: none;
     box-shadow: none;
 }
 
@@ -339,7 +833,7 @@ body.is-opening .home-moon-paper {
 /* ---------------- 横屏手机：星盘在左，文字在右 ---------------- */
 @media (orientation: landscape) and (max-height: 540px) {
     :root {
-        --disc: min(76svh, 44vw);
+        --disc: min(72svh, 40vw);
     }
 
     .home-main {
@@ -348,24 +842,137 @@ body.is-opening .home-moon-paper {
     }
 
     .home-words {
+        order: 0;
         align-items: flex-start;
         text-align: left;
     }
+
+    .home-dial,
+    .home-foot-nav {
+        display: none;
+    }
+
+    .home-cta,
+    .home-top-link,
+    .home-top .home-archive {
+        display: inline-flex;
+        align-items: center;
+    }
 }
 
-/* ---------------- 桌面：更从容的留白 ---------------- */
-@media (min-width: 900px) {
+/* ---------------- 桌面：左边是时间，中间是画，右边是话 ---------------- */
+@media (min-width: 1180px) and (min-height: 600px) {
+    :root {
+        --disc: clamp(400px, min(38vw, 58svh), 600px);
+    }
+
     .home {
-        padding-left: 40px;
-        padding-right: 40px;
+        padding-left: 48px;
+        padding-right: 48px;
+        padding-top: max(18px, env(safe-area-inset-top));
     }
 
     .home-top {
-        min-height: 52px;
+        min-height: 60px;
+    }
+
+    .home-mark {
+        font-size: 0.94rem;
+        letter-spacing: 0.34em;
+    }
+
+    .home-top-link,
+    .home-top .home-archive {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .home-season {
+        height: 44px;
+        padding: 0 16px;
+        font-size: 0.88rem;
+    }
+
+    .home-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        column-gap: clamp(40px, 4.5vw, 72px);
+        padding: 0;
+    }
+
+    .home-time {
+        display: flex;
+        justify-self: end;
+    }
+
+    .home-stage {
+        grid-column: 2;
+    }
+
+    .home-disc {
+        margin: calc(var(--disc) * 0.077) 0;
+    }
+
+    .home-orbit-text {
+        display: inline;
+    }
+
+    .home-dial {
+        display: none;
     }
 
     .home-words {
-        gap: 14px;
+        order: 0;
+        grid-column: 3;
+        justify-self: start;
+        align-items: flex-start;
+        text-align: left;
+        gap: 18px;
+        max-width: 22em;
+    }
+
+    .home-greet {
+        font-size: clamp(1.8rem, 2.4vw, 2.4rem);
+        line-height: 1.45;
+    }
+
+    .home-greet .ts-u {
+        display: block;
+    }
+
+    .home-greet wbr {
+        display: none;
+    }
+
+    .home-meta {
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+    }
+
+    .home-meta-days {
+        display: none;
+    }
+
+    .home-cta {
+        display: inline-flex;
+    }
+
+    .home-words .home-back:not([hidden]) {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .home-hints {
+        display: flex;
+    }
+
+    .home-foot-nav {
+        display: none;
+    }
+
+    .home-foot {
+        display: flex;
     }
 }
 
@@ -376,5 +983,10 @@ body.is-opening .home-moon-paper {
     *::after {
         transition-duration: 0.01ms !important;
         animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
+    }
+
+    .home-moon {
+        animation: none;
     }
 }

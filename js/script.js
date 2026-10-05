@@ -1,85 +1,88 @@
 /**
- * Minnie's 2026 - Calendar Journal Hybrid
- * Gallery grid with detail sidebar modal
+ * Love Minnie · 画廊（2026-10 星夜园林）
+ *
+ * 三个视图：
+ * - 今日：今日画信（细金框的画 + 一封有邮戳、落款和印章的信）+ 这个月的月相尺；
+ * - 长廊：所有画信从今天往回排成一条横向长廊，每个月开头竖排月份，桌面滚轮横着走；
+ * - 画历：一个月的圆窗，每天一扇，"今天"那一格是当季的窗形。
+ * 共用：看画弹窗（展签、邮戳、印章）、看画时底部的胶卷条、四季面板。
+ *
+ * URL：#today / #corridor / #calendar 切换视图；
+ *      ?day=YYYY-MM-DD 直接打开某一封（首页月轮点开就是这个）；
+ *      ?date=YYYY-MM-DD 把"今天"换成指定日期预览（与首页一致）；
+ *      ?lmdev=1 暴露排版自检钩子 window.__LM。
  */
-
 document.addEventListener('DOMContentLoaded', () => {
-    // ============================================================
-    // DOM Elements
-    // ============================================================
-    const calendarDays = document.getElementById('calendar-days');
-    const monthLabel = document.getElementById('current-month-label');
-    const prevMonthBtn = document.getElementById('prev-month');
-    const nextMonthBtn = document.getElementById('next-month');
-    const toggleCalendarBtn = document.getElementById('toggle-calendar');
-    const calendarSidebar = document.getElementById('calendar-sidebar');
-
-    const galleryGrid = document.getElementById('gallery-grid');
-    const emptyState = document.getElementById('empty-state');
-    const emptyTitle = document.getElementById('empty-title');
-    const emptyDateText = document.getElementById('empty-date-text');
-    const emptySubtext = document.getElementById('empty-subtext');
-
-    const timelineContainer = document.getElementById('timeline-container');
-    const timelinePrev = document.getElementById('timeline-prev');
-    const timelineNext = document.getElementById('timeline-next');
-
-    const bgBlur = document.getElementById('bg-blur');
-    const dateCapsule = document.getElementById('date-capsule');
-
-    const detailModal = document.getElementById('detail-modal');
-    const detailImage = document.getElementById('detail-image');
-    const detailTitle = document.getElementById('detail-title');
-    const detailDate = document.getElementById('detail-date');
-    const detailDescription = document.getElementById('detail-description');
-    const detailLetter = document.getElementById('detail-letter');
-    const detailClose = document.getElementById('detail-close');
+    const $ = (id) => document.getElementById(id);
+    const params = new URLSearchParams(window.location.search);
+    const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // ============================================================
-    // ROSE TORCH：跟随鼠标的柔光（仅桌面，鼠标本身保持系统光标）
+    // DOM
     // ============================================================
-    const torch = document.getElementById('torch');
+    const bgBlur = $('bg-blur');
+    const heroEl = $('today-hero');
+    const emptyState = $('empty-state');
 
+    const corridorScroll = $('corridor-scroll');
+    const corridorMonths = $('corridor-months');
+    const corridorRange = $('corridor-range');
+    const corridorMarks = $('corridor-marks');
+
+    const calGrid = $('cal-grid');
+    const calPrev = $('cal-prev');
+    const calNext = $('cal-next');
+
+    const timelineContainer = $('timeline-container');
+
+    const detailModal = $('detail-modal');
+    const detailImage = $('detail-image');
+    const detailTitle = $('detail-title');
+    const detailDate = $('detail-date');
+    const detailDescription = $('detail-description');
+    const detailLetter = $('detail-letter');
+    const detailClose = $('detail-close');
+
+    const seasonBtn = $('season-btn');
+    const seasonSheet = $('season-sheet');
+    const seasonOverlay = $('season-overlay');
+    const seasonOptions = $('season-options');
+
+    // ============================================================
+    // 跟随鼠标的柔光（仅桌面，鼠标本身保持系统光标）
+    // ============================================================
+    const torch = $('torch');
     if (torch) {
         const moveCursor = (x, y) => {
             torch.style.left = `${x}px`;
             torch.style.top = `${y}px`;
         };
         moveCursor(window.innerWidth / 2, window.innerHeight / 2);
-
-        document.addEventListener('mousemove', (e) => {
-            moveCursor(e.clientX, e.clientY);
-        });
+        document.addEventListener('mousemove', (e) => moveCursor(e.clientX, e.clientY));
     }
 
     const setTorchMode = (isActive) => {
         if (!torch) return;
-        const gradient = isActive
+        const size = isActive ? '600px' : '400px';
+        torch.style.width = size;
+        torch.style.height = size;
+        torch.style.background = isActive
             ? 'radial-gradient(circle, var(--torch-active-strong) 0%, var(--torch-active-soft) 50%, transparent 70%)'
             : 'radial-gradient(circle, var(--torch-idle-strong) 0%, var(--torch-idle-soft) 50%, transparent 70%)';
-        if (isActive) {
-            torch.style.width = '600px';
-            torch.style.height = '600px';
-            torch.style.background = gradient;
-        } else {
-            torch.style.width = '400px';
-            torch.style.height = '400px';
-            torch.style.background = gradient;
-        }
     };
 
     // ============================================================
-    // State
+    // 日期与数据
     // ============================================================
-    const START_DATE = new Date('2026-01-01T00:00:00');
     const RELATIONSHIP_START = new Date('2009-12-10T00:00:00');
-    const EMPTY_FUTURE_START = new Date('2025-12-25T00:00:00');
     const WEEKDAYS_ZH = '日一二三四五六';
+    const MONTH_CN = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+    const MONTH_EN = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
     const TS = window.Typeset;
 
     // "今天"：默认取本机日期；URL 加 ?date=YYYY-MM-DD 可预览指定日期的画廊（与首页一致）
     const PREVIEW_DATE = (() => {
-        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(new URLSearchParams(window.location.search).get('date') || '');
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(params.get('date') || '');
         return match ? new Date(+match[1], +match[2] - 1, +match[3]) : null;
     })();
     const getToday = () => {
@@ -88,82 +91,105 @@ document.addEventListener('DOMContentLoaded', () => {
         return d;
     };
     const isMobileLayout = () => window.matchMedia('(max-width: 600px)').matches;
-    let currentMonth = new Date(START_DATE);
-    let selectedDate = new Date(START_DATE);
-    let galleryData = [];
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const formatDateISO = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+    const toUtcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffDays = (start, end) => Math.floor((toUtcDay(end) - toUtcDay(start)) / 86400000);
+    const getDayNumber = (date) => diffDays(RELATIONSHIP_START, date) + 1;
+    const parseISO = (iso) => {
+        const [y, m, d] = iso.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    };
+
+    const escapeHtml = (text) => String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    // 首页链接带上预览日期
+    const homeHref = PREVIEW_DATE ? `index.html?date=${formatDateISO(PREVIEW_DATE)}` : 'index.html';
+    ['lm-home-link', 'nav-home'].forEach((id) => {
+        const el = $(id);
+        if (el) el.href = homeHref;
+    });
+
+    // 只展示"今天"及以前的画信（预览旧日期时也一样）
+    let galleryData = [];   // 新 → 旧
     let dataByDate = {};
-    const cardByDate = new Map();
-    let resizeTimer = null;
+    let sortedDates = [];   // 旧 → 新
+    let chronoIndex = new Map();
+    let selectedDate = getToday();
+
+    const getChronoNo = (item) => chronoIndex.get(item.date) || 0;
+
+    function getArtworkThemeText(item) {
+        const raw = String(item.loveLetter || item.title || item.description || '');
+        const match = raw.match(/今日份爱你[,，、\s]*(.+)$/);
+        if (match) return match[1].trim();
+        return raw.replace(/^♥️\s*/, '').trim();
+    }
+
+    function getArtworkLabel(item) {
+        const d = item.dateObj;
+        const dateLabel = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+        const theme = getArtworkThemeText(item);
+        return theme ? `${dateLabel}，${theme}` : dateLabel;
+    }
+
+    // 特别的日子：画历的描边、长廊的小标签
+    const SPECIAL_DAYS = [
+        { md: '09-22', name: '老婆生日', short: '生日', love: true },
+        { md: '10-03', name: '婚礼纪念日', short: '婚礼纪念日' },
+        { md: '12-10', name: '恋爱纪念日', short: '恋爱纪念日', love: true },
+        { md: '12-16', name: '领证纪念日', short: '领证纪念日' },
+        { date: '2026-05-14', name: '在一起 6000 天', short: '6000 天' },
+        { date: '2025-12-24', name: '第一封画信', short: '第一封' }
+    ];
+    const specialFor = (iso) => SPECIAL_DAYS.find((s) => (s.date ? s.date === iso : iso.slice(5) === s.md)) || null;
+
+    // ============================================================
+    // 背景：今天那幅画的色调
+    // ============================================================
     const bgToneCache = new Map();
     let bgToneRequestId = 0;
     let baseTint = null;
     const toneCanvas = document.createElement('canvas');
     const toneCtx = toneCanvas.getContext('2d', { willReadFrequently: true });
-
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
     const parseHexColor = (value) => {
         if (!value) return null;
         const hex = value.trim();
         if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return null;
-        const normalized = hex.length === 4
-            ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
-            : hex;
+        const normalized = hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
         const int = Number.parseInt(normalized.slice(1), 16);
-        return {
-            r: (int >> 16) & 255,
-            g: (int >> 8) & 255,
-            b: int & 255
-        };
+        return { r: (int >> 16) & 255, g: (int >> 8) & 255, b: int & 255 };
     };
-
     const mixColor = (a, b, ratio) => ({
         r: Math.round(a.r * (1 - ratio) + b.r * ratio),
         g: Math.round(a.g * (1 - ratio) + b.g * ratio),
         b: Math.round(a.b * (1 - ratio) + b.b * ratio)
     });
-
-    const toRgba = (color, alpha) => (
-        `rgba(${color.r}, ${color.g}, ${color.b}, ${clamp(alpha, 0, 1)})`
-    );
-
+    const toRgba = (color, alpha) => `rgba(${color.r}, ${color.g}, ${color.b}, ${clamp(alpha, 0, 1)})`;
     const getBaseTint = () => {
         if (!baseTint) {
-            const cssValue = getComputedStyle(document.documentElement)
-                .getPropertyValue('--bg-color');
-            baseTint = parseHexColor(cssValue) || { r: 26, g: 11, b: 42 };
+            const cssValue = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
+            baseTint = parseHexColor(cssValue) || { r: 21, g: 13, b: 33 };
         }
         return baseTint;
     };
-
-    const setBgBlurImage = (filename) => {
-        if (!bgBlur) return;
-        const value = filename ? `url('../images/${filename}')` : 'none';
-        bgBlur.style.setProperty('--bg-blur-image', value);
-    };
-
     const setBgBlurOverlay = (tone) => {
         if (!bgBlur || !tone) return;
         const base = getBaseTint();
         const toned = mixColor(tone, base, 0.55);
-        const strong = toRgba(toned, 0.45);
-        const soft = toRgba(toned, 0.25);
-        const deep = toRgba(base, 0.9);
         bgBlur.style.setProperty(
             '--bg-blur-overlay',
-            `radial-gradient(circle at 20% 20%, ${strong} 0%, ${soft} 45%, ${deep} 78%)`
+            `radial-gradient(circle at 20% 20%, ${toRgba(toned, 0.45)} 0%, ${toRgba(toned, 0.25)} 45%, ${toRgba(base, 0.9)} 78%)`
         );
     };
-
-    const resetBgBlurOverlay = () => {
-        setBgBlurOverlay(getBaseTint());
-    };
-
-    const clearBgBlur = () => {
-        setBgBlurImage(null);
-        resetBgBlurOverlay();
-    };
-
     const extractToneFromImage = (img) => {
         if (!toneCtx) return null;
         const size = 40;
@@ -172,43 +198,28 @@ document.addEventListener('DOMContentLoaded', () => {
         toneCtx.clearRect(0, 0, size, size);
         toneCtx.drawImage(img, 0, 0, size, size);
         const { data } = toneCtx.getImageData(0, 0, size, size);
-
         let r = 0;
         let g = 0;
         let b = 0;
         let total = 0;
-
         for (let i = 0; i < data.length; i += 4) {
-            const alpha = data[i + 3];
-            if (alpha < 40) continue;
-
+            if (data[i + 3] < 40) continue;
             const red = data[i];
             const green = data[i + 1];
             const blue = data[i + 2];
             const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-            const max = Math.max(red, green, blue);
-            const min = Math.min(red, green, blue);
-            const chroma = max - min;
-            const saturation = chroma / 255;
-            const lumaWeight = 1 - Math.abs(luma - 128) / 128;
-            const weight = Math.max(0.1, lumaWeight) * (0.4 + saturation);
-
+            const saturation = (Math.max(red, green, blue) - Math.min(red, green, blue)) / 255;
+            const weight = Math.max(0.1, 1 - Math.abs(luma - 128) / 128) * (0.4 + saturation);
             r += red * weight;
             g += green * weight;
             b += blue * weight;
             total += weight;
         }
-
-        if (!total) return null;
-        return {
-            r: Math.round(r / total),
-            g: Math.round(g / total),
-            b: Math.round(b / total)
-        };
+        return total ? { r: Math.round(r / total), g: Math.round(g / total), b: Math.round(b / total) } : null;
     };
-
-    const applyImageTone = (filename) => {
+    function applyImageTone(filename) {
         if (!bgBlur || !filename) return;
+        bgBlur.style.setProperty('--bg-blur-image', `url('../images/${filename}')`);
         const cached = bgToneCache.get(filename);
         if (cached) {
             setBgBlurOverlay(cached);
@@ -221,520 +232,136 @@ document.addEventListener('DOMContentLoaded', () => {
         img.onload = () => {
             if (requestId !== bgToneRequestId) return;
             const tone = extractToneFromImage(img);
-            if (tone) {
-                bgToneCache.set(filename, tone);
-                setBgBlurOverlay(tone);
-            } else {
-                resetBgBlurOverlay();
-            }
+            if (tone) bgToneCache.set(filename, tone);
+            setBgBlurOverlay(tone || getBaseTint());
         };
         img.onerror = () => {
-            if (requestId !== bgToneRequestId) return;
-            resetBgBlurOverlay();
+            if (requestId === bgToneRequestId) setBgBlurOverlay(getBaseTint());
         };
-    };
+    }
 
     // ============================================================
-    // Theme Toggle
+    // 四季：季节只换花，不换夜（与首页共用同一个存储键）
     // ============================================================
-    const themeButtons = document.querySelectorAll('.theme-btn');
-    const THEME_STORAGE_KEY = 'love-minnie-theme-v3'; // v3: Reset to force seasonal auto-detection
-    const THEME_SET = new Set(['winter', 'spring', 'summer', 'autumn']);
+    const THEME_STORAGE_KEY = 'love-minnie-theme-v3';
+    const SEASONS = {
+        spring: { name: '春', flower: '海棠', window: '海棠窗', months: '3—5 月' },
+        summer: { name: '夏', flower: '荷', window: '扇面窗', months: '6—8 月' },
+        autumn: { name: '秋', flower: '桂', window: '八角窗', months: '9—11 月' },
+        winter: { name: '冬', flower: '梅', window: '梅花窗', months: '12—2 月' }
+    };
+    const SEASON_CHOICES = ['auto', 'spring', 'summer', 'autumn', 'winter'];
 
     const getSeasonalTheme = () => {
-        const month = getToday().getMonth(); // 0-11
-        // Spring: March (2), April (3), May (4)
+        const month = getToday().getMonth();
         if (month >= 2 && month <= 4) return 'spring';
-        // Summer: June (5), July (6), August (7)
         if (month >= 5 && month <= 7) return 'summer';
-        // Autumn: September (8), October (9), November (10)
         if (month >= 8 && month <= 10) return 'autumn';
-        // Winter: December (11), January (0), February (1)
         return 'winter';
     };
+    const readSeasonChoice = () => {
+        try {
+            const stored = localStorage.getItem(THEME_STORAGE_KEY);
+            return SEASONS[stored] ? stored : 'auto';
+        } catch (err) {
+            return 'auto';
+        }
+    };
+    let seasonChoice = readSeasonChoice();
 
-    const applyTheme = (theme, options = {}) => {
-        const { persist = true } = options;
-        const nextTheme = THEME_SET.has(theme) ? theme : getSeasonalTheme();
-        document.documentElement.dataset.theme = nextTheme;
-        themeButtons.forEach(btn => {
-            const isActive = btn.dataset.theme === nextTheme;
-            btn.classList.toggle('active', isActive);
-            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
+    function renderSeasonOptions() {
+        const now = SEASONS[getSeasonalTheme()];
+        seasonOptions.innerHTML = SEASON_CHOICES.map((key) => {
+            const checked = key === seasonChoice;
+            if (key === 'auto') {
+                return `<button type="button" class="season-opt" role="radio" data-season="auto" aria-checked="${checked}">` +
+                    '<span class="season-win" aria-hidden="true"></span>' +
+                    '<span><span class="season-name">跟着日期</span><br>' +
+                    `<span class="season-when">现在是${now.name}天 · ${now.flower}</span></span></button>`;
+            }
+            const s = SEASONS[key];
+            return `<button type="button" class="season-opt" role="radio" data-season="${key}" aria-checked="${checked}">` +
+                '<span class="season-win" aria-hidden="true"></span>' +
+                `<span class="season-name">${s.name} · ${s.flower}</span>` +
+                `<span class="season-when">${s.window} · <span class="num">${s.months}</span></span></button>`;
+        }).join('');
+    }
 
+    function applySeason(choice, { persist = true } = {}) {
+        seasonChoice = SEASON_CHOICES.includes(choice) ? choice : 'auto';
+        const theme = seasonChoice === 'auto' ? getSeasonalTheme() : seasonChoice;
+        document.documentElement.dataset.theme = theme;
         if (persist) {
             try {
-                localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+                if (seasonChoice === 'auto') localStorage.removeItem(THEME_STORAGE_KEY);
+                else localStorage.setItem(THEME_STORAGE_KEY, seasonChoice);
             } catch (err) {
-                console.warn('Theme persistence failed:', err);
+                // 隐私模式存不下也没关系
             }
         }
-
+        const s = SEASONS[theme];
+        seasonBtn.querySelector('use').setAttribute('href', `#i-${theme}`);
+        $('season-label').textContent = `${s.name} · ${s.flower}`;
+        seasonBtn.setAttribute('aria-label', `季节：${s.name}，${s.flower}。点开换季节`);
+        seasonOptions.querySelectorAll('.season-opt').forEach((btn) => {
+            btn.setAttribute('aria-checked', String(btn.dataset.season === seasonChoice));
+        });
         baseTint = null;
-        const dateStr = selectedDate ? formatDateISO(selectedDate) : null;
-        const item = dateStr ? dataByDate[dateStr] : null;
-        if (item?.filename) {
-            applyImageTone(item.filename);
-        } else {
-            resetBgBlurOverlay();
-        }
-    };
-
-    const initTheme = () => {
-        let storedTheme = null;
-        try {
-            storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-        } catch (err) {
-            storedTheme = null;
-        }
-
-        const hasStoredTheme = THEME_SET.has(storedTheme);
-        const initialTheme = hasStoredTheme ? storedTheme : getSeasonalTheme();
-
-        // Only persist if it was already stored (user preference). 
-        // If it's the default seasonal theme, don't save it so it auto-updates next season.
-        applyTheme(initialTheme, { persist: hasStoredTheme });
-    };
-
-    themeButtons.forEach(btn => {
-        btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
-    });
-
-    // ============================================================
-    // Initialize
-    // ============================================================
-    const getEmbeddedData = () => (
-        Array.isArray(window.__GALLERY_DATA__) ? window.__GALLERY_DATA__ : null
-    );
-
-    const loadGalleryData = () => {
-        const embedded = getEmbeddedData();
-        if (embedded) return Promise.resolve(embedded);
-
-        return fetch('data.json')
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`Failed to load data.json (${res.status})`);
-                }
-                return res.json();
-            })
-            .catch(err => {
-                const fallback = getEmbeddedData();
-                if (fallback) return fallback;
-                return Promise.reject(err);
-            });
-    };
-
-    initTheme();
-
-    loadGalleryData()
-        .then(data => {
-            galleryData = data.map((item, index) => {
-                let dateObj = item.date ? new Date(item.date) : null;
-                if (!dateObj || Number.isNaN(dateObj.getTime())) {
-                    dateObj = new Date(START_DATE);
-                    dateObj.setDate(START_DATE.getDate() + index);
-                }
-                const dateStr = formatDateISO(dateObj);
-                return {
-                    ...item,
-                    date: dateStr,
-                    dateObj
-                };
-            }).sort((a, b) => b.dateObj - a.dateObj);
-
-            dataByDate = {};
-            galleryData.forEach(item => {
-                dataByDate[item.date] = item;
-            });
-
-            const realToday = getToday();
-            const todayStr = formatDateISO(realToday);
-
-            let initialDate = null;
-
-            // 1. First priority: Check if today has artwork
-            if (dataByDate[todayStr]) {
-                initialDate = realToday;
-            } else {
-                // 2. Second priority: Find the most recent artwork that's <= today
-                //    (galleryData is sorted newest first, so find the first one <= today)
-                const pastItems = galleryData.filter(item => item.dateObj <= realToday);
-                if (pastItems.length > 0) {
-                    initialDate = pastItems[0].dateObj; // Most recent past artwork
-                } else if (galleryData.length > 0) {
-                    // 3. Fallback: If all artwork is in the future, show the earliest upcoming
-                    const futureItems = [...galleryData].sort((a, b) => a.dateObj - b.dateObj);
-                    initialDate = futureItems[0].dateObj;
-                }
-            }
-
-            if (!initialDate) {
-                // No artwork at all, show current month empty state
-                currentMonth = new Date(realToday);
-                renderCalendar();
-                renderTimeline();
-                showEmptyState({ mode: getEmptyMode(realToday), date: realToday, scope: 'month' });
-                return;
-            }
-
-            selectedDate = new Date(initialDate);
-            currentMonth = new Date(initialDate);
-
-            renderCalendar();
-            renderTimeline();
-            updateMonthView({ anchorDate: selectedDate });
-        })
-        .catch(err => {
-            console.error('Error loading data:', err);
-            showEmptyState({ mode: getEmptyMode(START_DATE), date: START_DATE, scope: 'month' });
-        });
-
-    // ============================================================
-    // Event Listeners
-    // ============================================================
-    // 日历侧栏：只有宽屏桌面默认展开；手机（底部抽屉）和平板（浮层）默认收起。
-    // HTML 里不再写死 open，避免加载过程中日历先盖住画廊首屏再滑走。
-    if (calendarSidebar) {
-        const openByDefault = window.matchMedia('(min-width: 1025px)').matches;
-        calendarSidebar.style.transition = 'none';
-        calendarSidebar.classList.toggle('open', openByDefault);
-        document.body.classList.toggle('sidebar-closed', !openByDefault);
-        toggleCalendarBtn?.classList.toggle('active', openByDefault);
-        void calendarSidebar.offsetHeight;
-        calendarSidebar.style.transition = '';
+        const item = dataByDate[formatDateISO(selectedDate)];
+        if (item) applyImageTone(item.filename);
     }
 
-    prevMonthBtn.addEventListener('click', () => {
-        currentMonth.setMonth(currentMonth.getMonth() - 1);
-        renderCalendar();
-        updateMonthView();
-    });
+    let seasonReturnFocus = null;
+    function openSeasonSheet() {
+        seasonReturnFocus = document.activeElement;
+        renderSeasonOptions();
+        seasonSheet.classList.add('open');
+        seasonSheet.setAttribute('aria-hidden', 'false');
+        seasonOverlay.classList.add('show');
+        seasonBtn.setAttribute('aria-expanded', 'true');
+        const current = seasonOptions.querySelector('[aria-checked="true"]') || seasonOptions.querySelector('.season-opt');
+        requestAnimationFrame(() => current?.focus());
+    }
+    function closeSeasonSheet() {
+        if (!seasonSheet.classList.contains('open')) return;
+        seasonSheet.classList.remove('open');
+        seasonSheet.setAttribute('aria-hidden', 'true');
+        seasonOverlay.classList.remove('show');
+        seasonBtn.setAttribute('aria-expanded', 'false');
+        (seasonReturnFocus && document.contains(seasonReturnFocus) ? seasonReturnFocus : seasonBtn).focus();
+    }
 
-    nextMonthBtn.addEventListener('click', () => {
-        currentMonth.setMonth(currentMonth.getMonth() + 1);
-        renderCalendar();
-        updateMonthView();
+    seasonBtn.addEventListener('click', openSeasonSheet);
+    $('season-close').addEventListener('click', closeSeasonSheet);
+    seasonOverlay.addEventListener('click', closeSeasonSheet);
+    seasonOptions.addEventListener('click', (e) => {
+        const btn = e.target.closest('.season-opt');
+        if (!btn) return;
+        applySeason(btn.dataset.season);
+        setTimeout(closeSeasonSheet, 260);
     });
-
-    toggleCalendarBtn.addEventListener('click', () => {
-        // 手机上顶部的日历图标与底栏"日历"是同一个抽屉
-        if (isMobileLayout()) {
-            document.getElementById('nav-calendar')?.click();
+    seasonSheet.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeSeasonSheet();
             return;
         }
-        calendarSidebar.classList.toggle('open');
-        toggleCalendarBtn.classList.toggle('active');
-        document.body.classList.toggle('sidebar-closed', !calendarSidebar.classList.contains('open'));
-
-        // 在动画过程中持续刷新布局，消除"先错后对"的顿挫感
-        // 使用 requestAnimationFrame 循环，持续 500ms
-        const startTime = performance.now();
-        const animationDuration = 500;
-
-        const smoothResize = () => {
-            resizeAllGalleryItems();
-            layoutHero();
-            if (performance.now() - startTime < animationDuration) {
-                requestAnimationFrame(smoothResize);
-            }
-        };
-        requestAnimationFrame(smoothResize);
-    });
-
-    // 随机重温：从历史画信里随机抽一封打开
-    const memoryLaneBtn = document.getElementById('memory-lane-btn');
-    if (memoryLaneBtn) {
-        memoryLaneBtn.addEventListener('click', () => {
-            if (!galleryData.length) return;
-            const todayISO = formatDateISO(getToday());
-            const pool = galleryData.filter(d => d.date !== todayISO);
-            const source = pool.length ? pool : galleryData;
-            const pick = source[Math.floor(Math.random() * source.length)];
-            selectDate(new Date(pick.date), { scroll: false });
-            openDetail(pick);
-        });
-        memoryLaneBtn.addEventListener('mouseenter', () => setTorchMode(true));
-        memoryLaneBtn.addEventListener('mouseleave', () => setTorchMode(false));
-    }
-
-    timelinePrev.addEventListener('click', () => {
-        timelineContainer.scrollBy({ left: -200, behavior: 'smooth' });
-    });
-
-    timelineNext.addEventListener('click', () => {
-        timelineContainer.scrollBy({ left: 200, behavior: 'smooth' });
-    });
-
-    window.addEventListener('resize', () => {
-        window.clearTimeout(resizeTimer);
-        resizeTimer = window.setTimeout(() => {
-            resizeAllGalleryItems();
-            layoutHero();
-            if (detailModal?.classList.contains('open')) fitDetailTitle();
-        }, 150);
-    });
-
-    document.addEventListener('keydown', (e) => {
-        const isModalOpen = detailModal && detailModal.classList.contains('open');
-        if (isModalOpen) {
-            if (e.key === 'Tab') {
-                trapDetailFocus(e);
-                return;
-            }
-            if (e.key === 'Escape') {
-                closeDetail();
-                return;
-            }
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        if (e.key === 'Tab') {
+            const focusable = [...seasonSheet.querySelectorAll('button')];
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
                 e.preventDefault();
-                const offset = e.key === 'ArrowLeft' ? -1 : 1;
-                const newDate = new Date(selectedDate);
-                newDate.setDate(newDate.getDate() + offset);
-                const dateStr = formatDateISO(newDate);
-                const item = dataByDate[dateStr];
-                if (item) {
-                    selectDate(newDate, { scroll: false });
-                    openDetail(item);
-                } else {
-                    closeDetail();
-                    selectDate(newDate, { scroll: false });
-                }
-                return;
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
             }
-        }
-
-        if (e.key === 'ArrowLeft') {
-            navigateDay(-1);
-        } else if (e.key === 'ArrowRight') {
-            navigateDay(1);
         }
     });
 
-    if (detailClose) {
-        detailClose.addEventListener('click', closeDetail);
-    }
-
-    if (detailModal) {
-        detailModal.addEventListener('click', (e) => {
-            if (e.target === detailModal) {
-                closeDetail();
-            }
-        });
-    }
-
-    // ============================================================
-    // Calendar Rendering
-    // ============================================================
-    function renderCalendar() {
-        calendarDays.innerHTML = '';
-
-        const year = currentMonth.getFullYear();
-        const month = currentMonth.getMonth();
-
-        monthLabel.textContent = `${year}年${month + 1}月`;
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        const today = getToday();
-
-        for (let i = 0; i < firstDay; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'day-cell empty';
-            calendarDays.appendChild(emptyCell);
-        }
-
-        for (let day = 1; day <= daysInMonth; day++) {
-            const cellDate = new Date(year, month, day);
-            const dateStr = formatDateISO(cellDate);
-            const hasContent = dataByDate[dateStr] !== undefined;
-            const isFuture = cellDate > today && !hasContent;
-            const isSelected = formatDateISO(cellDate) === formatDateISO(selectedDate);
-            const isToday = formatDateISO(cellDate) === formatDateISO(today);
-            const weekIndex = Math.floor((firstDay + day - 1) / 7);
-
-            const cell = document.createElement('div');
-            cell.className = 'day-cell';
-            cell.dataset.date = dateStr;
-            cell.classList.add('reveal');
-            cell.style.setProperty('--reveal-delay', `${weekIndex * 70}ms`);
-
-            if (hasContent) cell.classList.add('has-content');
-            if (isFuture) cell.classList.add('future');
-            if (isSelected) cell.classList.add('selected');
-            if (isToday) cell.classList.add('today');
-
-            const monthLabelNum = month + 1;
-            if (isFuture) {
-                cell.innerHTML =
-                    `<span class="day-num">${day}</span>` +
-                    '<span class="seed-icon" aria-hidden="true"><img src="images/sunflower.svg" class="sunflower-icon" alt=""></span>';
-                cell.setAttribute('aria-label', `${monthLabelNum}月${day}日，尚未上画`);
-            } else {
-                cell.innerHTML = `<span class="day-num">${day}</span>`;
-                cell.setAttribute(
-                    'aria-label',
-                    hasContent ? `${monthLabelNum}月${day}日，有画作` : `${monthLabelNum}月${day}日`
-                );
-            }
-
-            cell.addEventListener('click', () => {
-                const item = dataByDate[dateStr];
-                if (window.innerWidth <= 1024) {
-                    // 手机、平板：收起日历（连同遮罩、滚动锁、底栏状态一起复位）
-                    closeCalendarPanel();
-                }
-                if (item && isMobileLayout()) {
-                    // 手机上点日期就是想看那天：直接打开那一封
-                    selectDate(cellDate, { scroll: false });
-                    openDetail(item);
-                    return;
-                }
-                selectDate(cellDate);
-            });
-
-            calendarDays.appendChild(cell);
-        }
-    }
-
-    // ============================================================
-    // Timeline Rendering
-    // ============================================================
-    function renderTimeline() {
-        timelineContainer.innerHTML = '';
-
-        // 按日期升序排列（早的在前）
-        const allItems = [...galleryData].sort((a, b) => a.dateObj - b.dateObj);
-
-        // 在最后添加未来的占位符
-        const lastDate = allItems.length > 0
-            ? new Date(allItems[allItems.length - 1].dateObj)
-            : new Date(START_DATE);
-
-        for (let i = 1; i <= 5; i++) {
-            const futureDate = new Date(lastDate);
-            futureDate.setDate(lastDate.getDate() + i);
-            allItems.push({
-                date: formatDateISO(futureDate),
-                dateObj: futureDate,
-                isFuture: true
-            });
-        }
-
-        const selectedKey = formatDateISO(selectedDate);
-        const selectedIndex = allItems.findIndex(item => item.date === selectedKey);
-
-        allItems.forEach((item, index) => {
-            const thumb = document.createElement('div');
-            thumb.className = 'timeline-thumb';
-            thumb.dataset.date = item.date;
-
-            if (item.isFuture) {
-                thumb.classList.add('future');
-                thumb.innerHTML = '<img src="images/sunflower.svg" class="sunflower-icon" alt="尚未上画">';
-            } else {
-                const img = document.createElement('img');
-                // 胶卷条只在看画时出现：先不给 src，第一次打开看画再加载，省下首屏流量
-                img.dataset.src = `images/${item.filename}`;
-                img.alt = getArtworkLabel(item);
-                img.decoding = 'async';
-                img.loading = Math.abs(index - Math.max(selectedIndex, 0)) <= 24 ? 'eager' : 'lazy';
-                img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
-                img.addEventListener('error', () => thumb.classList.add('is-error'));
-                if (timelineHydrated) hydrateThumb(img);
-                thumb.appendChild(img);
-
-                // 日期角标（"6.12"），比序号更直观
-                const badge = document.createElement('span');
-                badge.className = 'thumb-badge';
-                badge.textContent = `${item.dateObj.getMonth() + 1}.${item.dateObj.getDate()}`;
-                thumb.appendChild(badge);
-
-                thumb.addEventListener('click', () => {
-                    // Check if modal is open to determine behavior
-                    const isModalOpen = document.body.classList.contains('modal-open');
-
-                    selectDate(new Date(item.date), { scroll: !isModalOpen });
-
-                    if (isModalOpen) {
-                        // If in theater mode, just update content
-                        openDetail(item);
-                    }
-                });
-            }
-
-            if (formatDateISO(selectedDate) === item.date) {
-                thumb.classList.add('selected');
-            }
-
-            timelineContainer.appendChild(thumb);
-        });
-    }
-
-    let timelineHydrated = false;
-
-    function hydrateThumb(img) {
-        if (!img.dataset.src) return;
-        img.src = img.dataset.src;
-        img.removeAttribute('data-src');
-        if (img.complete && img.naturalWidth) img.classList.add('is-loaded');
-    }
-
-    function hydrateTimeline() {
-        if (timelineHydrated) return;
-        timelineHydrated = true;
-        timelineContainer.querySelectorAll('img[data-src]').forEach(hydrateThumb);
-    }
-
-    function getItemsForMonth(date) {
-        return galleryData.filter(item =>
-            item.dateObj.getFullYear() === date.getFullYear() &&
-            item.dateObj.getMonth() === date.getMonth()
-        );
-    }
-
-    function getItemsForWeek(date) {
-        const { start, end } = getWeekBounds(date);
-        const startKey = toUtcDay(start);
-        const endKey = toUtcDay(end);
-        return galleryData.filter(item => {
-            const dayKey = toUtcDay(item.dateObj);
-            return dayKey >= startKey && dayKey <= endKey;
-        });
-    }
-
-    function getEmptyScope(date) {
-        if (!date) return 'day';
-        if (!getItemsForMonth(date).length) return 'month';
-        if (!getItemsForWeek(date).length) return 'week';
-        return 'day';
-    }
-
-    function updateMonthView(options = {}) {
-        const { anchorDate = null } = options;
-        const items = getItemsForMonth(currentMonth);
-        // 今日画信置顶：当前月包含最新一封时，把它从瀑布流里抽出来单独展示
-        const heroItem = renderTodayHero();
-        const gridItems = heroItem ? items.filter(item => item.date !== heroItem.date) : items;
-
-        updateMonthDigest(items);
-
-        if (!items.length) {
-            clearBgBlur();
-            showEmptyState({ mode: getEmptyMode(currentMonth), date: currentMonth, scope: 'month' });
-            updateDateCapsuleForMonth(currentMonth);
-            return;
-        }
-
-        renderGallery(gridItems, { allowEmpty: !!heroItem });
-
-        const anchorDateStr = anchorDate ? formatDateISO(new Date(anchorDate)) : null;
-        const hasAnchor = anchorDateStr && items.some(item => item.date === anchorDateStr);
-        const targetDate = hasAnchor ? new Date(anchorDate) : items[0].dateObj;
-        selectDate(targetDate, { scroll: false, skipMonthUpdate: true });
-    }
+    renderSeasonOptions();
+    applySeason(seasonChoice, { persist: false });
 
     // ============================================================
     // 文字排版小工具：日期、数字、短语整体换行（见 js/typeset.js）
@@ -752,97 +379,192 @@ document.addEventListener('DOMContentLoaded', () => {
         return { title, isLong, ritual: ritual && !!theme, rest };
     }
 
-    function signHtml(parts) {
-        return HEART_SVG + (parts.ritual ? unit('今日份爱你') : '');
+    const signHtml = (parts) => HEART_SVG + (parts.ritual ? unit('今日份爱你') : '');
+
+    // ------------------------------------------------------------
+    // 邮戳、月相、印章：今日画信、长廊、画历和看画共用
+    // ------------------------------------------------------------
+    let postmarkSeq = 0;
+    function postmarkSvg(d, no, dayNo) {
+        const id = `lm-pm-${++postmarkSeq}`;
+        const ring = `LOVE MINNIE · ${d.getFullYear()} · ${pad2(d.getMonth() + 1)} · ${pad2(d.getDate())} · NO. ${no} ·`;
+        return '<svg viewBox="0 0 112 112" aria-hidden="true" focusable="false">' +
+            `<defs><path id="${id}" d="M56,56 m-44.5,0 a44.5,44.5 0 1,1 89,0 a44.5,44.5 0 1,1 -89,0"/></defs>` +
+            '<circle cx="56" cy="56" r="52" fill="#f4eadf" stroke="#b4455d" stroke-width="1.6"/>' +
+            '<circle cx="56" cy="56" r="37" fill="none" stroke="#b4455d" stroke-width="1"/>' +
+            `<text font-family="Bodoni Moda, serif" font-size="8.5" letter-spacing="2" fill="#b4455d"><textPath href="#${id}" textLength="272" lengthAdjust="spacing">${ring}</textPath></text>` +
+            `<text x="56" y="61" text-anchor="middle" font-family="Bodoni Moda, serif" font-size="22" fill="#b4455d">${dayNo}</text>` +
+            '<text x="56" y="73" text-anchor="middle" font-family="Bodoni Moda, serif" font-size="6.5" letter-spacing="2" fill="#b4455d">DAYS</text>' +
+            '</svg>';
     }
 
-    // 侧栏本月小结："9月 · 已收到 25 封画信"
-    function updateMonthDigest(items) {
-        const digest = document.getElementById('month-digest');
-        if (!digest) return;
-        const month = currentMonth.getMonth() + 1;
-        const today = getToday();
-        const isCurrentMonth = currentMonth.getFullYear() === today.getFullYear()
-            && currentMonth.getMonth() === today.getMonth();
-        const isFuture = toUtcDay(currentMonth) > toUtcDay(today) && !items.length;
-
-        if (isFuture || !items.length) {
-            digest.innerHTML = unit(`${month}月`) + SEP + unit(isFuture ? '花期未至' : '这个月还没有画信');
-            return;
+    // 月相：按月龄估算被照亮的比例；上半月亮在右，下半月亮在左
+    const SYNODIC = 29.530588853;
+    const NEW_MOON_REF = Date.UTC(2000, 0, 6, 18, 14);
+    function moonLit(date) {
+        const days = (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12) - NEW_MOON_REF) / 86400000;
+        const age = ((days % SYNODIC) + SYNODIC) % SYNODIC;
+        return { lit: (1 - Math.cos((2 * Math.PI * age) / SYNODIC)) / 2, waxing: age < SYNODIC / 2 };
+    }
+    function moonStyle(phase, size) {
+        const { lit, waxing } = phase;
+        if (lit <= 0.5) {
+            return { bg: 'var(--night-3)', shadow: `inset ${waxing ? '-' : ''}${(lit * size).toFixed(1)}px 0 0 0 var(--ink-gold)` };
         }
-        const verb = isCurrentMonth ? '已收到' : '收藏了';
-        digest.innerHTML = unit(`${month}月`) + SEP + unit(`${verb} <strong>${items.length}</strong> 封画信`);
+        return { bg: 'var(--ink-gold)', shadow: `inset ${waxing ? '' : '-'}${((1 - lit) * size).toFixed(1)}px 0 0 0 var(--night-3)` };
+    }
+    // 一个月里最圆的那天
+    function fullMoonDay(y, m) {
+        const daysIn = new Date(y, m + 1, 0).getDate();
+        let best = 1;
+        let bestLit = -1;
+        for (let day = 1; day <= daysIn; day++) {
+            const { lit } = moonLit(new Date(y, m, day));
+            if (lit > bestLit) {
+                bestLit = lit;
+                best = day;
+            }
+        }
+        return best;
+    }
+
+    // 印章：同一封信只盖一次（记在这台设备上），第二次打开时它已经在那儿了
+    const STAMP_KEY = 'love-minnie-stamped-v1';
+    function maybeStamp(seal, date) {
+        if (!seal) return;
+        seal.classList.remove('is-stamping');
+        let stamped = [];
+        try {
+            stamped = JSON.parse(localStorage.getItem(STAMP_KEY) || '[]');
+        } catch (err) {
+            stamped = [];
+        }
+        if (!Array.isArray(stamped) || stamped.includes(date)) return;
+        void seal.offsetWidth; // 重新触发动画
+        seal.classList.add('is-stamping');
+        stamped.push(date);
+        try {
+            localStorage.setItem(STAMP_KEY, JSON.stringify(stamped.slice(-120)));
+        } catch (err) {
+            // 隐私模式存不下也没关系，最多下次再盖一次
+        }
+    }
+
+    // 打开某一封：选中它，再打开看画
+    function openItem(item) {
+        if (!item) return;
+        selectDate(item.dateObj);
+        openDetail(item);
     }
 
     // ============================================================
-    // 今日画信（置顶卡）
+    // 今日画信
     // 横图竖图同一套版式，只按画的比例分配空间：
-    //   宽卡片：画在左、信在右，信笺一栏至少 340px；
-    //   窄卡片（手机、平板竖屏）：画在上、信在下，竖图限高，保证日期和那句话在首屏。
+    //   宽卡片：画在左、信在右；窄卡片（手机、平板竖屏）：画在上、信在下。
     // 今天的画还没上时，展示最近一封，并注明"今天这封还在路上"。
     // ============================================================
     function getHeroPick() {
-        const today = getToday();
-        const todayItem = dataByDate[formatDateISO(today)];
+        const todayItem = dataByDate[formatDateISO(getToday())];
         if (todayItem) return { item: todayItem, isToday: true };
-        const latest = galleryData.find(d => d.dateObj <= today);
-        return latest ? { item: latest, isToday: false } : null;
+        return galleryData.length ? { item: galleryData[0], isToday: false } : null;
     }
 
     function layoutHero() {
-        const hero = document.getElementById('today-hero');
-        const img = document.getElementById('today-hero-img');
-        if (!hero || hero.hidden || !img) return;
+        const img = $('today-hero-img');
+        if (!heroEl || heroEl.hidden || !img || heroEl.offsetParent === null) return;
         // 画还没加载完（手机网慢）时先按 4:3 占位，把上下 / 左右版式先定下来；加载完再按真实比例重算
         const known = img.naturalWidth > 0;
         const ratio = known ? img.naturalWidth / img.naturalHeight : 4 / 3;
         const portrait = ratio < 0.95;
-        hero.classList.toggle('is-portrait', known && portrait);
-        hero.classList.toggle('is-landscape', known && !portrait);
+        heroEl.classList.toggle('is-portrait', known && portrait);
+        heroEl.classList.toggle('is-landscape', known && !portrait);
 
-        const heroWidth = hero.clientWidth;
-        const stacked = heroWidth < 720;
-        hero.classList.toggle('is-stacked', stacked);
+        // 宽卡片：画在左，信纸一栏 367px（再压住画框衬边 13px，不压画）；窄卡片：画在上、信在下
+        const heroWidth = heroEl.clientWidth;
+        const stacked = heroWidth < 820;
+        heroEl.classList.toggle('is-stacked', stacked);
         const vh = window.innerHeight;
         let artW;
         if (stacked) {
-            const maxW = heroWidth - 32;
-            const maxH = portrait ? Math.min(vh * 0.52, 520) : vh * 0.46;
+            const maxW = heroWidth - 14;
+            const maxH = portrait ? Math.min(vh * 0.56, 560) : vh * 0.5;
             artW = Math.min(maxW, maxH * ratio);
         } else {
-            const pad = 28;
-            const availW = heroWidth - 340 - pad * 2;
+            const availW = heroWidth - 367 - 26;
             const maxH = portrait
-                ? Math.min(Math.max(vh - 220, 440), 740)
-                : Math.min(Math.max(vh - 330, 300), 560);
-            const maxW = portrait ? availW : Math.min(availW, heroWidth * 0.64 - pad * 2);
-            artW = Math.min(maxW, maxH * ratio);
+                ? Math.min(Math.max(vh - 240, 440), 760)
+                : Math.min(Math.max(vh - 330, 320), 600);
+            artW = Math.min(availW, maxH * ratio);
         }
         artW = Math.max(120, Math.floor(artW));
-        hero.style.setProperty('--art-w', `${artW}px`);
-        hero.style.setProperty('--art-h', `${Math.round(artW / ratio)}px`);
+        heroEl.style.setProperty('--art-w', `${artW}px`);
+        heroEl.style.setProperty('--art-h', `${Math.round(artW / ratio)}px`);
 
-        const titleEl = document.getElementById('today-hero-title');
+        const titleEl = $('today-hero-title');
         if (titleEl && !titleEl.classList.contains('is-long')) {
             const chars = Array.from(titleEl.textContent.replace(/\s/g, '')).length;
             TS.fit(titleEl, {
-                max: stacked ? (isMobileLayout() ? 34 : 40) : 44,
-                min: stacked ? 22 : 26,
-                maxLines: chars <= 10 ? 1 : 2
+                max: stacked ? (isMobileLayout() ? 40 : 46) : 56,
+                min: stacked ? 24 : 28,
+                maxLines: chars <= 8 ? 1 : 2
             });
         }
     }
 
-    function renderTodayHero(forcedPick) {
-        const hero = document.getElementById('today-hero');
-        if (!hero) return null;
+    // 月相尺：这个月每天的真实月相；有画信的日子是按钮，点开就是那一封
+    function renderHeroRuler(current) {
+        const ruler = $('today-hero-ruler');
+        if (!ruler) return;
+        const y = current.dateObj.getFullYear();
+        const m = current.dateObj.getMonth();
+        const daysIn = new Date(y, m + 1, 0).getDate();
+        const todayStr = formatDateISO(getToday());
+        const fullDay = fullMoonDay(y, m);
+        let count = 0;
+        const cells = [];
+        for (let day = 1; day <= daysIn; day++) {
+            const iso = `${y}-${pad2(m + 1)}-${pad2(day)}`;
+            const item = dataByDate[iso] || null;
+            if (item) count++;
+            const isToday = iso === todayStr;
+            const moon = moonStyle(moonLit(new Date(y, m, day)), 13);
+            const shadow = isToday ? `${moon.shadow}, 0 0 0 3px var(--bg-color), 0 0 0 4px var(--ink-gold)` : moon.shadow;
+            const cls = ['ruler-day'];
+            if (item) cls.push('has-letter');
+            if (iso > todayStr) cls.push('is-future');
+            if (iso === current.date) cls.push('is-current');
+            const mark = day === fullDay ? '望' : (isToday ? '今' : '');
+            const inner =
+                `<span class="ruler-mark" aria-hidden="true">${mark}</span>` +
+                `<span class="ruler-moon" aria-hidden="true" style="background:${moon.bg};box-shadow:${shadow}"></span>` +
+                `<span class="ruler-num">${day}</span>` +
+                '<span class="ruler-dot" aria-hidden="true"></span>';
+            if (!item) {
+                cells.push(`<span class="${cls.join(' ')}">${inner}</span>`);
+                continue;
+            }
+            const label = escapeHtml(`${m + 1}月${day}日，${letterParts(item).title || '画信'}`);
+            cells.push(`<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${label}">${inner}</button>`);
+        }
+        ruler.innerHTML =
+            '<div class="hero-ruler-head">' +
+            `<span>${MONTH_CN[m]} · <span class="num">${y}</span></span>` +
+            `<span class="ruler-sum">已收到 <span class="num">${count}</span> 封 · 满月在 <span class="num">${m + 1}.${fullDay}</span></span>` +
+            '</div>' +
+            `<div class="hero-ruler-days">${cells.join('')}</div>`;
+        // 手机上月相尺横向滚动：把这一封挪到看得见的位置
+        const cur = ruler.querySelector('.is-current');
+        const strip = ruler.querySelector('.hero-ruler-days');
+        if (cur && strip && strip.scrollWidth > strip.clientWidth) {
+            strip.scrollLeft = Math.max(0, cur.offsetLeft - strip.clientWidth / 2);
+        }
+    }
 
+    function renderTodayHero(forcedPick) {
+        if (!heroEl) return null;
         const pick = forcedPick || getHeroPick();
-        const sameMonth = pick
-            && pick.item.dateObj.getFullYear() === currentMonth.getFullYear()
-            && pick.item.dateObj.getMonth() === currentMonth.getMonth();
-        if (!sameMonth) {
-            hero.hidden = true;
+        if (!pick) {
+            heroEl.hidden = true;
             return null;
         }
 
@@ -850,459 +572,604 @@ document.addEventListener('DOMContentLoaded', () => {
         const d = item.dateObj;
         const daysAgo = diffDays(d, getToday());
         const label = isToday ? '今天' : (daysAgo === 1 ? '昨天' : '最近一封');
+        const no = getChronoNo(item);
+        const dayNo = getDayNumber(d);
 
-        document.getElementById('today-hero-date').innerHTML =
-            `<span class="ts-u is-today">${label}</span>` + SEP +
-            unit(`${d.getMonth() + 1}月${d.getDate()}日`) + SEP +
-            unit(`星期${WEEKDAYS_ZH[d.getDay()]}`);
+        $('today-hero-postmark').innerHTML = postmarkSvg(d, no, dayNo);
+        $('today-hero-no').innerHTML = unit(`第 <span class="num">${no}</span> 封画信`);
+        const note = $('today-hero-note');
+        note.hidden = isToday;
+        note.textContent = isToday ? '' : `今天这封还在路上，这是${label === '昨天' ? '昨天' : '最近'}的`;
 
         const parts = letterParts(item);
-        const titleEl = document.getElementById('today-hero-title');
+        const titleEl = $('today-hero-title');
         titleEl.innerHTML = TS.html(parts.title);
         titleEl.classList.toggle('is-long', parts.isLong);
         if (parts.isLong) TS.unfit(titleEl);
-        document.getElementById('today-hero-sign').innerHTML = signHtml(parts);
-        document.getElementById('today-hero-days').innerHTML =
-            unit(`在一起的第 <span class="num">${getDayNumber(d)}</span> 天`);
-        const note = document.getElementById('today-hero-note');
-        note.hidden = isToday;
-        note.innerHTML = isToday ? '' : unit('今天这封还在路上');
+        $('today-hero-sign').innerHTML = signHtml(parts);
+        $('today-hero-date').innerHTML =
+            unit(`<span class="num">${d.getFullYear()}</span> 年 <span class="num">${d.getMonth() + 1}</span> 月 <span class="num">${d.getDate()}</span> 日`) + SEP +
+            unit(`星期${WEEKDAYS_ZH[d.getDay()]}`);
+        $('today-hero-days').innerHTML = unit(`在一起的第 <span class="num">${dayNo}</span> 天`);
 
-        const img = document.getElementById('today-hero-img');
+        const img = $('today-hero-img');
         img.onload = layoutHero;
         img.src = `images/${item.filename}`;
         img.alt = getArtworkLabel(item);
-        hero.setAttribute('aria-label', `查看${label}的画：${getArtworkLabel(item)}`);
-        hero.style.setProperty('--hero-bg', `url("${img.src}")`);
+        $('today-hero-art').setAttribute('aria-label', `看大图：${label}的画，${getArtworkLabel(item)}`);
+        heroEl.setAttribute('aria-label', `${label}的画信`);
 
-        if (!hero.dataset.bound) {
-            const openHero = () => {
-                const it = galleryData.find(g => g.date === hero.dataset.date);
-                if (!it) return;
-                selectDate(new Date(it.date), { scroll: false });
-                openDetail(it);
-            };
-            hero.addEventListener('click', openHero);
-            hero.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openHero();
-                }
-            });
-            hero.addEventListener('mouseenter', () => setTorchMode(true));
-            hero.addEventListener('mouseleave', () => setTorchMode(false));
-            hero.dataset.bound = '1';
-        }
-        hero.dataset.date = item.date;
-        hero.hidden = false;
+        maybeStamp($('today-hero-seal'), item.date);
+        renderHeroRuler(item);
+
+        heroEl.dataset.date = item.date;
+        heroEl.hidden = false;
         layoutHero();
         return item;
     }
 
-    // ============================================================
-    // Gallery Rendering
-    // ============================================================
-    function renderGallery(items = galleryData, options = {}) {
-        if (!galleryGrid) return;
-        galleryGrid.innerHTML = '';
-        cardByDate.clear();
+    const openHero = () => openItem(dataByDate[heroEl.dataset.date]);
+    $('today-hero-art').addEventListener('click', openHero);
+    $('today-hero-art').addEventListener('mouseenter', () => setTorchMode(true));
+    $('today-hero-art').addEventListener('mouseleave', () => setTorchMode(false));
+    $('today-hero-open').addEventListener('click', openHero);
+    $('today-hero-ruler').addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-date]');
+        if (btn) openItem(dataByDate[btn.dataset.date]);
+    });
 
-        if (!items.length) {
-            // Hero 单独展示今天时，当月仅此一张也不算空
-            if (options.allowEmpty) {
-                if (emptyState) emptyState.style.display = 'none';
-                return;
-            }
-            showEmptyState({ mode: getEmptyMode(currentMonth), date: currentMonth, scope: 'month' });
+    function showEmptyState() {
+        heroEl.hidden = true;
+        emptyState.hidden = false;
+        const today = getToday();
+        $('empty-title').textContent = '花期未至';
+        $('empty-date-text').innerHTML =
+            unit(escapeHtml(`${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`)) + SEP + unit('第一封画信还在路上');
+        $('empty-subtext').textContent = 'The first letter is still on its way.';
+    }
+
+    // ============================================================
+    // 长廊：从今天往回走，一步一天
+    // ============================================================
+    let corridorBuilt = false;
+    let corridorItems = [];
+    let activeMonth = null;
+
+    function corridorTag(item, isToday) {
+        if (isToday) return '今天';
+        const special = specialFor(item.date);
+        return special ? special.short : '';
+    }
+
+    function renderCorridor() {
+        corridorBuilt = true;
+        if (!galleryData.length) {
+            corridorScroll.innerHTML = '<p class="view-sub">第一封画信还在路上。</p>';
             return;
         }
+        const todayStr = formatDateISO(getToday());
+        const monthCounts = {};
+        galleryData.forEach((item) => {
+            const key = item.date.slice(0, 7);
+            monthCounts[key] = (monthCounts[key] || 0) + 1;
+        });
+        const html = [];
+        const months = [];
+        let month = '';
+        galleryData.forEach((item, i) => {
+            const d = item.dateObj;
+            const key = item.date.slice(0, 7);
+            if (key !== month) {
+                month = key;
+                months.push({ key, y: d.getFullYear(), m: d.getMonth() });
+                html.push(
+                    `<div class="cor-month" id="cor-${key}" data-month="${key}">` +
+                    `<span class="cor-month-cn">${MONTH_CN[d.getMonth()]}</span>` +
+                    `<span class="cor-month-year">${d.getFullYear()}</span>` +
+                    `<span class="cor-month-count">${monthCounts[key]} 封</span></div>`
+                );
+            }
+            const isToday = item.date === todayStr;
+            const moon = moonStyle(moonLit(d), 13);
+            const tag = corridorTag(item, isToday);
+            const title = letterParts(item).title || getArtworkThemeText(item);
+            const src = `images/${item.filename}`;
+            const label = `${d.getMonth() + 1}月${d.getDate()}日，${title}，在一起的第 ${getDayNumber(d)} 天`;
+            html.push(
+                `<button type="button" class="cor-item${isToday ? ' is-today' : ''}" data-date="${item.date}" aria-label="${escapeHtml(label)}">` +
+                '<span class="cor-frame">' +
+                `<img class="cor-bg" src="${src}" alt="" aria-hidden="true" loading="lazy" decoding="async">` +
+                `<img class="cor-img" src="${src}" alt="" loading="${i < 6 ? 'eager' : 'lazy'}" decoding="async">` +
+                '</span>' +
+                '<span class="cor-cap"><span class="cor-cap-row"><span class="cor-when">' +
+                `<span class="cor-date">${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}</span>` +
+                `<span class="cor-wd">星期${WEEKDAYS_ZH[d.getDay()]}</span>` +
+                (tag ? `<span class="cor-tag">${escapeHtml(tag)}</span>` : '') +
+                '</span>' +
+                `<span class="cor-moon" aria-hidden="true" style="background:${moon.bg};box-shadow:${moon.shadow}"></span>` +
+                '</span>' +
+                `<span class="cor-title">${escapeHtml(title)}</span></span></button>`
+            );
+        });
+        corridorScroll.innerHTML = html.join('');
+        corridorItems = [...corridorScroll.querySelectorAll('.cor-item')];
 
-        if (emptyState) {
-            emptyState.style.display = 'none';
-        }
-        if (galleryGrid) {
-            galleryGrid.style.display = 'grid';
-        }
-
-        items.forEach((item, index) => {
-            const card = createGalleryCard(item, index);
-            // 入场 stagger：逐张浮现，结束后清理避免干扰 hover 动效
-            card.style.animationDelay = `${Math.min(index * 55, 660)}ms`;
-            card.classList.add('card-enter');
-            card.addEventListener('animationend', () => {
-                card.classList.remove('card-enter');
-                card.style.animationDelay = '';
+        // 画按真实比例定宽（加载前先按 16:9 占位）。
+        // 视野左边的画加载完会变宽变窄，把差值补回 scrollLeft，眼前这幅就不会被挤走
+        corridorScroll.querySelectorAll('.cor-img').forEach((img) => {
+            const setRatio = () => {
+                if (!img.naturalWidth) return;
+                const item = img.closest('.cor-item');
+                const before = item.offsetWidth;
+                const isLeft = item.offsetLeft < corridorScroll.scrollLeft;
+                item.style.setProperty('--r', (img.naturalWidth / img.naturalHeight).toFixed(4));
+                img.classList.add('is-loaded');
+                const delta = item.offsetWidth - before;
+                if (isLeft && delta) corridorScroll.scrollLeft += delta;
+            };
+            if (img.complete) setRatio();
+            else img.addEventListener('load', () => {
+                setRatio();
+                scheduleCorridorMarks();
             }, { once: true });
-            galleryGrid.appendChild(card);
-            cardByDate.set(item.date, card);
         });
 
-        requestAnimationFrame(resizeAllGalleryItems);
+        activeMonth = null;
+        corridorMonths.innerHTML = months.map((mo) =>
+            `<button type="button" class="month-chip" data-month="${mo.key}">${MONTH_CN[mo.m]}${mo.y !== getToday().getFullYear() ? ` <span class="num">${mo.y}</span>` : ''}</button>`
+        ).join('');
+
+        const fmt = (d) => `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`;
+        $('corridor-start').textContent = fmt(galleryData[0].dateObj);
+        $('corridor-end').textContent = fmt(galleryData[galleryData.length - 1].dateObj);
+        // 手机一屏一幅：一进来就把今天这幅放在正中
+        if (isMobileLayout()) scrollCorridorTo(corridorScroll.querySelector('.cor-item'), false);
+        scheduleCorridorMarks();
+        syncCorridor();
     }
 
-    function createGalleryCard(item, index) {
-        const card = document.createElement('article');
-        card.className = 'gallery-card';
-        card.dataset.date = item.date;
-        card.dataset.index = index;
-        card.setAttribute('tabindex', '0');
-        card.setAttribute('role', 'button');
-        card.setAttribute('aria-label', getArtworkLabel(item));
+    const corridorMax = () => Math.max(0, corridorScroll.scrollWidth - corridorScroll.clientWidth);
 
-        const media = document.createElement('div');
-        media.className = 'gallery-media';
+    // 走到某一幅时长廊该滚到哪：桌面靠左对齐，手机居中
+    function corridorTarget(el) {
+        if (isMobileLayout()) return el.offsetLeft - (corridorScroll.clientWidth - el.offsetWidth) / 2;
+        return el.offsetLeft - (parseFloat(getComputedStyle(corridorScroll).paddingLeft) || 0);
+    }
+    // 近处平滑走过去；远处（隔着一屏半以上）暗一下直接到，
+    // 免得一路经过的画全被加载、宽度一变就停错位置
+    let jumpTimer = null;
+    function scrollCorridorTo(el, smooth = true) {
+        if (!el) return;
+        const left = clamp(corridorTarget(el), 0, corridorMax());
+        const far = Math.abs(left - corridorScroll.scrollLeft) > corridorScroll.clientWidth * 1.5;
+        if (!smooth || reduceMotion()) {
+            corridorScroll.scrollLeft = left;
+            return;
+        }
+        if (!far) {
+            corridorScroll.scrollTo({ left, behavior: 'smooth' });
+            return;
+        }
+        clearTimeout(jumpTimer);
+        corridorScroll.classList.add('is-jumping');
+        jumpTimer = setTimeout(() => {
+            corridorScroll.scrollLeft = clamp(corridorTarget(el), 0, corridorMax());
+            requestAnimationFrame(() => corridorScroll.classList.remove('is-jumping'));
+        }, 180);
+    }
 
-        const img = document.createElement('img');
-        img.src = `images/${item.filename}`;
-        img.alt = getArtworkLabel(item);
-        img.loading = 'lazy';
-        img.decoding = 'async';
-
-        img.addEventListener('load', () => {
-            const isLandscape = img.naturalWidth >= img.naturalHeight;
-            card.classList.toggle('is-landscape', isLandscape);
-            card.classList.toggle('is-portrait', !isLandscape);
-            card.style.setProperty('--card-ratio', `${img.naturalWidth} / ${img.naturalHeight}`);
-            requestAnimationFrame(() => resizeMasonryItem(card));
+    // 进度条上方的小标记：生日、纪念日；点一下走到那一天
+    function placeCorridorMarks() {
+        if (!corridorBuilt || !corridorMarks) return;
+        const max = corridorMax();
+        if (!max) {
+            corridorMarks.innerHTML = '';
+            return;
+        }
+        const marks = [];
+        corridorScroll.querySelectorAll('.cor-item').forEach((el) => {
+            const special = specialFor(el.dataset.date);
+            if (!special || special.short === '第一封') return;
+            const pct = clamp(corridorTarget(el) / max, 0, 1) * 100;
+            marks.push(`<button type="button" tabindex="-1" class="corridor-mark${special.love ? ' is-love' : ''}" data-date="${el.dataset.date}" style="left:${pct.toFixed(2)}%">${escapeHtml(special.short)}</button>`);
         });
-
-        img.addEventListener('error', () => {
-            media.style.background = 'rgba(0, 0, 0, 0.55)';
+        corridorMarks.innerHTML = marks.join('');
+        // 靠两头的标签别伸出进度条：本来居中对齐那一点，挨边时往里收
+        const trackW = corridorMarks.clientWidth;
+        [...corridorMarks.children].forEach((el) => {
+            const point = (parseFloat(el.style.left) / 100) * trackW;
+            const w = el.offsetWidth;
+            const shift = clamp(w / 2, point + w - trackW - 7, point + 7);
+            el.style.transform = `translateX(${(-shift).toFixed(1)}px)`;
         });
+        // 挨得太近的标签错开两行，再挤就只留前一个
+        const rowEnds = [-Infinity, -Infinity];
+        [...corridorMarks.children]
+            .map((el) => ({ el, rect: el.getBoundingClientRect() }))
+            .sort((a, b) => a.rect.left - b.rect.left)
+            .forEach(({ el, rect }) => {
+                const row = rowEnds.findIndex((end) => rect.left >= end + 8);
+                if (row === -1) {
+                    el.hidden = true;
+                    return;
+                }
+                el.classList.toggle('is-up', row === 1);
+                rowEnds[row] = rect.right;
+            });
+    }
+    corridorMarks?.addEventListener('click', (e) => {
+        const mark = e.target.closest('.corridor-mark');
+        if (mark) scrollCorridorTo(corridorScroll.querySelector(`.cor-item[data-date="${mark.dataset.date}"]`));
+    });
+    let marksTimer = null;
+    function scheduleCorridorMarks() {
+        clearTimeout(marksTimer);
+        marksTimer = setTimeout(placeCorridorMarks, 200);
+    }
 
-        media.appendChild(img);
-
-        const meta = document.createElement('div');
-        meta.className = 'gallery-meta';
-        const itemDate = new Date(item.date);
-        // hover 给情话，不给编号：编号是档案信息，挪去了详情页副行
-        const prefixText = `${itemDate.getMonth() + 1}月${itemDate.getDate()}日 · 第 ${getDayNumber(itemDate)} 天`;
-        const titleText = letterParts(item).title || item.title || formatCardDateDisplay(itemDate);
-        meta.innerHTML = `
-            <div class="gallery-meta-line">
-                <span class="meta-prefix">${escapeHtml(prefixText)}</span>
-                <span class="meta-title">${escapeHtml(titleText)}</span>
-            </div>
-        `;
-
-        card.appendChild(media);
-        card.appendChild(meta);
-
-        card.addEventListener('mouseenter', () => setTorchMode(true));
-        card.addEventListener('mouseleave', () => setTorchMode(false));
-
-        card.addEventListener('click', () => {
-            selectDate(new Date(item.date), { scroll: false });
-            openDetail(item);
-        });
-
-        card.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                selectDate(new Date(item.date), { scroll: false });
-                openDetail(item);
+    function syncCorridor() {
+        const max = corridorMax();
+        const left = corridorScroll.scrollLeft;
+        corridorRange.value = max ? String(Math.round((left / max) * 1000)) : '0';
+        // 当前走到了哪个月：看视野左边三分之一处是哪一幅（手机上竖排月份是隐藏的，所以按画算）
+        const probe = left + corridorScroll.clientWidth * (isMobileLayout() ? 0.5 : 0.35);
+        const here = corridorItems.find((el) => el.offsetLeft + el.offsetWidth > probe) || corridorItems[corridorItems.length - 1];
+        const active = here ? here.dataset.date.slice(0, 7) : null;
+        if (active === activeMonth) return;
+        activeMonth = active;
+        corridorMonths.querySelectorAll('.month-chip').forEach((chip) => {
+            const on = chip.dataset.month === active;
+            chip.classList.toggle('is-active', on);
+            if (on) chip.setAttribute('aria-current', 'true');
+            else chip.removeAttribute('aria-current');
+            // 月份条在手机上也会横向滚：把当前月挪进视野（只动这一条，不动页面）
+            if (on && corridorMonths.scrollWidth > corridorMonths.clientWidth) {
+                const from = chip.offsetLeft - corridorMonths.offsetLeft;
+                const view = corridorMonths.scrollLeft;
+                if (from < view || from + chip.offsetWidth > view + corridorMonths.clientWidth) {
+                    corridorMonths.scrollTo({ left: from - 12, behavior: reduceMotion() ? 'auto' : 'smooth' });
+                }
             }
         });
-
-        return card;
     }
 
-    function resizeMasonryItem(card) {
-        if (!galleryGrid || !card) return;
-        const styles = window.getComputedStyle(galleryGrid);
-        const rowHeight = parseInt(styles.getPropertyValue('grid-auto-rows'), 10) || 8;
-        const rowGap = parseInt(styles.getPropertyValue('row-gap'), 10) || 18;
-        const media = card.querySelector('.gallery-media');
-        const mediaHeight = media ? media.getBoundingClientRect().height : card.getBoundingClientRect().height;
-        const cardStyles = window.getComputedStyle(card);
-        const borders = (parseFloat(cardStyles.borderTopWidth) || 0) + (parseFloat(cardStyles.borderBottomWidth) || 0);
-        const rowSpan = Math.ceil((mediaHeight + borders + rowGap) / (rowHeight + rowGap));
-        card.style.gridRowEnd = `span ${rowSpan}`;
-    }
+    let corridorRaf = 0;
+    corridorScroll.addEventListener('scroll', () => {
+        if (corridorRaf) return;
+        corridorRaf = requestAnimationFrame(() => {
+            corridorRaf = 0;
+            syncCorridor();
+        });
+    }, { passive: true });
 
-    function resizeAllGalleryItems() {
-        const cards = galleryGrid ? Array.from(galleryGrid.children) : [];
-        cards.forEach(card => resizeMasonryItem(card));
-    }
+    corridorRange.addEventListener('input', () => {
+        corridorScroll.scrollLeft = (Number(corridorRange.value) / 1000) * corridorMax();
+    });
+
+    // 桌面：竖着滚的滚轮沿长廊横着走；走到头再交还给页面
+    corridorScroll.addEventListener('wheel', (e) => {
+        if (e.ctrlKey || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        const max = corridorMax();
+        if (!max) return;
+        const delta = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
+        const left = corridorScroll.scrollLeft;
+        if ((delta < 0 && left <= 0) || (delta > 0 && left >= max - 1)) return;
+        e.preventDefault();
+        corridorScroll.scrollLeft = left + delta;
+    }, { passive: false });
+
+    corridorScroll.addEventListener('click', (e) => {
+        const btn = e.target.closest('.cor-item');
+        if (btn) openItem(dataByDate[btn.dataset.date]);
+    });
+    corridorScroll.addEventListener('mouseover', (e) => {
+        if (e.target.closest('.cor-item')) setTorchMode(true);
+    });
+    corridorScroll.addEventListener('mouseout', (e) => {
+        if (e.target.closest('.cor-item') && !e.relatedTarget?.closest?.('.cor-item')) setTorchMode(false);
+    });
+
+    corridorMonths.addEventListener('click', (e) => {
+        const chip = e.target.closest('.month-chip');
+        if (!chip) return;
+        const marker = $(`cor-${chip.dataset.month}`);
+        if (!marker) return;
+        // 手机上把这个月的第一幅放正中，桌面上让竖排月份靠左
+        scrollCorridorTo(isMobileLayout() ? marker.nextElementSibling : marker);
+    });
 
     // ============================================================
-    // Select & Display Day
+    // 画历：一个月的圆窗
     // ============================================================
-    function selectDate(date, options = {}) {
-        const { scroll = true, skipMonthUpdate = false } = options;
+    let calMonth = new Date(getToday().getFullYear(), getToday().getMonth(), 1);
+    let calBuilt = false;
+
+    const firstLetterMonth = () => {
+        const first = sortedDates.length ? parseISO(sortedDates[0]) : getToday();
+        return new Date(first.getFullYear(), first.getMonth(), 1);
+    };
+    const thisMonth = () => new Date(getToday().getFullYear(), getToday().getMonth(), 1);
+    const monthKey = (d) => d.getFullYear() * 12 + d.getMonth();
+
+    function renderCalendar() {
+        calBuilt = true;
+        const y = calMonth.getFullYear();
+        const m = calMonth.getMonth();
+        const daysIn = new Date(y, m + 1, 0).getDate();
+        const firstDow = new Date(y, m, 1).getDay();
+        const today = getToday();
+        const todayStr = formatDateISO(today);
+        const fullDay = fullMoonDay(y, m);
+
+        $('cal-month').textContent = MONTH_CN[m];
+        $('cal-month').classList.toggle('is-long', MONTH_CN[m].length > 2);
+        $('cal-en').textContent = `${MONTH_EN[m]} · ${y}`;
+        document.title = `Love Minnie · 画历 · ${y}年${m + 1}月`;
+
+        // 这个月有几封、该有几封
+        const monthPrefix = `${y}-${pad2(m + 1)}`;
+        const count = sortedDates.filter((iso) => iso.startsWith(monthPrefix)).length;
+        const firstIso = sortedDates[0] || todayStr;
+        let possible = 0;
+        for (let day = 1; day <= daysIn; day++) {
+            const iso = `${monthPrefix}-${pad2(day)}`;
+            if (iso >= firstIso && iso <= todayStr) possible++;
+        }
+        const countEl = $('cal-count');
+        if (!count) {
+            countEl.textContent = monthKey(calMonth) > monthKey(today) ? '花期未至。' : '这个月还没有画信。';
+        } else if (count >= possible) {
+            countEl.innerHTML = `<span class="num">${count}</span> 封画信，一天不落。`;
+        } else {
+            countEl.innerHTML = `已收到 <span class="num">${count}</span> 封画信。`;
+        }
+
+        // 前后月
+        const prev = new Date(y, m - 1, 1);
+        const next = new Date(y, m + 1, 1);
+        $('cal-prev-label').textContent = MONTH_CN[prev.getMonth()];
+        $('cal-next-label').textContent = MONTH_CN[next.getMonth()];
+        calPrev.disabled = monthKey(prev) < monthKey(firstLetterMonth());
+        calNext.disabled = monthKey(next) > monthKey(thisMonth());
+        calPrev.setAttribute('aria-label', `上个月：${prev.getFullYear()}年${prev.getMonth() + 1}月`);
+        calNext.setAttribute('aria-label', `下个月：${next.getFullYear()}年${next.getMonth() + 1}月`);
+
+        // 圆窗
+        const cells = [];
+        for (let i = 0; i < firstDow; i++) cells.push('<span class="cal-day is-blank" aria-hidden="true"></span>');
+        for (let day = 1; day <= daysIn; day++) {
+            const iso = `${monthPrefix}-${pad2(day)}`;
+            const item = dataByDate[iso] || null;
+            const future = iso > todayStr;
+            const isToday = iso === todayStr;
+            const special = specialFor(iso);
+            const cls = ['cal-day'];
+            if (!item && !future) cls.push('is-empty');
+            if (future) cls.push('is-future');
+            if (isToday) cls.push('is-today');
+            if (day === fullDay) cls.push('is-full');
+            if (special && !isToday) cls.push(special.love ? 'is-love' : 'is-gold');
+            const art = item ? `<img src="images/${item.filename}" alt="" loading="lazy" decoding="async">` : '';
+            const title = item ? (letterParts(item).title || getArtworkThemeText(item)) : '';
+            const bits = [`${m + 1}月${day}日`];
+            if (title) bits.push(title);
+            if (special) bits.push(special.name);
+            if (day === fullDay) bits.push('满月');
+            if (isToday) bits.push('今天');
+            if (future) bits.push('还没到');
+            else if (!item) bits.push('这天没有画信');
+            cells.push(
+                `<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${escapeHtml(bits.join('，'))}">` +
+                '<span class="cal-win" aria-hidden="true"><span class="cal-win-edge"></span>' +
+                `<span class="cal-win-art">${art}</span></span>` +
+                `<span class="cal-num">${day}</span>` +
+                (special && special.love && !isToday ? `<span class="cal-heart" aria-hidden="true">${HEART_SVG}</span>` : '') +
+                '</button>'
+            );
+        }
+        calGrid.innerHTML = cells.join('');
+
+        // 这个月的特别日子：生日、纪念日、满月
+        const specials = [];
+        for (let day = 1; day <= daysIn; day++) {
+            const iso = `${monthPrefix}-${pad2(day)}`;
+            const special = specialFor(iso);
+            if (special) specials.push({ iso, day, name: special.name, love: !!special.love });
+            if (day === fullDay) specials.push({ iso, day, name: '满月', moon: true });
+        }
+        const listHtml = specials.map((s) => {
+            const item = dataByDate[s.iso];
+            const future = s.iso > todayStr;
+            const dateText = `<span class="cal-special-date">${m + 1}.${s.day}</span>`;
+            let name = escapeHtml(s.name);
+            if (future) {
+                const left = diffDays(today, parseISO(s.iso));
+                name += SEP + unit(`还有 <span class="num">${left}</span> 天`);
+            }
+            const cls = `cal-special-item${s.love ? ' is-love' : ''}`;
+            let lead = `<img class="cal-special-thumb" src="images/${item?.filename}" alt="" loading="lazy">`;
+            if (s.moon) lead = '<span class="cal-special-moon" aria-hidden="true"></span>';
+            else if (!item) lead = '<span class="cal-special-moon is-ring" aria-hidden="true"></span>';
+            if (item && !s.moon) {
+                return `<li><button type="button" class="${cls}" data-date="${s.iso}">${lead}${dateText}<span class="cal-special-name">${name}</span></button></li>`;
+            }
+            return `<li><div class="${cls}">${lead}${dateText}<span class="cal-special-name">${name}</span></div></li>`;
+        }).join('');
+        $('cal-special').innerHTML = listHtml;
+        $('cal-special-wrap').hidden = !specials.length;
+        $('memory-lane-btn').hidden = !galleryData.length;
+    }
+
+    function shiftCalendar(offset) {
+        const next = new Date(calMonth.getFullYear(), calMonth.getMonth() + offset, 1);
+        if (monthKey(next) < monthKey(firstLetterMonth()) || monthKey(next) > monthKey(thisMonth())) return;
+        calMonth = next;
+        renderCalendar();
+    }
+
+    calPrev.addEventListener('click', () => shiftCalendar(-1));
+    calNext.addEventListener('click', () => shiftCalendar(1));
+
+    const EMPTY_DAY_PHRASES = ['这一天还在路上', '这一天的花还含苞', '这一天等你点亮', '这一天慢慢靠近', '这一天先留白'];
+    calGrid.addEventListener('click', (e) => {
+        const cell = e.target.closest('.cal-day');
+        if (!cell || cell.classList.contains('is-blank')) return;
+        const item = dataByDate[cell.dataset.date];
+        if (item) {
+            openItem(item);
+            return;
+        }
+        const d = parseISO(cell.dataset.date);
+        const phrase = cell.classList.contains('is-future')
+            ? EMPTY_DAY_PHRASES[Math.floor(Math.random() * EMPTY_DAY_PHRASES.length)]
+            : '这一天没有画信';
+        showToast(unit(`${d.getMonth() + 1}月${d.getDate()}日`) + SEP + unit(phrase));
+    });
+    $('cal-special').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-date]');
+        if (btn) openItem(dataByDate[btn.dataset.date]);
+    });
+
+    // 随机重温：从历史画信里随机抽一封打开
+    $('memory-lane-btn').addEventListener('click', () => {
+        if (!galleryData.length) return;
+        const todayISO = formatDateISO(getToday());
+        const pool = galleryData.filter((d) => d.date !== todayISO);
+        const source = pool.length ? pool : galleryData;
+        openItem(source[Math.floor(Math.random() * source.length)]);
+    });
+
+    // ============================================================
+    // 视图切换：#today / #corridor / #calendar
+    // ============================================================
+    const VIEWS = ['today', 'corridor', 'calendar'];
+    const VIEW_TITLES = { today: 'Love Minnie · 画信', corridor: 'Love Minnie · 长廊' };
+    let currentView = null;
+    let dataReady = false;
+
+    const viewFromHash = () => {
+        const name = window.location.hash.replace('#', '');
+        return VIEWS.includes(name) ? name : 'today';
+    };
+
+    function setView(view, { scroll = true } = {}) {
+        currentView = view;
+        document.body.dataset.view = view;
+        VIEWS.forEach((v) => {
+            $(`view-${v}`).hidden = v !== view;
+        });
+        document.querySelectorAll('.lm-tab, .nav-item[data-view]').forEach((el) => {
+            const on = el.dataset.view === view;
+            el.classList.toggle('is-active', on);
+            el.classList.toggle('active', on);
+            if (on) el.setAttribute('aria-current', 'page');
+            else el.removeAttribute('aria-current');
+        });
+        if (VIEW_TITLES[view]) document.title = VIEW_TITLES[view];
+        if (dataReady) {
+            if (view === 'today') layoutHero();
+            if (view === 'corridor') {
+                if (!corridorBuilt) renderCorridor();
+                else {
+                    placeCorridorMarks();
+                    syncCorridor();
+                }
+            }
+            if (view === 'calendar') renderCalendar();
+        }
+        if (scroll) window.scrollTo(0, 0);
+    }
+
+    window.addEventListener('hashchange', () => {
+        if (detailModal.classList.contains('open')) closeDetail({ restoreFocus: false });
+        closeSeasonSheet();
+        setView(viewFromHash());
+    });
+
+    // ============================================================
+    // 胶卷条：看画时出现在底部，点哪张换哪张
+    // ============================================================
+    let timelineHydrated = false;
+
+    function renderTimeline() {
+        timelineContainer.innerHTML = '';
+        const allItems = [...galleryData].reverse();
+        const lastDate = allItems.length ? new Date(allItems[allItems.length - 1].dateObj) : getToday();
+        for (let i = 1; i <= 5; i++) {
+            const futureDate = new Date(lastDate);
+            futureDate.setDate(lastDate.getDate() + i);
+            allItems.push({ date: formatDateISO(futureDate), dateObj: futureDate, isFuture: true });
+        }
+        const selectedKey = formatDateISO(selectedDate);
+        const selectedIndex = Math.max(0, allItems.findIndex((item) => item.date === selectedKey));
+
+        allItems.forEach((item, index) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'timeline-thumb';
+            thumb.dataset.date = item.date;
+            if (item.isFuture) {
+                thumb.classList.add('future');
+                thumb.innerHTML = '<img src="images/sunflower.svg" class="sunflower-icon" alt="尚未上画">';
+            } else {
+                const img = document.createElement('img');
+                // 胶卷条只在看画时出现：先不给 src，第一次打开看画再加载，省下首屏流量
+                img.dataset.src = `images/${item.filename}`;
+                img.alt = getArtworkLabel(item);
+                img.decoding = 'async';
+                img.loading = Math.abs(index - selectedIndex) <= 24 ? 'eager' : 'lazy';
+                img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
+                img.addEventListener('error', () => thumb.classList.add('is-error'));
+                if (timelineHydrated) hydrateThumb(img);
+                thumb.appendChild(img);
+                const badge = document.createElement('span');
+                badge.className = 'thumb-badge';
+                badge.textContent = `${item.dateObj.getMonth() + 1}.${item.dateObj.getDate()}`;
+                thumb.appendChild(badge);
+                thumb.addEventListener('click', () => {
+                    selectDate(item.dateObj);
+                    if (detailModal.classList.contains('open')) openDetail(item);
+                });
+            }
+            if (item.date === selectedKey) thumb.classList.add('selected');
+            timelineContainer.appendChild(thumb);
+        });
+    }
+
+    function hydrateThumb(img) {
+        if (!img.dataset.src) return;
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+        if (img.complete && img.naturalWidth) img.classList.add('is-loaded');
+    }
+
+    function hydrateTimeline() {
+        if (timelineHydrated) return;
+        timelineHydrated = true;
+        timelineContainer.querySelectorAll('img[data-src]').forEach(hydrateThumb);
+    }
+
+    $('timeline-prev').addEventListener('click', () => timelineContainer.scrollBy({ left: -200, behavior: 'smooth' }));
+    $('timeline-next').addEventListener('click', () => timelineContainer.scrollBy({ left: 200, behavior: 'smooth' }));
+
+    function selectDate(date) {
         selectedDate = new Date(date);
         const dateStr = formatDateISO(selectedDate);
+        timelineContainer.querySelectorAll('.timeline-thumb.selected').forEach((el) => el.classList.remove('selected'));
+        const thumb = timelineContainer.querySelector(`.timeline-thumb[data-date="${dateStr}"]`);
+        if (thumb) {
+            thumb.classList.add('selected');
+            if (detailModal.classList.contains('open')) {
+                thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
         const item = dataByDate[dateStr];
-
-        if (!item) {
-            // 没有画的日子：整月都没画才换成空状态；否则只轻提示一句，不清空这个月的画
-            const monthHasItems = getItemsForMonth(currentMonth).length > 0;
-            if (monthHasItems) {
-                const isFutureDay = toUtcDay(selectedDate) > toUtcDay(getToday());
-                const phrase = isFutureDay ? pickEmptyPhrase('day').zh : '这一天没有画信';
-                showToast(unit(`${selectedDate.getMonth() + 1}月${selectedDate.getDate()}日`) + SEP + unit(escapeHtml(phrase)));
-            } else {
-                const emptyScope = getEmptyScope(selectedDate);
-                showEmptyState({ mode: getEmptyMode(selectedDate), date: selectedDate, scope: emptyScope });
-            }
-
-            // 仍然更新选中状态
-            document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
-            const targetCell = document.querySelector(`.day-cell[data-date="${dateStr}"]`);
-            if (targetCell) targetCell.classList.add('selected');
-
-            updateDateCapsuleForDate(selectedDate);
-            flashDateCapsule();
-
-            if (!monthHasItems) clearBgBlur();
-            return;
-        }
-
-        // 有内容时隐藏空状态
-        if (emptyState) emptyState.style.display = 'none';
-
-        document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
-        const targetCell = document.querySelector(`.day-cell[data-date="${dateStr}"]`);
-        if (targetCell) targetCell.classList.add('selected');
-
-        document.querySelectorAll('.timeline-thumb.selected').forEach(el => el.classList.remove('selected'));
-        const targetThumb = document.querySelector(`.timeline-thumb[data-date="${dateStr}"]`);
-        if (targetThumb) {
-            targetThumb.classList.add('selected');
-            targetThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
-
-        document.querySelectorAll('.gallery-card.selected').forEach(el => el.classList.remove('selected'));
-        const targetCard = cardByDate.get(dateStr);
-        if (targetCard) {
-            targetCard.classList.add('selected');
-            if (scroll) {
-                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        } else if (scroll) {
-            // 今天那张由 Hero 承载，不在瀑布流里：选中今天时滚回顶部的 Hero
-            const hero = document.getElementById('today-hero');
-            if (hero && !hero.hidden && hero.dataset.date === dateStr) {
-                hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
-        if (bgBlur) {
-            setBgBlurImage(item.filename);
-            applyImageTone(item.filename);
-        }
-
-        updateDateCapsule(item);
-
-        const monthChanged = currentMonth.getMonth() !== selectedDate.getMonth() ||
-            currentMonth.getFullYear() !== selectedDate.getFullYear();
-
-        if (monthChanged) {
-            currentMonth = new Date(selectedDate);
-            renderCalendar();
-            if (!skipMonthUpdate) {
-                updateMonthView({ anchorDate: selectedDate });
-            }
-        }
-    }
-
-    function updateDateCapsuleForDate(date) {
-        if (!dateCapsule || !date) return;
-        const d = new Date(date);
-        const dayNum = getDayNumber(d);
-        const shortMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
-        dateCapsule.textContent = `Day ${dayNum} · ${shortMonth} ${d.getDate()}`;
-    }
-
-    let toastTimer = null;
-    function showToast(html) {
-        const toast = document.getElementById('lm-toast');
-        if (!toast) return;
-        toast.innerHTML = html;
-        toast.classList.add('show');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
-    }
-
-    function flashDateCapsule() {
-        if (!dateCapsule) return;
-        dateCapsule.classList.remove('capsule-flash');
-        void dateCapsule.offsetWidth;
-        dateCapsule.classList.add('capsule-flash');
-    }
-
-    function updateDateCapsule(item) {
-        if (!item?.date) return;
-        updateDateCapsuleForDate(new Date(item.date));
-    }
-
-    function updateDateCapsuleForMonth(date) {
-        if (!dateCapsule || !date) return;
-        dateCapsule.textContent = formatMonthDisplay(date);
-    }
-
-    function getEmptyMode(date) {
-        return toUtcDay(date) >= toUtcDay(EMPTY_FUTURE_START) ? 'future' : 'past';
-    }
-
-    const EMPTY_PHRASES = {
-        day: [
-            { zh: '这一天还在路上', en: 'This day is still on its way.' },
-            { zh: '这一天尚未开启', en: 'This day has not opened yet.' },
-            { zh: '这一天先留白', en: 'Let this day stay blank for now.' },
-            { zh: '这一天的花还含苞', en: 'The bloom of this day is still closed.' },
-            { zh: '这一天等你点亮', en: 'This day is waiting for your light.' },
-            { zh: '这一天慢慢靠近', en: 'This day is quietly drawing near.' },
-            { zh: '这一天的故事未翻页', en: 'This day\'s story hasn\'t turned the page.' },
-            { zh: '这一天轻轻打盹', en: 'This day is taking a soft nap.' }
-        ],
-        week: [
-            { zh: '这一周正在靠近', en: 'This week is drawing near.' },
-            { zh: '这一周仍在酝酿', en: 'This week is still brewing.' },
-            { zh: '这一周慢慢生长', en: 'This week is growing slowly.' },
-            { zh: '这一周暂时留白', en: 'This week remains blank for now.' },
-            { zh: '这一周在准备亮相', en: 'This week is preparing to appear.' },
-            { zh: '这一周留待花开', en: 'This week is saved for blooming.' },
-            { zh: '这一周还在路上', en: 'This week is still on its way.' },
-            { zh: '这一周轻轻合上', en: 'This week is softly folded away.' }
-        ],
-        month: [
-            { zh: '这个月仍在沉睡', en: 'This month is still asleep.' },
-            { zh: '这个月尚未抵达', en: 'This month has not arrived yet.' },
-            { zh: '这个月的花期未到', en: 'The bloom of this month hasn\'t come.' },
-            { zh: '这个月缓慢靠近', en: 'This month is slowly approaching.' },
-            { zh: '这个月先把灯藏好', en: 'This month keeps its lights tucked away.' },
-            { zh: '这个月的故事未展开', en: 'The story of this month hasn\'t unfolded yet.' },
-            { zh: '这个月留给未来', en: 'This month is saved for later.' },
-            { zh: '这个月正在酝酿', en: 'This month is still brewing.' }
-        ]
-    };
-
-    const lastEmptyPhraseIndex = {
-        day: -1,
-        week: -1,
-        month: -1
-    };
-
-    const pickEmptyPhrase = (scope) => {
-        const list = EMPTY_PHRASES[scope] || EMPTY_PHRASES.day;
-        if (!list.length) return { zh: '', en: '' };
-        let nextIndex = Math.floor(Math.random() * list.length);
-        if (list.length > 1 && nextIndex === lastEmptyPhraseIndex[scope]) {
-            nextIndex = (nextIndex + 1) % list.length;
-        }
-        lastEmptyPhraseIndex[scope] = nextIndex;
-        return list[nextIndex];
-    };
-
-    function showEmptyState(config = {}) {
-        const { mode = 'future', date = currentMonth, scope = 'month' } = config;
-        if (!emptyState) return;
-        emptyState.style.display = 'flex';
-        if (galleryGrid) {
-            galleryGrid.innerHTML = '';
-            galleryGrid.style.display = 'none';
-        }
-
-        const resolvedScope = ['day', 'week', 'month'].includes(scope) ? scope : 'month';
-        const zhDateText = resolvedScope === 'day'
-            ? formatDateDisplayZh(date)
-            : resolvedScope === 'week'
-                ? formatWeekRangeZh(date)
-                : formatMonthDisplayZh(date);
-        const enDateText = resolvedScope === 'day'
-            ? formatDateDisplayEn(date)
-            : resolvedScope === 'week'
-                ? formatWeekRangeEn(date)
-                : formatMonthDisplay(date);
-
-        if (mode === 'future') {
-            const phrase = pickEmptyPhrase(resolvedScope);
-            if (emptyTitle) emptyTitle.textContent = '花期未至';
-            if (emptyDateText) {
-                emptyDateText.innerHTML = unit(escapeHtml(zhDateText)) + SEP + unit(escapeHtml(phrase.zh));
-            }
-            if (emptySubtext) {
-                emptySubtext.textContent = `${enDateText} · ${phrase.en}`;
-            }
-        } else if (mode === 'past') {
-            if (emptyTitle) emptyTitle.textContent = '旧梦微光';
-            if (emptyDateText) {
-                emptyDateText.innerHTML = unit(escapeHtml(zhDateText)) + SEP + unit('美好已成回忆');
-            }
-            if (emptySubtext) {
-                emptySubtext.textContent = `${enDateText} · Those days now glow in memory.`;
-            }
-        } else {
-            if (emptyTitle) emptyTitle.textContent = 'A seed waiting to bloom...';
-            if (emptyDateText) {
-                emptyDateText.textContent = `${formatDateDisplay(new Date(date))} — This memory is waiting to unfold...`;
-            }
-            if (emptySubtext) {
-                emptySubtext.textContent = '';
-            }
-        }
+        if (item) applyImageTone(item.filename);
     }
 
     // ============================================================
-    // Navigation
-    // ============================================================
-    function navigateDay(offset) {
-        const newDate = new Date(selectedDate);
-        newDate.setDate(newDate.getDate() + offset);
-        selectDate(newDate);
-    }
-
-    // ============================================================
-    // Detail Modal
+    // 看画
     // ============================================================
     let lastDetailFocus = null;
-
-    function getDetailFocusable() {
-        if (!detailModal) return [];
-        const dialog = detailModal.querySelector('.detail-dialog') || detailModal;
-        return [...dialog.querySelectorAll(
-            'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )].filter(el => el.getAttribute('aria-hidden') !== 'true');
-    }
-
-    function setBackgroundInert(isInert) {
-        if (!detailModal) return;
-        [...document.body.children].forEach(el => {
-            if (el === detailModal) return;
-            // 影院模式仍允许底栏时间轴点选换画
-            if (el.classList.contains('timeline-strip')) return;
-            if (isInert) el.setAttribute('inert', '');
-            else el.removeAttribute('inert');
-        });
-    }
-
-    function trapDetailFocus(e) {
-        const focusable = getDetailFocusable();
-        if (!focusable.length) {
-            e.preventDefault();
-            detailClose?.focus();
-            return;
-        }
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        const active = document.activeElement;
-        const inside = detailModal.contains(active);
-
-        if (focusable.length === 1 || !inside) {
-            e.preventDefault();
-            first.focus();
-            return;
-        }
-        if (e.shiftKey && active === first) {
-            e.preventDefault();
-            last.focus();
-        } else if (!e.shiftKey && active === last) {
-            e.preventDefault();
-            first.focus();
-        }
-    }
 
     function fitDetailTitle() {
         if (!detailTitle) return;
@@ -1321,16 +1188,60 @@ document.addEventListener('DOMContentLoaded', () => {
     function maybeShowSwipeHint() {
         if (swipeHintShown || !isMobileLayout()) return;
         swipeHintShown = true;
+        let seen = false;
         try {
-            if (localStorage.getItem(SWIPE_HINT_KEY)) return;
+            seen = localStorage.getItem(SWIPE_HINT_KEY) === '1';
             localStorage.setItem(SWIPE_HINT_KEY, '1');
         } catch (err) {
-            // 存储不可用时本次会话内只提示一次
+            seen = false;
         }
-        const hint = document.getElementById('detail-hint');
+        if (seen) return;
+        const hint = $('detail-hint');
         if (!hint) return;
         hint.classList.add('is-visible');
-        setTimeout(() => hint.classList.remove('is-visible'), 2600);
+        setTimeout(() => hint.classList.remove('is-visible'), 2800);
+    }
+
+    function getDetailFocusable() {
+        const dialog = detailModal.querySelector('.detail-dialog') || detailModal;
+        return [...dialog.querySelectorAll(
+            'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )].filter((el) => el.getAttribute('aria-hidden') !== 'true');
+    }
+
+    function setBackgroundInert(isInert) {
+        [...document.body.children].forEach((el) => {
+            if (el === detailModal) return;
+            // 影院模式仍允许底栏胶卷条点选换画
+            if (el.classList.contains('timeline-strip')) return;
+            if (isInert) el.setAttribute('inert', '');
+            else el.removeAttribute('inert');
+        });
+    }
+
+    function trapDetailFocus(e) {
+        const focusable = getDetailFocusable();
+        if (!focusable.length) {
+            e.preventDefault();
+            detailClose?.focus();
+            return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        const inside = detailModal.contains(active);
+        if (focusable.length === 1 || !inside) {
+            e.preventDefault();
+            first.focus();
+            return;
+        }
+        if (e.shiftKey && active === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && active === last) {
+            e.preventDefault();
+            first.focus();
+        }
     }
 
     function openDetail(item) {
@@ -1345,39 +1256,31 @@ document.addEventListener('DOMContentLoaded', () => {
             fitDetailTitle();
         };
 
-        // 先移除之前的方向类
-        if (detailDialog) {
-            detailDialog.classList.remove('is-portrait', 'is-landscape');
-        }
-
+        detailDialog?.classList.remove('is-portrait', 'is-landscape');
         // 先绑定 onload，再切换 src，避免缓存图片时错过方向识别
         detailImage.onload = updateDetailOrientation;
         detailImage.src = `images/${item.filename}`;
         detailImage.alt = getArtworkLabel(item);
-        // 弹窗信笺/图区的同图氛围底
-        if (detailDialog) {
-            detailDialog.style.setProperty('--detail-bg', `url("${detailImage.src}")`);
-        }
+        // 看画的同图氛围底：铺满整个屏幕
+        detailModal.style.setProperty('--detail-bg', `url("${detailImage.src}")`);
 
-        // 信笺：日期 → 第几天、第几封 → 主题 → 落款
-        const d = item.dateObj instanceof Date ? item.dateObj : new Date(item.date);
+        // 展签：日期 → 第几天、第几封 → 今日份爱你 → 主题 → 落款
+        const d = item.dateObj;
         detailDate.innerHTML =
             unit(`${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`) + SEP +
             unit(`星期${WEEKDAYS_ZH[d.getDay()]}`);
-        const detailSub = document.getElementById('detail-sub');
-        if (detailSub) {
-            detailSub.innerHTML =
-                unit(`在一起的第 <span class="num">${getDayNumber(d)}</span> 天`) + SEP +
-                unit(`第 <span class="num">${getChronoNo(item)}</span> 封画信`);
-        }
+        $('detail-sub').innerHTML =
+            unit(`在一起的第 <span class="num">${getDayNumber(d)}</span> 天`) + SEP +
+            unit(`第 <span class="num">${getChronoNo(item)}</span> 封画信`);
 
         const parts = letterParts(item);
         detailTitle.innerHTML = TS.html(parts.title || '这是一个特别的日子');
         detailTitle.classList.toggle('is-long', parts.isLong);
         detailLetter.innerHTML = parts.rest ? TS.html(parts.rest) : '';
-        if (detailDialog) detailDialog.classList.toggle('is-long-letter', parts.isLong || !!parts.rest);
-        const detailSign = document.getElementById('detail-sign');
-        if (detailSign) detailSign.innerHTML = signHtml(parts);
+        detailDialog?.classList.toggle('is-long-letter', parts.isLong || !!parts.rest);
+        $('detail-sign').innerHTML = signHtml(parts);
+        $('detail-postmark').innerHTML = postmarkSvg(d, getChronoNo(item), getDayNumber(d));
+        maybeStamp($('detail-seal'), item.date);
 
         const description = item.description ? item.description.trim() : '';
         detailDescription.innerHTML = description && description !== (item.loveLetter || '').trim()
@@ -1387,40 +1290,27 @@ document.addEventListener('DOMContentLoaded', () => {
         detailModal.classList.add('open');
         detailModal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
-        if (!lastDetailFocus) {
-            lastDetailFocus = document.activeElement;
-        }
+        if (!lastDetailFocus) lastDetailFocus = document.activeElement;
         setBackgroundInert(true);
-        if (detailClose) {
-            detailClose.focus();
-        }
-        if (detailImage.complete) {
-            updateDetailOrientation();
-        } else {
-            fitDetailTitle();
-        }
+        detailClose?.focus();
+        if (detailImage.complete) updateDetailOrientation();
+        else fitDetailTitle();
         // 手机上不显示胶卷条，就不去加载它的图
         if (!isMobileLayout()) hydrateTimeline();
         maybeShowSwipeHint();
 
         // Edit 是管理功能，只在 URL 带 ?admin=1 时显示，避免打扰观众视角
-        const isAdminMode = new URLSearchParams(window.location.search).has('admin');
-        let editBtn = document.getElementById('detail-edit');
-        if (isAdminMode) {
+        let editBtn = $('detail-edit');
+        if (params.has('admin')) {
             if (!editBtn) {
                 editBtn = document.createElement('button');
                 editBtn.id = 'detail-edit';
+                editBtn.type = 'button';
                 editBtn.className = 'detail-action-btn';
                 editBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-edit"></use></svg>';
-                editBtn.setAttribute('title', 'Review & Edit');
-
-                // Insert before Close button
-                const header = document.querySelector('.detail-header');
-                if (header) {
-                    header.appendChild(editBtn);
-                }
+                editBtn.setAttribute('aria-label', 'Review & Edit');
+                detailModal.querySelector('.detail-header')?.appendChild(editBtn);
             }
-
             editBtn.onclick = () => {
                 window.location.href = `admin.html?date=${item.date}`;
             };
@@ -1429,445 +1319,196 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function closeDetail() {
-        if (!detailModal) return;
+    function closeDetail({ restoreFocus = true } = {}) {
+        if (!detailModal.classList.contains('open')) return;
         detailModal.classList.remove('open');
         detailModal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
         setBackgroundInert(false);
         const restore = lastDetailFocus;
         lastDetailFocus = null;
-        if (restore && typeof restore.focus === 'function' && document.contains(restore)) {
+        if (restoreFocus && restore && typeof restore.focus === 'function' && document.contains(restore)) {
             restore.focus();
         }
     }
 
-    // ============================================================
-    // 移动端触摸滑动切换画作
-    // ============================================================
+    detailClose?.addEventListener('click', () => closeDetail());
+    detailModal.addEventListener('click', (e) => {
+        if (e.target === detailModal) closeDetail();
+    });
+
+    // 前一封 / 后一封（按日期，左早右晚）
+    const detailMediaEl = detailModal.querySelector('.detail-media');
+    function navigateLetter(offset, { animate = false } = {}) {
+        const index = sortedDates.indexOf(formatDateISO(selectedDate));
+        if (index === -1) return;
+        const target = sortedDates[index + offset];
+        if (!target) {
+            // 到头了：轻轻顶一下
+            if (detailMediaEl) {
+                detailMediaEl.style.transform = offset > 0 ? 'translateX(-10px)' : 'translateX(10px)';
+                setTimeout(() => {
+                    detailMediaEl.style.transform = '';
+                }, 150);
+            }
+            return;
+        }
+        const item = dataByDate[target];
+        if (!animate || !detailMediaEl || reduceMotion()) {
+            openItem(item);
+            return;
+        }
+        detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
+        detailMediaEl.style.transform = `translateX(${offset > 0 ? '-100%' : '100%'})`;
+        detailMediaEl.style.opacity = '0';
+        setTimeout(() => {
+            openItem(item);
+            detailMediaEl.style.transition = 'none';
+            detailMediaEl.style.transform = `translateX(${offset > 0 ? '100%' : '-100%'})`;
+            requestAnimationFrame(() => {
+                detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
+                detailMediaEl.style.transform = 'translateX(0)';
+                detailMediaEl.style.opacity = '1';
+            });
+        }, 200);
+    }
+
+    // 手机：左右滑换画
     let touchStartX = 0;
     let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-    const SWIPE_THRESHOLD = 50; // 最小滑动距离
-    const SWIPE_RESTRAINT = 100; // 垂直方向最大偏移
-
-    if (detailModal) {
-        const detailMediaEl = detailModal.querySelector('.detail-media');
-        
-        detailModal.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
-
-        detailModal.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            touchEndY = e.changedTouches[0].screenY;
-            handleSwipe();
-        }, { passive: true });
-
-        function handleSwipe() {
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-
-            // 只处理水平滑动（垂直偏移不能太大）
-            if (Math.abs(deltaX) > SWIPE_THRESHOLD && Math.abs(deltaY) < SWIPE_RESTRAINT) {
-                if (deltaX > 0) {
-                    // 右滑 -> 上一张
-                    navigateDetailBySwipe(-1);
-                } else {
-                    // 左滑 -> 下一张
-                    navigateDetailBySwipe(1);
-                }
-            }
+    detailModal.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+    detailModal.addEventListener('touchend', (e) => {
+        const deltaX = e.changedTouches[0].screenX - touchStartX;
+        const deltaY = e.changedTouches[0].screenY - touchStartY;
+        if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 100) {
+            navigateLetter(deltaX > 0 ? -1 : 1, { animate: true });
         }
-
-        function navigateDetailBySwipe(offset) {
-            const currentDateStr = formatDateISO(selectedDate);
-            
-            // 获取所有有内容的日期，按日期排序
-            const allDates = Object.keys(dataByDate).sort();
-            const currentIndex = allDates.indexOf(currentDateStr);
-            
-            if (currentIndex === -1) return;
-            
-            const newIndex = currentIndex + offset;
-            if (newIndex < 0 || newIndex >= allDates.length) {
-                // 到达边界，可以添加震动反馈
-                if (detailMediaEl) {
-                    detailMediaEl.style.transform = offset > 0 ? 'translateX(-10px)' : 'translateX(10px)';
-                    setTimeout(() => {
-                        detailMediaEl.style.transform = '';
-                    }, 150);
-                }
-                return;
-            }
-            
-            const newDateStr = allDates[newIndex];
-            const newItem = dataByDate[newDateStr];
-            
-            if (newItem) {
-                // 添加滑动动画
-                if (detailMediaEl) {
-                    const direction = offset > 0 ? '-100%' : '100%';
-                    detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
-                    detailMediaEl.style.transform = `translateX(${direction})`;
-                    detailMediaEl.style.opacity = '0';
-                    
-                    setTimeout(() => {
-                        selectDate(new Date(newDateStr), { scroll: false });
-                        openDetail(newItem);
-                        
-                        // 从另一侧滑入
-                        const enterFrom = offset > 0 ? '100%' : '-100%';
-                        detailMediaEl.style.transition = 'none';
-                        detailMediaEl.style.transform = `translateX(${enterFrom})`;
-                        detailMediaEl.style.opacity = '0';
-                        
-                        requestAnimationFrame(() => {
-                            detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
-                            detailMediaEl.style.transform = 'translateX(0)';
-                            detailMediaEl.style.opacity = '1';
-                        });
-                    }, 200);
-                } else {
-                    selectDate(new Date(newDateStr), { scroll: false });
-                    openDetail(newItem);
-                }
-            }
-        }
-    }
-
-    // ============================================================
-    // Utility Functions
-    // ============================================================
-    function formatDateISO(date) {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-    }
-
-    function formatDateDisplay(date) {
-        // Change to YYYY.MMM.D, e.g., 2026.Jan.2
-        const year = date.getFullYear();
-        const day = date.getDate();
-        const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()];
-        return `${year}.${monthShort}.${day}`;
-    }
-
-    function formatMonthDisplay(date) {
-        const options = { year: 'numeric', month: 'long' };
-        return date.toLocaleDateString('en-US', options);
-    }
-
-    function formatMonthDisplayZh(date) {
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        return `${year}年${month}月`;
-    }
-
-    function formatDateDisplayZh(date) {
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        return `${year}年${month}月${day}日`;
-    }
-
-    function getArtworkThemeText(item) {
-        const raw = String(item.loveLetter || item.title || item.description || '');
-        const match = raw.match(/今日份爱你[,，、\s]*(.+)$/);
-        if (match) return match[1].trim();
-        return raw.replace(/^♥️\s*/, '').trim();
-    }
-
-    function getArtworkLabel(item) {
-        const dateObj = item.dateObj instanceof Date ? item.dateObj : new Date(item.date);
-        const dateLabel = formatDateDisplayZh(dateObj);
-        const theme = getArtworkThemeText(item);
-        return theme ? `${dateLabel}，${theme}` : dateLabel;
-    }
-
-    function formatDateDisplayEn(date) {
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    }
-
-    function formatCardDateDisplay(date) {
-        const year = date.getFullYear();
-        const day = date.getDate();
-        const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()];
-        return `${year} ${monthShort} ${day}`;
-    }
-
-    function getWeekBounds(date) {
-        const base = new Date(date);
-        base.setHours(0, 0, 0, 0);
-        const day = base.getDay();
-        const diffToMonday = (day + 6) % 7;
-        const start = new Date(base);
-        start.setDate(base.getDate() - diffToMonday);
-        const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        return { start, end };
-    }
-
-    function formatWeekRangeZh(date) {
-        const { start, end } = getWeekBounds(date);
-        const startYear = start.getFullYear();
-        const endYear = end.getFullYear();
-        const startMonth = start.getMonth() + 1;
-        const endMonth = end.getMonth() + 1;
-        const startDay = start.getDate();
-        const endDay = end.getDate();
-
-        if (startYear === endYear) {
-            return `${startYear}年${startMonth}月${startDay}日-${endMonth}月${endDay}日`;
-        }
-        return `${startYear}年${startMonth}月${startDay}日-${endYear}年${endMonth}月${endDay}日`;
-    }
-
-    function formatWeekRangeEn(date) {
-        const { start, end } = getWeekBounds(date);
-        const startYear = start.getFullYear();
-        const endYear = end.getFullYear();
-        const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const startLabel = `${monthShort[start.getMonth()]} ${start.getDate()}`;
-        const endLabel = `${monthShort[end.getMonth()]} ${end.getDate()}`;
-
-        if (startYear === endYear) {
-            return `${startLabel}-${endLabel}, ${startYear}`;
-        }
-        return `${startLabel}, ${startYear}-${endLabel}, ${endYear}`;
-    }
-
-    function toUtcDay(date) {
-        return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-    }
-
-    function diffDays(start, end) {
-        return Math.floor((toUtcDay(end) - toUtcDay(start)) / (1000 * 60 * 60 * 24));
-    }
-
-    function getDayNumber(date) {
-        return diffDays(RELATIONSHIP_START, date) + 1;
-    }
-
-    // 按日期升序的存档序号（第 N 封画信）
-    function getChronoNo(item) {
-        const sortedByDate = [...galleryData].sort((a, b) => new Date(a.date) - new Date(b.date));
-        return sortedByDate.findIndex(d => d.date === item.date) + 1;
-    }
-
-    function getNoNumber(date, index) {
-        const today = new Date();
-        const useRealNo = toUtcDay(today) >= toUtcDay(START_DATE);
-        if (!useRealNo) {
-            return index + 1;
-        }
-
-        const diff = diffDays(START_DATE, date) + 1;
-        return diff > 0 ? diff : index + 1;
-    }
-
-    function escapeHtml(text) {
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    // ============================================================
-    // 方案 A：移动端底部导航栏交互
-    // ============================================================
-    const mobileBottomNav = document.getElementById('mobile-bottom-nav');
-    const navHome = document.getElementById('nav-home');
-    const navGallery = document.getElementById('nav-gallery');
-    const navCalendar = document.getElementById('nav-calendar');
-    const navSettings = document.getElementById('nav-settings');
-    const calendarOverlay = document.getElementById('calendar-overlay');
-    const settingsSheet = document.getElementById('settings-sheet');
-    const settingsOverlay = document.getElementById('settings-overlay');
-    const mobileThemeOptions = document.getElementById('mobile-theme-options');
-
-    // 辅助函数：关闭所有 Bottom Sheet
-    const closeAllSheets = () => {
-        calendarSidebar?.classList.remove('open');
-        calendarOverlay?.classList.remove('show');
-        settingsSheet?.classList.remove('open');
-        settingsOverlay?.classList.remove('show');
-        settingsSheet?.setAttribute('aria-hidden', 'true');
-        navSettings?.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-        updateNavActiveState('gallery');
-    };
-
-    // 更新导航栏激活状态
-    const updateNavActiveState = (activeNav) => {
-        [navHome, navGallery, navCalendar, navSettings].forEach(btn => {
-            btn?.classList.remove('active');
-        });
-        if (activeNav === 'home') navHome?.classList.add('active');
-        else if (activeNav === 'gallery') navGallery?.classList.add('active');
-        else if (activeNav === 'calendar') navCalendar?.classList.add('active');
-        else if (activeNav === 'settings') navSettings?.classList.add('active');
-    };
-
-    // 收起日历（手机底部抽屉 / 平板浮层）：遮罩、滚动锁、底栏状态一起复位
-    function closeCalendarPanel() {
-        calendarSidebar?.classList.remove('open');
-        calendarOverlay?.classList.remove('show');
-        toggleCalendarBtn?.classList.remove('active');
-        document.body.classList.add('sidebar-closed');
-        document.body.style.overflow = '';
-        updateNavActiveState('gallery');
-    }
-
-    // 首页按钮：返回入口页（预览日期一并带上）
-    navHome?.addEventListener('click', () => {
-        window.location.href = PREVIEW_DATE ? `index.html?date=${formatDateISO(PREVIEW_DATE)}` : 'index.html';
-    });
-
-    // 画廊按钮：关闭所有面板，回到画廊视图
-    navGallery?.addEventListener('click', () => {
-        closeAllSheets();
-    });
-
-    // 日历按钮：切换日历 Bottom Sheet
-    navCalendar?.addEventListener('click', () => {
-        const isOpen = calendarSidebar?.classList.contains('open');
-        
-        // 先关闭设置面板
-        settingsSheet?.classList.remove('open');
-        settingsOverlay?.classList.remove('show');
-        settingsSheet?.setAttribute('aria-hidden', 'true');
-        navSettings?.setAttribute('aria-expanded', 'false');
-        
-        if (isOpen) {
-            calendarSidebar?.classList.remove('open');
-            calendarOverlay?.classList.remove('show');
-            document.body.style.overflow = '';
-            updateNavActiveState('gallery');
-        } else {
-            calendarSidebar?.classList.add('open');
-            calendarOverlay?.classList.add('show');
-            document.body.style.overflow = 'hidden'; // 防止背景滚动
-            updateNavActiveState('calendar');
-        }
-    });
-
-    // 设置按钮：切换设置 Bottom Sheet
-    navSettings?.addEventListener('click', () => {
-        const isOpen = settingsSheet?.classList.contains('open');
-        
-        // 先关闭日历面板
-        calendarSidebar?.classList.remove('open');
-        calendarOverlay?.classList.remove('show');
-        
-        if (isOpen) {
-            settingsSheet?.classList.remove('open');
-            settingsOverlay?.classList.remove('show');
-            settingsSheet?.setAttribute('aria-hidden', 'true');
-            navSettings?.setAttribute('aria-expanded', 'false');
-            document.body.style.overflow = '';
-            updateNavActiveState('gallery');
-        } else {
-            settingsSheet?.classList.add('open');
-            settingsOverlay?.classList.add('show');
-            settingsSheet?.setAttribute('aria-hidden', 'false');
-            navSettings?.setAttribute('aria-expanded', 'true');
-            document.body.style.overflow = 'hidden';
-            updateNavActiveState('settings');
-            // 更新主题选项的激活状态
-            updateMobileThemeButtons();
-        }
-    });
-
-    // 点击遮罩层关闭日历
-    calendarOverlay?.addEventListener('click', () => {
-        calendarSidebar?.classList.remove('open');
-        calendarOverlay?.classList.remove('show');
-        document.body.style.overflow = '';
-        updateNavActiveState('gallery');
-    });
-
-    // 点击遮罩层关闭设置
-    settingsOverlay?.addEventListener('click', () => {
-        settingsSheet?.classList.remove('open');
-        settingsOverlay?.classList.remove('show');
-        settingsSheet?.setAttribute('aria-hidden', 'true');
-        navSettings?.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-        updateNavActiveState('gallery');
-    });
-
-    // 移动端主题切换
-    const updateMobileThemeButtons = () => {
-        const currentTheme = document.documentElement.dataset.theme || 'spring';
-        mobileThemeOptions?.querySelectorAll('.theme-option').forEach(btn => {
-            const isActive = btn.dataset.theme === currentTheme;
-            btn.classList.toggle('active', isActive);
-        });
-    };
-
-    mobileThemeOptions?.querySelectorAll('.theme-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const theme = btn.dataset.theme;
-            applyTheme(theme);
-            updateMobileThemeButtons();
-            // 切换主题后自动关闭设置面板
-            setTimeout(() => {
-                settingsSheet?.classList.remove('open');
-                settingsOverlay?.classList.remove('show');
-                settingsSheet?.setAttribute('aria-hidden', 'true');
-                navSettings?.setAttribute('aria-expanded', 'false');
-                document.body.style.overflow = '';
-                updateNavActiveState('gallery');
-            }, 300);
-        });
-    });
-
-    // 同步桌面端主题切换按钮的事件到移动端
-    themeButtons.forEach(btn => {
-        btn.addEventListener('click', updateMobileThemeButtons);
-    });
+    }, { passive: true });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key !== 'Escape' || !settingsSheet?.classList.contains('open')) return;
-        if (detailModal?.classList.contains('open')) return;
-        settingsSheet.classList.remove('open');
-        settingsOverlay?.classList.remove('show');
-        settingsSheet.setAttribute('aria-hidden', 'true');
-        navSettings?.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-        updateNavActiveState('gallery');
-        navSettings?.focus();
+        if (detailModal.classList.contains('open')) {
+            if (e.key === 'Tab') {
+                trapDetailFocus(e);
+                return;
+            }
+            if (e.key === 'Escape') {
+                closeDetail();
+                return;
+            }
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                navigateLetter(e.key === 'ArrowLeft' ? -1 : 1);
+            }
+            return;
+        }
+        if (seasonSheet.classList.contains('open') || e.altKey || e.ctrlKey || e.metaKey) return;
+        // 画历里 ← → 翻月
+        if (currentView === 'calendar' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+            const tag = document.activeElement?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            e.preventDefault();
+            shiftCalendar(e.key === 'ArrowLeft' ? -1 : 1);
+        }
     });
+
+    // ============================================================
+    // 轻提示
+    // ============================================================
+    let toastTimer = null;
+    function showToast(html) {
+        const toast = $('lm-toast');
+        if (!toast) return;
+        toast.innerHTML = html;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    // ============================================================
+    // 尺寸变化
+    // ============================================================
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (currentView === 'today') layoutHero();
+            if (currentView === 'corridor') {
+                placeCorridorMarks();
+                syncCorridor();
+            }
+            if (detailModal.classList.contains('open')) fitDetailTitle();
+        }, 150);
+    });
+
+    // ============================================================
+    // 数据
+    // ============================================================
+    const loadGalleryData = () => {
+        if (Array.isArray(window.__GALLERY_DATA__)) return Promise.resolve(window.__GALLERY_DATA__);
+        return fetch('data.json').then((res) => {
+            if (!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
+            return res.json();
+        });
+    };
+
+    setView(viewFromHash(), { scroll: false });
+
+    loadGalleryData()
+        .then((data) => {
+            const todayStr = formatDateISO(getToday());
+            galleryData = data
+                .filter((item) => item && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.filename && item.date <= todayStr)
+                .map((item) => ({ ...item, dateObj: parseISO(item.date) }))
+                .sort((a, b) => (a.date < b.date ? 1 : -1));
+            dataByDate = {};
+            galleryData.forEach((item) => {
+                dataByDate[item.date] = item;
+            });
+            sortedDates = Object.keys(dataByDate).sort();
+            chronoIndex = new Map(sortedDates.map((iso, i) => [iso, i + 1]));
+            dataReady = true;
+
+            const hero = renderTodayHero();
+            if (!hero) showEmptyState();
+            selectDate(hero ? hero.dateObj : getToday());
+            renderTimeline();
+            setView(viewFromHash(), { scroll: false });
+
+            // 从首页月轮选中某天进来（?day=YYYY-MM-DD）：直接打开那一封，不越过"今天"
+            const requestedDay = params.get('day') || '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && dataByDate[requestedDay]) {
+                openItem(dataByDate[requestedDay]);
+            }
+        })
+        .catch((err) => {
+            console.error('Error loading data:', err);
+            dataReady = true;
+            showEmptyState();
+        });
 
     // ============================================================
     // 排版自检：URL 带 ?lmdev=1 时暴露钩子，可逐封渲染今日卡和看画页，
     // 批量检查断行（正常访问不受影响）
     // ============================================================
-    if (new URLSearchParams(window.location.search).has('lmdev')) {
+    if (params.has('lmdev')) {
         const imageReady = (img) => (img.complete && img.naturalWidth)
             ? Promise.resolve()
-            : new Promise(resolve => {
+            : new Promise((resolve) => {
                 img.addEventListener('load', resolve, { once: true });
                 img.addEventListener('error', resolve, { once: true });
             });
         window.__LM = {
-            dates: () => galleryData.map(d => d.date),
+            dates: () => galleryData.map((d) => d.date),
             async hero(dateStr) {
                 const item = dataByDate[dateStr];
                 if (!item) return false;
                 closeDetail();
-                currentMonth = new Date(item.dateObj);
+                if (currentView !== 'today') setView('today', { scroll: false });
                 renderTodayHero({ item, isToday: true });
-                await imageReady(document.getElementById('today-hero-img'));
+                await imageReady($('today-hero-img'));
                 layoutHero();
                 return true;
             },

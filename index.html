@@ -7,9 +7,10 @@
     <meta name="theme-color" content="#150d21">
     <title>Love Minnie · 今天的画信</title>
     <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
-    <!-- 字体全部本地托管：手机不挂 VPN 也能打开 -->
+    <!-- 字体全部本地托管：手机不挂 VPN 也能打开。Bodoni Moda 只给数字，@font-face 在 day-6000.css -->
+    <link rel="preload" href="fonts/memorial/bodoni-moda-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
-    <link rel="stylesheet" href="css/home.css?v=1.0">
+    <link rel="stylesheet" href="css/home.css?v=2.0">
     <link rel="stylesheet" href="css/day-6000.css?v=12.1">
     <link rel="prefetch" href="gallery.html">
 </head>
@@ -21,28 +22,105 @@
 
     <div class="home">
         <header class="home-top">
-            <span class="home-mark">Love Minnie</span>
-            <button type="button" id="day-6000-archive" class="home-archive" hidden>6000 天</button>
+            <span class="home-mark">LOVE MINNIE</span>
+            <div class="home-top-end">
+                <a class="home-top-link" href="gallery.html#corridor" data-gallery-link>长廊</a>
+                <a class="home-top-link" href="gallery.html#calendar" data-gallery-link>画历</a>
+                <span class="home-season" id="home-season" hidden></span>
+                <button type="button" id="day-6000-archive" class="home-archive js-d6k" hidden>6000 天</button>
+            </div>
         </header>
 
         <main class="home-main">
-            <div class="home-disc" id="home-disc">
-                <canvas class="home-disc-canvas" id="home-disc-canvas" aria-hidden="true"></canvas>
-                <!-- 月洞窗：隔着窗纸看见今天那幅画，点开就是今天的画信 -->
-                <a class="home-moon" id="home-moon" href="gallery.html" aria-label="拆开今天的画信">
-                    <span class="home-moon-art" id="home-moon-art"></span>
-                    <span class="home-moon-paper" aria-hidden="true"></span>
-                </a>
+            <!-- 左：时间（桌面） -->
+            <section class="home-time" aria-label="在一起的日子">
+                <span class="home-time-label">在一起的第</span>
+                <span class="home-time-num" id="home-day-num"></span>
+                <span class="home-time-since">天 · 自 <span class="num">2009.12.10</span></span>
+                <span class="home-time-rule" aria-hidden="true"></span>
+                <span class="home-time-letter" id="home-letter-line">
+                    <svg class="home-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4 10.8 19.3C6.2 15.2 3.4 12.6 3.4 9.4 3.4 6.8 5.4 4.9 8 4.9c1.5 0 2.9.7 4 1.9 1.1-1.2 2.5-1.9 4-1.9 2.6 0 4.6 1.9 4.6 4.5 0 3.2-2.8 5.8-7.4 9.9z" /></svg>
+                    <span>第 <span class="num" id="home-letter-num"></span> 封画信</span>
+                </span>
+                <span class="home-time-moon">
+                    <span class="home-moon-phase" id="home-moon-phase" aria-hidden="true"></span>
+                    <span id="home-moon-name"></span>
+                </span>
+            </section>
+
+            <!-- 中：星盘 + 月轮 + 月洞窗 -->
+            <div class="home-stage">
+                <div class="home-disc" id="home-disc">
+                    <canvas class="home-disc-canvas" id="home-disc-canvas" aria-hidden="true"></canvas>
+                    <svg class="home-orbit" viewBox="0 0 600 600" aria-hidden="true" focusable="false">
+                        <defs>
+                            <path id="home-orbit-path" d="M300,300 m-284,0 a284,284 0 1,1 568,0 a284,284 0 1,1 -568,0" />
+                        </defs>
+                        <circle class="home-orbit-line" cx="300" cy="300" r="270" />
+                        <text class="home-orbit-text"><textPath href="#home-orbit-path" id="home-orbit-text" textLength="1760" lengthAdjust="spacing"></textPath></text>
+                    </svg>
+                    <!-- 月轮：最近三十天，今天在正上方，逆时针往回 -->
+                    <div class="home-ring" id="home-ring" aria-hidden="true"></div>
+                    <span class="home-moon-halo" aria-hidden="true"></span>
+                    <!-- 月洞窗：隔着窗纸看见那天的画；点一下拆开，按住等雾散开 -->
+                    <a class="home-moon" id="home-moon" href="gallery.html" aria-label="拆开今天的画信">
+                        <span class="home-moon-art" id="home-moon-art"></span>
+                        <span class="home-moon-paper" aria-hidden="true"></span>
+                    </a>
+                </div>
+
+                <!-- 手机：前一天 / 提示 / 后一天 -->
+                <div class="home-dial">
+                    <button type="button" class="home-dial-btn" id="home-prev" aria-label="前一天">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" /></svg>
+                    </button>
+                    <div class="home-dial-hint">
+                        <span class="home-hint-idle">点开月洞窗<span class="home-hint-hold">，或按住等雾散开</span></span>
+                        <span class="home-hint-idle">沿月轮转动，回到这三十天</span>
+                        <button type="button" class="home-back js-back" hidden>回到今天</button>
+                    </div>
+                    <button type="button" class="home-dial-btn" id="home-next" aria-label="后一天" disabled>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" /></svg>
+                    </button>
+                </div>
             </div>
 
+            <!-- 右：话（手机上在星盘上方） -->
             <div class="home-words">
                 <h1 class="home-greet">
                     <span class="ts-u">熊老婆，</span><wbr><span class="ts-u home-status" id="home-status">今天的画信到了。</span>
                 </h1>
-                <p class="home-meta" id="home-meta"></p>
-                <a class="home-cta" id="home-cta" href="gallery.html">拆开今天的画信</a>
+                <p class="home-meta" id="home-meta" aria-live="polite"></p>
+                <a class="home-cta" id="home-cta" href="gallery.html">
+                    <span id="home-cta-label">拆开今天的画信</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5 18.5 12 13 17.5" /></svg>
+                </a>
+                <button type="button" class="home-back home-back-quiet js-back" hidden>回到今天</button>
+                <ul class="home-hints">
+                    <li class="home-hint-hold">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="3.2" /></svg>
+                        或按住月洞窗，等雾散开
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" /><path d="M19.6 4.2v3.6H16" /></svg>
+                        沿月轮转动，回到这三十天
+                    </li>
+                </ul>
             </div>
         </main>
+
+        <!-- 手机底部：长廊 · 画历 · 6000 天 -->
+        <nav class="home-foot-nav" aria-label="更多">
+            <a class="home-foot-link" href="gallery.html#corridor" data-gallery-link>长廊</a>
+            <a class="home-foot-link" href="gallery.html#calendar" data-gallery-link>画历</a>
+            <button type="button" class="home-foot-link js-d6k" hidden>6000 天</button>
+        </nav>
+
+        <!-- 桌面底部 -->
+        <footer class="home-foot">
+            <span id="home-foot-season">星夜园林</span>
+            <span>键盘 ← → 也能转动月轮</span>
+        </footer>
     </div>
 
     <noscript>
@@ -50,7 +128,7 @@
     </noscript>
 
     <script src="js/typeset.js?v=1.0"></script>
-    <script src="js/home.js?v=1.0"></script>
+    <script src="js/home.js?v=2.0"></script>
     <script src="js/day-6000.js?v=12.0"></script>
     <script src="js/anniversary-effects.js?v=11.7"></script>
 </body>
