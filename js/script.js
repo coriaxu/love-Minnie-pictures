@@ -678,7 +678,6 @@ document.addEventListener('DOMContentLoaded', () => {
             html.push(
                 `<button type="button" class="cor-item${isToday ? ' is-today' : ''}" data-date="${item.date}" aria-label="${escapeHtml(label)}">` +
                 '<span class="cor-frame">' +
-                `<img class="cor-bg" src="${src}" alt="" aria-hidden="true" loading="lazy" decoding="async">` +
                 `<img class="cor-img" src="${src}" alt="" loading="${i < 6 ? 'eager' : 'lazy'}" decoding="async">` +
                 '</span>' +
                 '<span class="cor-cap"><span class="cor-cap-row"><span class="cor-when">' +
@@ -694,8 +693,8 @@ document.addEventListener('DOMContentLoaded', () => {
         corridorScroll.innerHTML = html.join('');
         corridorItems = [...corridorScroll.querySelectorAll('.cor-item')];
 
-        // 画按真实比例定宽（加载前先按 16:9 占位）。
-        // 视野左边的画加载完会变宽变窄，把差值补回 scrollLeft，眼前这幅就不会被挤走
+        // 画框按真实比例定（加载前先按 16:9 占位）。桌面上框多宽这一格就多宽：
+        // 视野左边的画加载完会变宽变窄，把差值补回 scrollLeft，眼前这幅就不会被挤走（手机每格同宽，差值总是 0）
         corridorScroll.querySelectorAll('.cor-img').forEach((img) => {
             const setRatio = () => {
                 if (!img.naturalWidth) return;
