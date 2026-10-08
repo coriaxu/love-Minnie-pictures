@@ -1055,10 +1055,6 @@ button.ruler-day:focus-visible {
     transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.42s ease;
 }
 
-.cor-bg {
-    display: none;
-}
-
 .cor-img {
     position: relative;
     display: block;
@@ -3042,9 +3038,13 @@ body.modal-open {
         font-size: 0.84rem;
     }
 
-    /* === 长廊：一屏一幅，吸附居中；画放在同一幅画的深色晕染里 === */
+    /* === 长廊：一屏一幅，吸附居中 ===
+       每一幅占一扇同样大小的窗（--cor-w × --cor-h），画框贴着画、按画的比例在窗里取最大并居中：
+       横图不再垫上下两条底色，竖图不再垫左右两条（框住留白的那两条就是"边框"）。
+       窗一样宽，懒加载改比例时吸附点不动；窗一样高，展签停在同一条线上。 */
     .view-corridor {
         --cor-h: clamp(220px, calc(100svh - 440px), 440px);
+        --cor-w: min(calc(100vw - 72px), 420px);
         min-height: calc(100svh - 150px);
         margin: 0 calc(-1 * max(12px, env(safe-area-inset-left)));
     }
@@ -3069,29 +3069,23 @@ body.modal-open {
     .corridor-scroll {
         align-items: flex-start;
         gap: 14px;
-        padding: 18px calc(50vw - 150px) 12px;
+        padding: 18px calc(50% - var(--cor-w) / 2) 12px;
         scroll-snap-type: x mandatory;
-        scroll-padding-inline: calc(50vw - 150px);
+        scroll-padding-inline: calc(50% - var(--cor-w) / 2);
     }
 
     .cor-item {
-        width: 300px;
+        width: var(--cor-w);
         scroll-snap-align: center;
     }
 
-    .cor-bg {
-        display: block;
-        position: absolute;
-        left: -10%;
-        top: -10%;
-        width: 120%;
-        height: 120%;
-        object-fit: cover;
-        filter: blur(26px) brightness(0.42);
-    }
-
-    .cor-img {
-        object-fit: contain;
+    /* 框的宽高都按画的比例算（加载前按 16:9 占位）；上下外边距把窗剩下的高度平分 */
+    .cor-frame {
+        --cor-fh: min(var(--cor-h), calc(var(--cor-w) / var(--r, 1.7778)));
+        align-self: center;
+        width: min(var(--cor-w), calc(var(--cor-h) * var(--r, 1.7778)));
+        height: var(--cor-fh);
+        margin: calc((var(--cor-h) - var(--cor-fh)) / 2) 0;
     }
 
     .cor-item:hover .cor-frame {
