@@ -75,6 +75,7 @@
     const disc = document.getElementById('home-disc');
     const ringEl = document.getElementById('home-ring');
     const moon = document.getElementById('home-moon');
+    const reveal = document.getElementById('home-reveal');
     const status = document.getElementById('home-status');
     const meta = document.getElementById('home-meta');
     const cta = document.getElementById('home-cta');
@@ -224,13 +225,29 @@
     // ------------------------------------------------------------
     // 月洞窗里的画
     // ------------------------------------------------------------
+    // 画的宽高比记在这台设备上（与画廊共用）：画廊打开时画还没下载完，也能先按真比例排好画框
+    const RATIO_KEY = 'love-minnie-ratios-v1';
+    function rememberRatio(filename, ratio) {
+        try {
+            const stored = JSON.parse(localStorage.getItem(RATIO_KEY) || '{}') || {};
+            const value = Number(ratio.toFixed(4));
+            if (stored[filename] === value) return;
+            stored[filename] = value;
+            localStorage.setItem(RATIO_KEY, JSON.stringify(stored));
+        } catch (err) {
+            // 隐私模式存不下也没关系
+        }
+    }
+
     let artToken = 0;
     let artSrc = null;
+    let artRatio = 0; // 窗里那幅画的宽高比；拆开到底时铺满屏幕的画要按它对齐
     function showArt(src) {
         if (src === artSrc) return;
         artSrc = src;
         const token = ++artToken;
         if (!src) {
+            artRatio = 0;
             moon.classList.remove('has-art', 'is-swapping');
             return;
         }
@@ -239,12 +256,15 @@
         img.decoding = 'async';
         img.onload = () => {
             if (token !== artToken) return;
+            artRatio = img.naturalWidth / img.naturalHeight;
+            rememberRatio(src.split('/').pop(), artRatio);
             moon.style.setProperty('--art', `url("${img.src}")`);
             moon.classList.add('has-art');
             moon.classList.remove('is-swapping');
         };
         img.onerror = () => {
             if (token !== artToken) return;
+            artRatio = 0;
             moon.classList.remove('has-art', 'is-swapping');
         };
         img.src = src;
@@ -490,6 +510,27 @@
             }
             dots[k] = { x: c + Math.cos(angle) * radius, y: c + Math.sin(angle) * radius, size: dotSize, color };
         }
+        placeGlints(size);
+    }
+
+    // 纪念日（金）和她的生日（玫瑰）那几颗星：在画好的点上再叠一层会闪的光，跟着花盘一起转
+    const glintsEl = document.getElementById('home-glints');
+    function placeGlints(size) {
+        if (!glintsEl || reduceMotion) return;
+        const rand = mulberry32(922);
+        const html = [];
+        for (let k = 1; k < dots.length; k++) {
+            const kind = dayKinds[k];
+            if (kind !== 2 && kind !== 3) continue;
+            const p = dots[k];
+            const glow = kind === 2 ? '240, 207, 138' : '245, 179, 195';
+            html.push(
+                `<span class="home-glint" style="left:${(p.x / size * 100).toFixed(2)}%;top:${(p.y / size * 100).toFixed(2)}%;` +
+                `--s:${Math.max(3, p.size * 2.6).toFixed(1)}px;--c:${glow};` +
+                `--dur:${(3.2 + rand() * 3.6).toFixed(2)}s;--delay:${(-rand() * 6).toFixed(2)}s"></span>`
+            );
+        }
+        glintsEl.innerHTML = html.join('');
     }
 
     // 背景零星的星：避开星盘和外环所在的位置
@@ -505,6 +546,7 @@
         const cy = d.top + d.height / 2;
         const rand = mulberry32(5141);
         const count = Math.round((w * h) / 9000);
+        const twinkles = [];
         for (let i = 0; i < count; i++) {
             const x = rand() * w;
             const y = rand() * h;
@@ -515,8 +557,42 @@
             skyCtx.beginPath();
             skyCtx.arc(x, y, size, 0, Math.PI * 2);
             skyCtx.fill();
+            // 亮一些的星里挑几颗会闪
+            if (alpha > 0.4 && size > 0.75 && twinkles.length < 16) twinkles.push({ x, y });
         }
+        placeTwinkles(twinkles);
     }
+
+    const nightEl = document.getElementById('home-night');
+    function placeTwinkles(points) {
+        if (!nightEl || reduceMotion) return;
+        const rand = mulberry32(1210);
+        nightEl.querySelectorAll('.home-twinkle').forEach((el) => el.remove());
+        nightEl.insertAdjacentHTML('beforeend', points.map((p) =>
+            `<span class="home-twinkle" style="left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;` +
+            `--dur:${(2.6 + rand() * 4).toFixed(2)}s;--delay:${(-rand() * 5).toFixed(2)}s"></span>`
+        ).join(''));
+    }
+
+    // 流星：每隔二三十秒从夜空上半部划过一颗（页面在后台、正在拆开时不放）
+    function scheduleMeteor() {
+        if (!nightEl || reduceMotion) return;
+        setTimeout(() => {
+            if (!document.hidden && !body.classList.contains('is-opening')) {
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                const meteor = document.createElement('span');
+                meteor.className = 'home-meteor';
+                meteor.style.left = `${(w * (0.3 + Math.random() * 0.65)).toFixed(0)}px`;
+                meteor.style.top = `${(h * (0.04 + Math.random() * 0.3)).toFixed(0)}px`;
+                meteor.style.setProperty('--len', `${Math.round(Math.min(w, h) * (0.16 + Math.random() * 0.12))}px`);
+                meteor.addEventListener('animationend', () => meteor.remove(), { once: true });
+                nightEl.appendChild(meteor);
+            }
+            scheduleMeteor();
+        }, 12000 + Math.random() * 22000);
+    }
+    setTimeout(scheduleMeteor, 2500);
 
     // 下标越大越早：从 hi 画到 lo（含两端，lo ≥ 1）
     function drawRange(hi, lo) {
@@ -605,6 +681,30 @@
     });
 
     // ------------------------------------------------------------
+    // 景深：桌面上鼠标挪动时，星盘和远处的星空朝相反方向轻轻错开几像素
+    // ------------------------------------------------------------
+    if (!reduceMotion && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        let tx = 0;
+        let ty = 0;
+        let px = 0;
+        let py = 0;
+        let raf = 0;
+        const step = () => {
+            px += (tx - px) * 0.07;
+            py += (ty - py) * 0.07;
+            body.style.setProperty('--px', px.toFixed(4));
+            body.style.setProperty('--py', py.toFixed(4));
+            raf = Math.abs(tx - px) + Math.abs(ty - py) > 0.001 ? requestAnimationFrame(step) : 0;
+        };
+        window.addEventListener('pointermove', (event) => {
+            if (event.pointerType !== 'mouse' || body.classList.contains('is-opening') || body.classList.contains('is-turning')) return;
+            tx = (event.clientX / window.innerWidth) * 2 - 1;
+            ty = (event.clientY / window.innerHeight) * 2 - 1;
+            if (!raf) raf = requestAnimationFrame(step);
+        }, { passive: true });
+    }
+
+    // ------------------------------------------------------------
     // 拆开：月洞窗放大铺满屏幕，画面变清晰，然后进入画廊
     // ------------------------------------------------------------
     function openLetter(event) {
@@ -625,7 +725,34 @@
         const scale = (far * 2) / r.width;
         body.classList.add('is-opening');
         moon.style.transform = `translate(-50%, -50%) scale(${scale.toFixed(3)})`;
-        setTimeout(() => { window.location.href = href; }, 680);
+        // 放大到底时，换上一张同样位置、同样大小的整屏画（窗里的画是 inset -8% 的 cover），
+        // 它带着 view-transition-name 换页，在画廊里落进今天那幅画的画框
+        if (artRatio && moon.classList.contains('has-art')) {
+            const side = r.width * 1.16 * scale;
+            const bw = artRatio >= 1 ? side * artRatio : side;
+            const bh = artRatio >= 1 ? side : side / artRatio;
+            reveal.style.backgroundImage = moon.style.getPropertyValue('--art');
+            reveal.style.backgroundSize = `${bw.toFixed(1)}px ${bh.toFixed(1)}px`;
+            reveal.style.backgroundPosition = `${(cx - bw / 2).toFixed(1)}px ${(cy - bh / 2).toFixed(1)}px`;
+            reveal.style.viewTransitionName = 'lm-art';
+            // 画廊据此让同一幅画从这个位置连续缩进画框（见 gallery.html 头部的 pagereveal）
+            try {
+                sessionStorage.setItem('lm-reveal', JSON.stringify({
+                    bx: cx - bw / 2, by: cy - bh / 2, bw, bh, vw: w, vh: h, t: Date.now()
+                }));
+            } catch (err) {
+                // 存不下就退回普通的淡入淡出
+            }
+        }
+        setTimeout(() => {
+            // 放大到底的这一刻换上整屏画（和月洞窗分毫不差，看不出换了），再藏起底下的月洞窗：
+            // 换页拍快照时四周只剩夜色，画独自落进画框
+            if (reveal.style.viewTransitionName) {
+                reveal.classList.add('is-on');
+                moon.style.visibility = 'hidden';
+            }
+            window.location.href = href;
+        }, 680);
     }
 
     // ------------------------------------------------------------
@@ -688,6 +815,9 @@
         if (!event.persisted) return;
         body.classList.remove('is-opening', 'is-holding', 'is-turning');
         moon.style.transform = '';
+        moon.style.visibility = '';
+        reveal.classList.remove('is-on');
+        reveal.style.viewTransitionName = '';
         setHold(0);
     });
 

@@ -7,12 +7,93 @@
     <meta name="theme-color" content="#150d21">
     <title>Love Minnie · 画信</title>
     <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
+    <!-- 添加到主屏幕：本地图标（星盘与月洞窗），像 App 一样全屏打开 -->
+    <link rel="apple-touch-icon" href="images/app-icon-180.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Love Minnie">
+    <meta name="description" content="送给熊老婆的每日画信：今天的画与话，也能随时重温过去。">
 
     <!-- 字体全部本地托管：手机不挂 VPN 也能打开。Bodoni Moda / Pinyon Script 的 @font-face 在 day-6000.css -->
     <link rel="preload" href="fonts/memorial/bodoni-moda-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
-    <link rel="stylesheet" href="css/style.css?v=12.1">
+    <link rel="stylesheet" href="css/style.css?v=12.2">
     <link rel="stylesheet" href="css/day-6000.css?v=12.1">
+    <!-- 画廊脚本在文档解析完后执行（defer），并挡住第一帧直到它跑完：今日画信先排好再出画面，
+         换页转场才拍得到那幅画。data.js、typeset.js 仍在 body 末尾按原样同步加载，先于它就位 -->
+    <script src="js/script.js?v=13.2" defer blocking="render"></script>
+    <script>
+        // 从首页拆开进来：铺满屏幕的那幅画落进画框（跨页 View Transition；不支持的浏览器照常打开）。
+        // 首页把满屏时这幅画的位置大小记在 sessionStorage['lm-reveal']，这里让画框里的画
+        // 从那个位置、那个大小连续缩回来，一幅画到底，不叠影。
+        addEventListener('pagereveal', function (e) {
+            var vt = e.viewTransition;
+            var from = null;
+            try {
+                from = JSON.parse(sessionStorage.getItem('lm-reveal'));
+                sessionStorage.removeItem('lm-reveal');
+            } catch (err) { /* 读不到就照常淡入 */ }
+            if (!vt) return;
+            var art = document.querySelector('.detail-modal.open #detail-image') ||
+                document.querySelector('.today-hero:not([hidden]) #today-hero-img');
+            if (!art) return;
+            // 信纸单独成层、压在画上面：画缩回画框的一路上不会把信盖住
+            var letter = art.id === 'today-hero-img' ? document.querySelector('.hero-letter-col') : null;
+            var root = document.documentElement;
+            art.style.viewTransitionName = 'lm-art';
+            if (letter) {
+                letter.style.viewTransitionName = 'lm-letter';
+                document.getElementById('today-hero').classList.add('is-arriving');
+            }
+            root.classList.add('vt-arrive'); // 画由转场送进来，不再自己揭幕
+            vt.finished.finally(function () {
+                art.style.viewTransitionName = '';
+                if (letter) letter.style.viewTransitionName = '';
+                root.classList.remove('vt-arrive');
+            });
+            if (!from || Date.now() - from.t > 10000 || from.vw !== innerWidth || from.vh !== innerHeight) return;
+            vt.ready.then(function () {
+                var r = art.getBoundingClientRect();
+                var cs = getComputedStyle(art);
+                var px = function (p) { return parseFloat(cs[p]) || 0; };
+                var left = px('paddingLeft') + px('borderLeftWidth');
+                var top = px('paddingTop') + px('borderTopWidth');
+                var inner = r.width - left - px('paddingRight') - px('borderRightWidth');
+                if (!inner) return;
+                var innerH = r.height - top - px('paddingBottom') - px('borderBottomWidth');
+                var k = from.bw / inner;
+                var pct = function (v, base) { return (v / base * 100).toFixed(3) + '%'; };
+                var timing = { duration: 900, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'both' };
+                var ax = left / r.width, ay = top / r.height, aw = inner / r.width, ah = innerH / r.height;
+                try {
+                    // 画框里的画：从满屏时的位置大小缩回画框
+                    root.animate([
+                        {
+                            left: pct(from.bx - left * k, from.vw), top: pct(from.by - top * k, from.vh),
+                            width: pct(r.width * k, from.vw), height: pct(r.height * k, from.vh)
+                        },
+                        { left: '0%', top: '0%', width: '100%', height: '100%' }
+                    ], Object.assign({ pseudoElement: '::view-transition-new(lm-art)' }, timing));
+                    // 首页留下的满屏快照（清晰）：按同一个比例跟着缩，盖在上面，前半程不糊；末段淡出交给画框里的画
+                    root.animate([
+                        { left: '0%', top: '0%', width: '100%', height: '100%' },
+                        {
+                            left: ((ax - from.bx / from.bw * aw) * 100).toFixed(3) + '%',
+                            top: ((ay - from.by / from.bh * ah) * 100).toFixed(3) + '%',
+                            width: (from.vw / from.bw * aw * 100).toFixed(3) + '%',
+                            height: (from.vh / from.bh * ah * 100).toFixed(3) + '%'
+                        }
+                    ], Object.assign({ pseudoElement: '::view-transition-old(lm-art)' }, timing));
+                    root.classList.add('vt-reveal');
+                } catch (err) {
+                    return; // 浏览器不支持给转场伪元素做动画：退回普通的放大淡入
+                }
+                vt.finished.finally(function () { root.classList.remove('vt-reveal'); });
+            });
+        });
+    </script>
 </head>
 
 <body class="gallery-page" data-view="today">
@@ -88,10 +169,10 @@
                         <div class="hero-actions">
                             <button type="button" class="hero-action" id="today-hero-open">
                                 <svg class="icon" aria-hidden="true"><use href="#i-expand" /></svg>
-                                看大图
+                                <span class="hero-action-label">看大图</span>
                             </button>
                             <a href="#corridor" class="hero-action" id="today-hero-walk">
-                                沿长廊往回走
+                                <span class="hero-action-label">沿长廊往回走</span>
                                 <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
                             </a>
                         </div>
@@ -215,22 +296,35 @@
     </div>
 
     <!-- ===================== 看画 ===================== -->
-    <div id="detail-modal" class="detail-modal" aria-hidden="true">
-        <div class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+    <div id="detail-modal" class="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
+        <!-- 关闭键挂在弹窗最外层：画和展签都有入场位移，挂在里面会被 transform 带着跑 -->
+        <button id="detail-close" class="detail-close" type="button" aria-label="关闭">
+            <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
+        <div class="detail-dialog">
             <div class="detail-media">
                 <img id="detail-image" src="" alt="">
                 <p class="detail-hint" id="detail-hint" aria-hidden="true">左右滑动，看前后几天</p>
             </div>
             <aside class="detail-side">
+                <!-- 前一封 / 后一封（桌面；手机左右滑）。键盘 ← → 同样能翻 -->
+                <nav class="detail-pager" aria-label="翻看前后的画信">
+                    <button type="button" class="pager-btn" id="detail-prev">
+                        <svg class="icon" aria-hidden="true"><use href="#i-prev" /></svg>
+                        <span class="num"></span>
+                    </button>
+                    <span class="pager-keys" aria-hidden="true">← →</span>
+                    <button type="button" class="pager-btn" id="detail-next">
+                        <span class="num"></span>
+                        <svg class="icon" aria-hidden="true"><use href="#i-next" /></svg>
+                    </button>
+                </nav>
                 <span class="detail-postmark" id="detail-postmark" aria-hidden="true"></span>
                 <div class="detail-header">
                     <div class="detail-meta">
                         <div id="detail-date" class="detail-date"></div>
                         <div id="detail-sub" class="detail-sub"></div>
                     </div>
-                    <button id="detail-close" class="detail-close" type="button" aria-label="关闭">
-                        <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
-                    </button>
                 </div>
                 <div class="detail-body">
                     <div class="detail-letter-wrap">
@@ -253,8 +347,7 @@
 
     <!-- ===================== SCRIPTS ===================== -->
     <script src="js/data.js?v=24.6"></script>
-    <script src="js/typeset.js?v=1.0"></script>
-    <script src="js/script.js?v=13.1"></script>
+    <script src="js/typeset.js?v=1.1"></script>
     <script src="js/day-6000.js?v=12.0"></script>
     <!-- Anniversary Effects Engine -->
     <script src="js/anniversary-effects.js?v=11.7"></script>

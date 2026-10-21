@@ -1,0 +1,16 @@
+{
+    "name": "Love Minnie · 今天的画信",
+    "short_name": "Love Minnie",
+    "description": "送给熊老婆的每日画信：今天的画与话，也能随时重温过去。",
+    "lang": "zh-CN",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#150d21",
+    "theme_color": "#150d21",
+    "icons": [
+        { "src": "images/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "images/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "images/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ]
+}

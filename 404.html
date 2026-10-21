@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#150d21">
+    <title>Love Minnie · 这一天还没有画</title>
+    <script>
+        // 404 可能出现在任意深的路径下：先把相对地址的起点定到站点根目录
+        //（GitHub Pages 的项目站点在 /仓库名/ 下，其他托管在 /）
+        (function () {
+            var root = /\.github\.io$/.test(location.hostname)
+                ? '/' + (location.pathname.split('/')[1] || '') + '/'
+                : '/';
+            var base = document.createElement('base');
+            base.href = root;
+            document.head.appendChild(base);
+        })();
+    </script>
+    <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="images/app-icon-180.png">
+    <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
+    <style>
+        @font-face {
+            font-family: 'Bodoni Moda';
+            font-style: normal;
+            font-weight: 400 900;
+            font-display: swap;
+            src: url('fonts/memorial/bodoni-moda-latin-wght-normal.woff2') format('woff2');
+        }
+
+        :root {
+            --ink-0: #0d0816;
+            --paper: #f6ede4;
+            --paper-3: rgba(246, 237, 228, 0.58);
+            --gold: #ecd09a;
+            --gold-2: rgba(236, 208, 154, 0.62);
+            --gold-3: rgba(236, 208, 154, 0.24);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100svh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 34px;
+            padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+            background: radial-gradient(110% 80% at 50% 44%, #28183c 0%, #170e25 55%, var(--ink-0) 100%) fixed;
+            background-color: #150d21;
+            color: var(--paper);
+            font-family: 'LXGW WenKai Screen', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            text-align: center;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* 一扇空着的月洞窗：雾里什么也没有，等着哪天画进去 */
+        .window {
+            position: relative;
+            width: min(46vw, 220px);
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: radial-gradient(circle at 44% 40%, rgba(255, 248, 231, 0.16) 0%, rgba(246, 228, 191, 0.07) 46%, rgba(13, 8, 22, 0.4) 100%);
+            box-shadow: 0 0 0 1px var(--gold-3), 0 0 0 10px rgba(13, 8, 22, 0.4), 0 0 0 11px rgba(236, 208, 154, 0.12), 0 0 80px rgba(236, 208, 154, 0.08);
+            animation: breathe 5s ease-in-out infinite;
+        }
+
+        .window::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(60% 40% at 30% 60%, rgba(246, 237, 228, 0.12), transparent 70%),
+                radial-gradient(50% 35% at 70% 40%, rgba(243, 174, 191, 0.1), transparent 70%);
+            filter: blur(6px);
+            animation: drift 14s ease-in-out infinite alternate;
+        }
+
+        .window span {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Bodoni Moda', serif;
+            font-size: clamp(2.4rem, 11vw, 3.4rem);
+            letter-spacing: 0.06em;
+            color: rgba(236, 208, 154, 0.5);
+        }
+
+        @keyframes breathe {
+            50% {
+                box-shadow: 0 0 0 1px rgba(236, 208, 154, 0.4), 0 0 0 10px rgba(13, 8, 22, 0.4), 0 0 0 11px rgba(236, 208, 154, 0.18), 0 0 110px rgba(236, 208, 154, 0.14);
+            }
+        }
+
+        @keyframes drift {
+            to {
+                transform: translate(6%, -4%) scale(1.08);
+            }
+        }
+
+        h1 {
+            font-weight: 400;
+            font-size: clamp(1.4rem, 6vw, 2rem);
+            letter-spacing: 0.08em;
+            line-height: 1.5;
+        }
+
+        p {
+            margin-top: 10px;
+            font-size: 0.98rem;
+            letter-spacing: 0.06em;
+            line-height: 1.8;
+            color: var(--paper-3);
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px 22px;
+        }
+
+        a {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 48px;
+            padding: 0 24px;
+            border-radius: 999px;
+            border: 1px solid var(--gold-2);
+            background: rgba(236, 208, 154, 0.06);
+            color: var(--gold);
+            font-size: 1rem;
+            letter-spacing: 0.14em;
+            text-decoration: none;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        a.quiet {
+            border-color: var(--gold-3);
+            background: transparent;
+            color: var(--paper-3);
+        }
+
+        a:hover,
+        a:focus-visible {
+            background: rgba(236, 208, 154, 0.14);
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .window,
+            .window::before {
+                animation: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            @view-transition {
+                navigation: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="window" aria-hidden="true"><span>404</span></div>
+    <div>
+        <h1>这扇窗里，还没有画。</h1>
+        <p>大概是路走岔了，回到今天的画信吧。</p>
+    </div>
+    <nav aria-label="去别处看看">
+        <a href="index.html">回到今天</a>
+        <a class="quiet" href="gallery.html#corridor">沿长廊走走</a>
+    </nav>
+</body>
+
+</html>

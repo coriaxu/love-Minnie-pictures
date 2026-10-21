@@ -7,10 +7,18 @@
     <meta name="theme-color" content="#150d21">
     <title>Love Minnie · 今天的画信</title>
     <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
+    <!-- 添加到主屏幕：本地图标（星盘与月洞窗），像 App 一样全屏打开 -->
+    <link rel="apple-touch-icon" href="images/app-icon-180.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Love Minnie">
+    <meta name="description" content="送给熊老婆的每日画信：今天的画与话，也能随时重温过去。">
     <!-- 字体全部本地托管：手机不挂 VPN 也能打开。Bodoni Moda 只给数字，@font-face 在 day-6000.css -->
     <link rel="preload" href="fonts/memorial/bodoni-moda-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
-    <link rel="stylesheet" href="css/home.css?v=2.0">
+    <link rel="stylesheet" href="css/home.css?v=2.1">
     <link rel="stylesheet" href="css/day-6000.css?v=12.1">
     <link rel="prefetch" href="gallery.html">
 </head>
@@ -19,6 +27,8 @@
 
     <!-- 背景零星的星；向日葵星盘画在 .home-disc 里，跟着版面走 -->
     <canvas class="home-sky" id="home-sky" aria-hidden="true"></canvas>
+    <!-- 夜空里会闪的几颗星和偶尔的一颗流星（减少动态效果时不出现） -->
+    <div class="home-night" id="home-night" aria-hidden="true"></div>
 
     <div class="home">
         <header class="home-top">
@@ -51,7 +61,11 @@
             <!-- 中：星盘 + 月轮 + 月洞窗 -->
             <div class="home-stage">
                 <div class="home-disc" id="home-disc">
-                    <canvas class="home-disc-canvas" id="home-disc-canvas" aria-hidden="true"></canvas>
+                    <!-- 向日葵花盘极慢地转；纪念日和生日那几颗星在上面轻轻闪 -->
+                    <div class="home-spin" aria-hidden="true">
+                        <canvas class="home-disc-canvas" id="home-disc-canvas"></canvas>
+                        <div class="home-glints" id="home-glints"></div>
+                    </div>
                     <svg class="home-orbit" viewBox="0 0 600 600" aria-hidden="true" focusable="false">
                         <defs>
                             <path id="home-orbit-path" d="M300,300 m-284,0 a284,284 0 1,1 568,0 a284,284 0 1,1 -568,0" />
@@ -123,12 +137,15 @@
         </footer>
     </div>
 
+    <!-- 拆开到底时铺满屏幕的那幅画：和放大到底的月洞窗分毫不差；换页时它落进画廊的画框（跨页 View Transition） -->
+    <div class="home-reveal" id="home-reveal" aria-hidden="true"></div>
+
     <noscript>
         <p class="home-noscript"><a href="gallery.html">打开画廊，看看今天的画与话。</a></p>
     </noscript>
 
-    <script src="js/typeset.js?v=1.0"></script>
-    <script src="js/home.js?v=2.0"></script>
+    <script src="js/typeset.js?v=1.1"></script>
+    <script src="js/home.js?v=2.1"></script>
     <script src="js/day-6000.js?v=12.0"></script>
     <script src="js/anniversary-effects.js?v=11.7"></script>
 </body>

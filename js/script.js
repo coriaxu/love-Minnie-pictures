@@ -12,7 +12,8 @@
  *      ?date=YYYY-MM-DD 把"今天"换成指定日期预览（与首页一致）；
  *      ?lmdev=1 暴露排版自检钩子 window.__LM。
  */
-document.addEventListener('DOMContentLoaded', () => {
+// gallery.html 里 defer + blocking="render"：执行时 DOM 已经齐了，直接跑，今日画信在第一帧之前就排好（页面转场要拍到它）
+(() => {
     const $ = (id) => document.getElementById(id);
     const params = new URLSearchParams(window.location.search);
     const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -124,6 +125,44 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedDate = getToday();
 
     const getChronoNo = (item) => chronoIndex.get(item.date) || 0;
+
+    // 小图（画历圆窗、胶卷条、特别日子）用 images/thumbs/ 里的缩略图（tools/make_thumbs.py 生成）；
+    // 新画还没补缩略图时，加载失败就退回原图
+    const fullSrc = (item) => `images/${item.filename}`;
+    const thumbSrc = (item) => `images/thumbs/${item.filename}`;
+    document.addEventListener('error', (e) => {
+        const img = e.target;
+        if (!(img instanceof HTMLImageElement) || !img.dataset.full) return;
+        const full = img.dataset.full;
+        img.removeAttribute('data-full');
+        img.src = full;
+    }, true);
+
+    // 画的宽高比：加载过一次就记在这台设备上（首页月洞窗也会记），
+    // 下次画还没下载完就能按真比例排版，不再先按占位比例撑开、再跳一下
+    const RATIO_KEY = 'love-minnie-ratios-v1';
+    const ratioCache = (() => {
+        try {
+            const stored = JSON.parse(localStorage.getItem(RATIO_KEY) || '{}');
+            return stored && typeof stored === 'object' ? stored : {};
+        } catch (err) {
+            return {};
+        }
+    })();
+    const knownRatio = (filename) => Number(ratioCache[filename]) || 0;
+    function rememberRatio(filename, img) {
+        if (!filename || !img.naturalWidth) return;
+        const ratio = Number((img.naturalWidth / img.naturalHeight).toFixed(4));
+        if (ratioCache[filename] === ratio) return;
+        ratioCache[filename] = ratio;
+        const keys = Object.keys(ratioCache);
+        if (keys.length > 600) keys.slice(0, keys.length - 600).forEach((key) => delete ratioCache[key]);
+        try {
+            localStorage.setItem(RATIO_KEY, JSON.stringify(ratioCache));
+        } catch (err) {
+            // 存不下也没关系，只是下次多跳一下
+        }
+    }
 
     function getArtworkThemeText(item) {
         const raw = String(item.loveLetter || item.title || item.description || '');
@@ -450,11 +489,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 打开某一封：选中它，再打开看画
-    function openItem(item) {
+    // ------------------------------------------------------------
+    // 画的位移转场（View Transition）：同一幅画从一处挪到另一处、大小跟着变，其余整页交叉淡化。
+    //   vt-detail：点开看画 / 关上看画（从点的那张图放大进画框，关上落回去）
+    //   vt-swap：看画里换一封（画框从这一幅的尺寸变成下一幅的）
+    // 不支持、减少动态效果、或页面在后台时直接换。
+    // ------------------------------------------------------------
+    const canMorph = () => !!document.startViewTransition && !reduceMotion() && !document.hidden;
+    const imageSettled = (img, cap) => new Promise((resolve) => {
+        if (img.complete && img.naturalWidth) {
+            resolve();
+            return;
+        }
+        const done = () => resolve();
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+        setTimeout(done, cap);
+    });
+    let morphSeq = 0;
+    function morphArt(kind, fromEl, update, toEl) {
+        if (!canMorph() || !fromEl) {
+            update();
+            return;
+        }
+        const seq = ++morphSeq;
+        const root = document.documentElement;
+        let target = null;
+        root.classList.remove('vt-detail', 'vt-swap');
+        root.classList.add(kind);
+        fromEl.style.viewTransitionName = 'lm-art';
+        const transition = document.startViewTransition(async () => {
+            fromEl.style.viewTransitionName = '';
+            update();
+            target = toEl();
+            if (target) {
+                target.style.viewTransitionName = 'lm-art';
+                // 等那幅画解码好（最多 0.4 秒）再拍新画面，免得放大到一半是空框
+                const img = target instanceof HTMLImageElement ? target : target.querySelector('img');
+                if (img) await imageSettled(img, 400);
+            }
+        });
+        transition.finished.finally(() => {
+            if (target) target.style.viewTransitionName = '';
+            fromEl.style.viewTransitionName = '';
+            if (seq === morphSeq) root.classList.remove(kind);
+        });
+    }
+
+    // 打开某一封：选中它，再打开看画；fromEl 是点的那张图，画会从它那儿放大进画框
+    function openItem(item, fromEl) {
         if (!item) return;
-        selectDate(item.dateObj);
-        openDetail(item);
+        const run = () => {
+            selectDate(item.dateObj);
+            openDetail(item);
+        };
+        if (fromEl && !detailModal.classList.contains('open')) morphArt('vt-detail', fromEl, run, () => detailImage);
+        else run();
     }
 
     // ============================================================
@@ -472,28 +562,37 @@ document.addEventListener('DOMContentLoaded', () => {
     function layoutHero() {
         const img = $('today-hero-img');
         if (!heroEl || heroEl.hidden || !img || heroEl.offsetParent === null) return;
-        // 画还没加载完（手机网慢）时先按 4:3 占位，把上下 / 左右版式先定下来；加载完再按真实比例重算
-        const known = img.naturalWidth > 0;
-        const ratio = known ? img.naturalWidth / img.naturalHeight : 4 / 3;
+        // 画还没加载完（手机网慢）时先按记下的比例（没记过就按 4:3）占位，把上下 / 左右版式先定下来；
+        // 加载完再按真实比例重算
+        const hinted = knownRatio(heroEl.dataset.file);
+        const known = img.naturalWidth > 0 || hinted > 0;
+        const ratio = img.naturalWidth > 0 ? img.naturalWidth / img.naturalHeight : (hinted || 4 / 3);
         const portrait = ratio < 0.95;
         heroEl.classList.toggle('is-portrait', known && portrait);
         heroEl.classList.toggle('is-landscape', known && !portrait);
 
-        // 宽卡片：画在左，信纸一栏 367px（再压住画框衬边 13px，不压画）；窄卡片：画在上、信在下
+        // 宽卡片：画在左，信纸一栏 367px（再压住画框衬边 13px，不压画）；窄卡片：画在上、信在下。
+        // 手机横屏这种矮屏：仍然左右排，信纸收窄、字号收一档，画和信同时在一屏里
         const heroWidth = heroEl.clientWidth;
-        const stacked = heroWidth < 820;
-        heroEl.classList.toggle('is-stacked', stacked);
         const vh = window.innerHeight;
+        const compact = vh < 520 && heroWidth >= 560;
+        const stacked = heroWidth < 820 && !compact;
+        const letterW = compact ? 292 : 367;
+        heroEl.classList.toggle('is-stacked', stacked);
+        heroEl.classList.toggle('is-compact', compact);
+        heroEl.style.setProperty('--letter-w', `${letterW}px`);
         let artW;
         if (stacked) {
             const maxW = heroWidth - 14;
             const maxH = portrait ? Math.min(vh * 0.56, 560) : vh * 0.5;
             artW = Math.min(maxW, maxH * ratio);
         } else {
-            const availW = heroWidth - 367 - 26;
-            const maxH = portrait
-                ? Math.min(Math.max(vh - 240, 440), 760)
-                : Math.min(Math.max(vh - 330, 320), 600);
+            const availW = heroWidth - letterW - 26;
+            const maxH = compact
+                ? Math.max(vh - 120, 180)
+                : portrait
+                    ? Math.min(Math.max(vh - 240, 440), 760)
+                    : Math.min(Math.max(vh - 330, 320), 640);
             artW = Math.min(availW, maxH * ratio);
         }
         artW = Math.max(120, Math.floor(artW));
@@ -504,8 +603,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (titleEl && !titleEl.classList.contains('is-long')) {
             const chars = Array.from(titleEl.textContent.replace(/\s/g, '')).length;
             TS.fit(titleEl, {
-                max: stacked ? (isMobileLayout() ? 40 : 46) : 56,
-                min: stacked ? 24 : 28,
+                max: compact ? 34 : stacked ? (isMobileLayout() ? 40 : 46) : 56,
+                min: stacked || compact ? 24 : 28,
                 maxLines: chars <= 8 ? 1 : 2
             });
         }
@@ -540,11 +639,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 `<span class="ruler-num">${day}</span>` +
                 '<span class="ruler-dot" aria-hidden="true"></span>';
             if (!item) {
-                cells.push(`<span class="${cls.join(' ')}">${inner}</span>`);
+                cells.push(`<span class="${cls.join(' ')}" style="--i:${day}">${inner}</span>`);
                 continue;
             }
             const label = escapeHtml(`${m + 1}月${day}日，${letterParts(item).title || '画信'}`);
-            cells.push(`<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${label}">${inner}</button>`);
+            cells.push(`<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${label}" style="--i:${day}">${inner}</button>`);
         }
         ruler.innerHTML =
             '<div class="hero-ruler-head">' +
@@ -560,6 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let heroEntered = false;
     function renderTodayHero(forcedPick) {
         if (!heroEl) return null;
         const pick = forcedPick || getHeroPick();
@@ -593,8 +693,24 @@ document.addEventListener('DOMContentLoaded', () => {
         $('today-hero-days').innerHTML = unit(`在一起的第 <span class="num">${dayNo}</span> 天`);
 
         const img = $('today-hero-img');
-        img.onload = layoutHero;
+        heroEl.dataset.file = item.filename;
+        // 第一次打开：画先藏在暗处，下载好了再揭开（入场编排见 style.css"今日画信入场"）
+        const entering = !heroEntered && !reduceMotion();
+        const unveil = () => {
+            if (!img.classList.contains('is-veiled')) return;
+            requestAnimationFrame(() => {
+                img.classList.add('is-unveiling');
+                img.classList.remove('is-veiled');
+            });
+        };
+        if (entering) img.classList.add('is-veiled');
+        img.onload = () => {
+            rememberRatio(item.filename, img);
+            layoutHero();
+            unveil();
+        };
         img.src = `images/${item.filename}`;
+        if (img.complete && img.naturalWidth) unveil();
         img.alt = getArtworkLabel(item);
         $('today-hero-art').setAttribute('aria-label', `看大图：${label}的画，${getArtworkLabel(item)}`);
         heroEl.setAttribute('aria-label', `${label}的画信`);
@@ -605,10 +721,15 @@ document.addEventListener('DOMContentLoaded', () => {
         heroEl.dataset.date = item.date;
         heroEl.hidden = false;
         layoutHero();
+        if (entering) {
+            heroEntered = true;
+            heroEl.classList.add('is-entering');
+            setTimeout(() => heroEl.classList.remove('is-entering', 'is-arriving'), 3700);
+        }
         return item;
     }
 
-    const openHero = () => openItem(dataByDate[heroEl.dataset.date]);
+    const openHero = () => openItem(dataByDate[heroEl.dataset.date], $('today-hero-img'));
     $('today-hero-art').addEventListener('click', openHero);
     $('today-hero-art').addEventListener('mouseenter', () => setTorchMode(true));
     $('today-hero-art').addEventListener('mouseleave', () => setTorchMode(false));
@@ -675,8 +796,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = letterParts(item).title || getArtworkThemeText(item);
             const src = `images/${item.filename}`;
             const label = `${d.getMonth() + 1}月${d.getDate()}日，${title}，在一起的第 ${getDayNumber(d)} 天`;
+            const ratio = knownRatio(item.filename);
             html.push(
-                `<button type="button" class="cor-item${isToday ? ' is-today' : ''}" data-date="${item.date}" aria-label="${escapeHtml(label)}">` +
+                `<button type="button" class="cor-item${isToday ? ' is-today' : ''}" data-date="${item.date}" aria-label="${escapeHtml(label)}"${ratio ? ` style="--r:${ratio}"` : ''}>` +
                 '<span class="cor-frame">' +
                 `<img class="cor-img" src="${src}" alt="" loading="${i < 6 ? 'eager' : 'lazy'}" decoding="async">` +
                 '</span>' +
@@ -702,6 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const before = item.offsetWidth;
                 const isLeft = item.offsetLeft < corridorScroll.scrollLeft;
                 item.style.setProperty('--r', (img.naturalWidth / img.naturalHeight).toFixed(4));
+                rememberRatio(dataByDate[item.dataset.date]?.filename, img);
                 img.classList.add('is-loaded');
                 const delta = item.offsetWidth - before;
                 if (isLeft && delta) corridorScroll.scrollLeft += delta;
@@ -725,6 +848,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isMobileLayout()) scrollCorridorTo(corridorScroll.querySelector('.cor-item'), false);
         scheduleCorridorMarks();
         syncCorridor();
+
+        // 第一次走进长廊：前几幅依次浮上来
+        if (!reduceMotion()) {
+            [...corridorScroll.children].slice(0, 8).forEach((el, k) => el.style.setProperty('--k', String(k)));
+            corridorScroll.classList.add('is-entering');
+            setTimeout(() => corridorScroll.classList.remove('is-entering'), 1900);
+        }
     }
 
     const corridorMax = () => Math.max(0, corridorScroll.scrollWidth - corridorScroll.clientWidth);
@@ -859,7 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     corridorScroll.addEventListener('click', (e) => {
         const btn = e.target.closest('.cor-item');
-        if (btn) openItem(dataByDate[btn.dataset.date]);
+        if (btn) openItem(dataByDate[btn.dataset.date], btn.querySelector('.cor-img.is-loaded'));
     });
     corridorScroll.addEventListener('mouseover', (e) => {
         if (e.target.closest('.cor-item')) setTorchMode(true);
@@ -882,6 +1012,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     let calMonth = new Date(getToday().getFullYear(), getToday().getMonth(), 1);
     let calBuilt = false;
+    let calDirection = 1; // 翻月方向：圆窗亮起来的波从哪一边起
+    let calFlipTimer = null;
 
     const firstLetterMonth = () => {
         const first = sortedDates.length ? parseISO(sortedDates[0]) : getToday();
@@ -933,8 +1065,13 @@ document.addEventListener('DOMContentLoaded', () => {
         calPrev.setAttribute('aria-label', `上个月：${prev.getFullYear()}年${prev.getMonth() + 1}月`);
         calNext.setAttribute('aria-label', `下个月：${next.getFullYear()}年${next.getMonth() + 1}月`);
 
-        // 圆窗
+        // 圆窗：翻月时按对角线一扇扇亮起来（往后翻从左上起，往前翻从右上起）
         const cells = [];
+        const wave = (day) => {
+            const i = firstDow + day - 1;
+            const col = i % 7;
+            return Math.floor(i / 7) + (calDirection < 0 ? 6 - col : col);
+        };
         for (let i = 0; i < firstDow; i++) cells.push('<span class="cal-day is-blank" aria-hidden="true"></span>');
         for (let day = 1; day <= daysIn; day++) {
             const iso = `${monthPrefix}-${pad2(day)}`;
@@ -948,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isToday) cls.push('is-today');
             if (day === fullDay) cls.push('is-full');
             if (special && !isToday) cls.push(special.love ? 'is-love' : 'is-gold');
-            const art = item ? `<img src="images/${item.filename}" alt="" loading="lazy" decoding="async">` : '';
+            const art = item ? `<img src="${thumbSrc(item)}" data-full="${fullSrc(item)}" alt="" loading="lazy" decoding="async">` : '';
             const title = item ? (letterParts(item).title || getArtworkThemeText(item)) : '';
             const bits = [`${m + 1}月${day}日`];
             if (title) bits.push(title);
@@ -958,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (future) bits.push('还没到');
             else if (!item) bits.push('这天没有画信');
             cells.push(
-                `<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${escapeHtml(bits.join('，'))}">` +
+                `<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${escapeHtml(bits.join('，'))}" style="--w:${wave(day)}">` +
                 '<span class="cal-win" aria-hidden="true"><span class="cal-win-edge"></span>' +
                 `<span class="cal-win-art">${art}</span></span>` +
                 `<span class="cal-num">${day}</span>` +
@@ -967,6 +1104,16 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
         calGrid.innerHTML = cells.join('');
+        if (!reduceMotion()) {
+            const side = document.querySelector('.cal-side');
+            [calGrid, side].forEach((el) => {
+                el.classList.remove('is-flipping');
+                void el.offsetWidth; // 连续翻月时重新播放
+                el.classList.add('is-flipping');
+            });
+            clearTimeout(calFlipTimer);
+            calFlipTimer = setTimeout(() => [calGrid, side].forEach((el) => el.classList.remove('is-flipping')), 1500);
+        }
 
         // 这个月的特别日子：生日、纪念日、满月
         const specials = [];
@@ -986,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name += SEP + unit(`还有 <span class="num">${left}</span> 天`);
             }
             const cls = `cal-special-item${s.love ? ' is-love' : ''}`;
-            let lead = `<img class="cal-special-thumb" src="images/${item?.filename}" alt="" loading="lazy">`;
+            let lead = item ? `<img class="cal-special-thumb" src="${thumbSrc(item)}" data-full="${fullSrc(item)}" alt="" loading="lazy">` : '';
             if (s.moon) lead = '<span class="cal-special-moon" aria-hidden="true"></span>';
             else if (!item) lead = '<span class="cal-special-moon is-ring" aria-hidden="true"></span>';
             if (item && !s.moon) {
@@ -1003,7 +1150,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const next = new Date(calMonth.getFullYear(), calMonth.getMonth() + offset, 1);
         if (monthKey(next) < monthKey(firstLetterMonth()) || monthKey(next) > monthKey(thisMonth())) return;
         calMonth = next;
+        calDirection = offset;
         renderCalendar();
+        calDirection = 1;
     }
 
     calPrev.addEventListener('click', () => shiftCalendar(-1));
@@ -1015,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!cell || cell.classList.contains('is-blank')) return;
         const item = dataByDate[cell.dataset.date];
         if (item) {
-            openItem(item);
+            openItem(item, cell.querySelector('.cal-win-art'));
             return;
         }
         const d = parseISO(cell.dataset.date);
@@ -1026,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     $('cal-special').addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-date]');
-        if (btn) openItem(dataByDate[btn.dataset.date]);
+        if (btn) openItem(dataByDate[btn.dataset.date], btn.querySelector('.cal-special-thumb'));
     });
 
     // 随机重温：从历史画信里随机抽一封打开
@@ -1079,10 +1228,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scroll) window.scrollTo(0, 0);
     }
 
+    // 切视图时旧的淡出、新的浮上来（View Transition；不支持或减少动态效果时直接换）
+    function withViewTransition(update) {
+        if (!document.startViewTransition || reduceMotion() || document.hidden) {
+            update();
+            return;
+        }
+        const root = document.documentElement;
+        root.classList.add('vt-view');
+        const transition = document.startViewTransition(update);
+        transition.finished.finally(() => root.classList.remove('vt-view'));
+    }
+
     window.addEventListener('hashchange', () => {
-        if (detailModal.classList.contains('open')) closeDetail({ restoreFocus: false });
+        if (detailModal.classList.contains('open')) closeDetail({ restoreFocus: false, animate: false });
         closeSeasonSheet();
-        setView(viewFromHash());
+        const next = viewFromHash();
+        if (next === currentView) {
+            setView(next);
+            return;
+        }
+        withViewTransition(() => setView(next));
     });
 
     // ============================================================
@@ -1102,31 +1268,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedKey = formatDateISO(selectedDate);
         const selectedIndex = Math.max(0, allItems.findIndex((item) => item.date === selectedKey));
 
+        let month = '';
         allItems.forEach((item, index) => {
-            const thumb = document.createElement('div');
+            const thumb = document.createElement('button');
+            thumb.type = 'button';
+            thumb.tabIndex = -1; // 键盘用 ← → 翻；胶卷条给鼠标点
             thumb.className = 'timeline-thumb';
             thumb.dataset.date = item.date;
+            const key = item.date.slice(0, 7);
+            if (key !== month) {
+                if (month) thumb.classList.add('is-month-start');
+                month = key;
+            }
+            const d = item.dateObj;
+            const label = `<span class="tl-date num">${d.getMonth() + 1}.${d.getDate()}</span>`;
             if (item.isFuture) {
                 thumb.classList.add('future');
-                thumb.innerHTML = '<img src="images/sunflower.svg" class="sunflower-icon" alt="尚未上画">';
+                thumb.disabled = true;
+                thumb.setAttribute('aria-hidden', 'true');
+                thumb.innerHTML = `<span class="tl-frame"></span>${label}`;
             } else {
                 const img = document.createElement('img');
                 // 胶卷条只在看画时出现：先不给 src，第一次打开看画再加载，省下首屏流量
-                img.dataset.src = `images/${item.filename}`;
-                img.alt = getArtworkLabel(item);
+                img.dataset.src = thumbSrc(item);
+                img.dataset.full = fullSrc(item);
+                img.alt = '';
                 img.decoding = 'async';
                 img.loading = Math.abs(index - selectedIndex) <= 24 ? 'eager' : 'lazy';
                 img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
-                img.addEventListener('error', () => thumb.classList.add('is-error'));
                 if (timelineHydrated) hydrateThumb(img);
-                thumb.appendChild(img);
-                const badge = document.createElement('span');
-                badge.className = 'thumb-badge';
-                badge.textContent = `${item.dateObj.getMonth() + 1}.${item.dateObj.getDate()}`;
-                thumb.appendChild(badge);
+                const frame = document.createElement('span');
+                frame.className = 'tl-frame';
+                frame.appendChild(img);
+                thumb.appendChild(frame);
+                thumb.insertAdjacentHTML('beforeend', label);
+                thumb.setAttribute('aria-label', getArtworkLabel(item));
                 thumb.addEventListener('click', () => {
-                    selectDate(item.dateObj);
-                    if (detailModal.classList.contains('open')) openDetail(item);
+                    if (detailModal.classList.contains('open')) swapLetter(item);
+                    else selectDate(item.dateObj);
                 });
             }
             if (item.date === selectedKey) thumb.classList.add('selected');
@@ -1147,6 +1326,14 @@ document.addEventListener('DOMContentLoaded', () => {
         timelineContainer.querySelectorAll('img[data-src]').forEach(hydrateThumb);
     }
 
+    // 把当前这一封挪到胶卷条正中（第一次打开看画时直接到位，之后平滑地走过去）
+    function centerTimeline(smooth) {
+        const thumb = timelineContainer.querySelector('.timeline-thumb.selected');
+        if (!thumb) return;
+        const left = thumb.offsetLeft - (timelineContainer.clientWidth - thumb.offsetWidth) / 2;
+        timelineContainer.scrollTo({ left: Math.max(0, left), behavior: smooth && !reduceMotion() ? 'smooth' : 'auto' });
+    }
+
     $('timeline-prev').addEventListener('click', () => timelineContainer.scrollBy({ left: -200, behavior: 'smooth' }));
     $('timeline-next').addEventListener('click', () => timelineContainer.scrollBy({ left: 200, behavior: 'smooth' }));
 
@@ -1157,9 +1344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const thumb = timelineContainer.querySelector(`.timeline-thumb[data-date="${dateStr}"]`);
         if (thumb) {
             thumb.classList.add('selected');
-            if (detailModal.classList.contains('open')) {
-                thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            if (detailModal.classList.contains('open')) centerTimeline(true);
         }
         const item = dataByDate[dateStr];
         if (item) applyImageTone(item.filename);
@@ -1202,8 +1387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getDetailFocusable() {
-        const dialog = detailModal.querySelector('.detail-dialog') || detailModal;
-        return [...dialog.querySelectorAll(
+        return [...detailModal.querySelectorAll(
             'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
         )].filter((el) => el.getAttribute('aria-hidden') !== 'true');
     }
@@ -1255,9 +1439,14 @@ document.addEventListener('DOMContentLoaded', () => {
             fitDetailTitle();
         };
 
-        detailDialog?.classList.remove('is-portrait', 'is-landscape');
-        // 先绑定 onload，再切换 src，避免缓存图片时错过方向识别
-        detailImage.onload = updateDetailOrientation;
+        // 记得这幅画的比例就先定好横竖；先绑定 onload，再切换 src，避免缓存图片时错过方向识别
+        const hinted = knownRatio(item.filename);
+        detailDialog?.classList.toggle('is-portrait', hinted > 0 && hinted < 1 / 1.05);
+        detailDialog?.classList.toggle('is-landscape', hinted >= 1 / 1.05);
+        detailImage.onload = () => {
+            rememberRatio(item.filename, detailImage);
+            updateDetailOrientation();
+        };
         detailImage.src = `images/${item.filename}`;
         detailImage.alt = getArtworkLabel(item);
         // 看画的同图氛围底：铺满整个屏幕
@@ -1286,16 +1475,21 @@ document.addEventListener('DOMContentLoaded', () => {
             ? TS.html(description)
             : '';
 
+        updatePager(item);
+        const wasOpen = detailModal.classList.contains('open');
         detailModal.classList.add('open');
         detailModal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
         if (!lastDetailFocus) lastDetailFocus = document.activeElement;
         setBackgroundInert(true);
-        detailClose?.focus();
+        if (!wasOpen) detailClose?.focus({ preventScroll: true });
         if (detailImage.complete) updateDetailOrientation();
         else fitDetailTitle();
         // 手机上不显示胶卷条，就不去加载它的图
-        if (!isMobileLayout()) hydrateTimeline();
+        if (!isMobileLayout()) {
+            hydrateTimeline();
+            centerTimeline(wasOpen);
+        }
         maybeShowSwipeHint();
 
         // Edit 是管理功能，只在 URL 带 ?admin=1 时显示，避免打扰观众视角
@@ -1318,23 +1512,77 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function closeDetail({ restoreFocus = true } = {}) {
-        if (!detailModal.classList.contains('open')) return;
-        detailModal.classList.remove('open');
-        detailModal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-        setBackgroundInert(false);
-        const restore = lastDetailFocus;
-        lastDetailFocus = null;
-        if (restoreFocus && restore && typeof restore.focus === 'function' && document.contains(restore)) {
-            restore.focus();
+    // 前一封 / 后一封的日期标在看画的展签上方（桌面）
+    const pagerPrev = $('detail-prev');
+    const pagerNext = $('detail-next');
+    function updatePager(item) {
+        const index = sortedDates.indexOf(item.date);
+        const label = (iso) => (iso ? `${+iso.slice(5, 7)}.${+iso.slice(8, 10)}` : '');
+        [[pagerPrev, sortedDates[index - 1], '前一封'], [pagerNext, sortedDates[index + 1], '后一封']].forEach(([btn, iso, word]) => {
+            if (!btn) return;
+            btn.disabled = !iso;
+            btn.querySelector('.num').textContent = label(iso);
+            btn.setAttribute('aria-label', iso ? `${word}：${label(iso).replace('.', '月')}日` : `没有${word}了`);
+        });
+    }
+    pagerPrev?.addEventListener('click', () => navigateLetter(-1));
+    pagerNext?.addEventListener('click', () => navigateLetter(1));
+
+    // 关上看画时，画落回它在当前视图里的位置：今日画信 / 长廊里那一幅（先把长廊挪过去）/
+    // 画历里那一扇窗（先翻到那个月）。找不到就原地淡出
+    function landingFor(item) {
+        if (!item) return null;
+        if (currentView === 'today') {
+            return !heroEl.hidden && heroEl.dataset.date === item.date ? $('today-hero-img') : null;
         }
+        if (currentView === 'corridor') {
+            const el = corridorScroll.querySelector(`.cor-item[data-date="${item.date}"]`);
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            const box = corridorScroll.getBoundingClientRect();
+            if (r.right < box.left + 40 || r.left > box.right - 40) scrollCorridorTo(el, false);
+            const img = el.querySelector('.cor-img');
+            return img?.classList.contains('is-loaded') ? img : el.querySelector('.cor-frame');
+        }
+        if (currentView === 'calendar') {
+            const month = new Date(item.dateObj.getFullYear(), item.dateObj.getMonth(), 1);
+            if (monthKey(month) !== monthKey(calMonth)) {
+                calMonth = month;
+                renderCalendar();
+            }
+            return calGrid.querySelector(`.cal-day[data-date="${item.date}"] .cal-win-art`);
+        }
+        return null;
+    }
+
+    function closeDetail({ restoreFocus = true, animate = true } = {}) {
+        if (!detailModal.classList.contains('open')) return;
+        const item = dataByDate[formatDateISO(selectedDate)];
+        const finish = () => {
+            detailModal.classList.remove('open');
+            detailModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            setBackgroundInert(false);
+            const restore = lastDetailFocus;
+            lastDetailFocus = null;
+            if (restoreFocus && restore && typeof restore.focus === 'function' && document.contains(restore)) {
+                restore.focus({ preventScroll: true });
+            }
+        };
+        if (animate) morphArt('vt-detail', detailImage, finish, () => landingFor(item));
+        else finish();
     }
 
     detailClose?.addEventListener('click', () => closeDetail());
     detailModal.addEventListener('click', (e) => {
         if (e.target === detailModal) closeDetail();
     });
+
+    // 看画里换一封：画框从这一幅的尺寸变成下一幅的，展签交叉淡化
+    function swapLetter(item) {
+        if (!item) return;
+        morphArt('vt-swap', detailImage, () => openItem(item), () => detailImage);
+    }
 
     // 前一封 / 后一封（按日期，左早右晚）
     const detailMediaEl = detailModal.querySelector('.detail-media');
@@ -1354,7 +1602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const item = dataByDate[target];
         if (!animate || !detailMediaEl || reduceMotion()) {
-            openItem(item);
+            swapLetter(item);
             return;
         }
         detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
@@ -1522,4 +1770,4 @@ document.addEventListener('DOMContentLoaded', () => {
             close: closeDetail
         };
     }
-});
+})();

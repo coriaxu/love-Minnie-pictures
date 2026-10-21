@@ -202,14 +202,25 @@
     // ----------------------------------------------------------------
     const fitted = new Set();
 
+    // 按行聚类：同一行的字 top 可能差几像素（今日画信入场时信纸带一点旋转，或亚像素取整），
+    // 和上一行的起点差出半个字高才算新的一行
     function countLines(el) {
         const range = document.createRange();
         range.selectNodeContents(el);
-        const tops = new Set();
-        for (const rect of range.getClientRects()) {
-            if (rect.width > 0.5) tops.add(Math.round(rect.top));
-        }
-        return tops.size;
+        const tolerance = (parseFloat(getComputedStyle(el).fontSize) || 16) * 0.5;
+        const tops = [...range.getClientRects()]
+            .filter((rect) => rect.width > 0.5)
+            .map((rect) => rect.top)
+            .sort((a, b) => a - b);
+        let lines = 0;
+        let lineTop = -Infinity;
+        tops.forEach((top) => {
+            if (top - lineTop > tolerance) {
+                lines++;
+                lineTop = top;
+            }
+        });
+        return lines;
     }
 
     // 看画页打开时带缩放动画（scale 0.98 → 1），量宽度要扣掉 transform，否则会在动画途中量小
