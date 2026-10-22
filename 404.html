@@ -8,7 +8,8 @@
     <title>Love Minnie · 这一天还没有画</title>
     <script>
         // 404 可能出现在任意深的路径下：先把相对地址的起点定到站点根目录
-        //（GitHub Pages 的项目站点在 /仓库名/ 下，其他托管在 /）
+        //（GitHub Pages 的项目站点在 /仓库名/ 下，其他托管在 /），再挂图标和字体。
+        // 这几个链接不能直接写在 HTML 里：浏览器的预加载会抢在这段脚本之前按错的路径去取
         (function () {
             var root = /\.github\.io$/.test(location.hostname)
                 ? '/' + (location.pathname.split('/')[1] || '') + '/'
@@ -16,11 +17,19 @@
             var base = document.createElement('base');
             base.href = root;
             document.head.appendChild(base);
+            [
+                ['icon', 'images/sunflower.svg', 'image/svg+xml'],
+                ['apple-touch-icon', 'images/app-icon-180.png'],
+                ['stylesheet', 'fonts/wenkai/lxgwwenkaiscreen.css']
+            ].forEach(function (item) {
+                var link = document.createElement('link');
+                link.rel = item[0];
+                link.href = item[1];
+                if (item[2]) link.type = item[2];
+                document.head.appendChild(link);
+            });
         })();
     </script>
-    <link rel="icon" href="images/sunflower.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="images/app-icon-180.png">
-    <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
     <style>
         @font-face {
             font-family: 'Bodoni Moda';
