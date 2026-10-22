@@ -14,7 +14,7 @@
 2. 转成 WebP，同步数据，并更新画廊的数据缓存版本。
 3. 只提交本次相关文件，推送后核验线上数据与图片。
 
-上画之后补一张缩略图：`python3 tools/make_thumbs.py`（只处理缺的，几秒钟），把新生成的 `images/thumbs/YYYYMMDD.webp` 一起提交。画历圆窗、看画胶卷条和"这个月的特别日子"用它；漏了也不会坏，那几处会自动退回原图，只是多花些流量。这一步需要加进 love-minnie-daily-upload Skill 的提交清单。
+上画时一起生成缩略图：`python3 tools/make_thumbs.py YYYY-MM-DD`（只读那一天的原图），把 `images/thumbs/YYYYMMDD.webp` 加进提交清单。画历圆窗、看画胶卷条和"这个月的特别日子"用它；漏了也不会坏，那几处会自动退回原图，只是多花些流量。Skill 的改法见 [日更缩略图说明](docs/DAILY_UPLOAD_THUMBNAILS.md)。
 
 “今天”取 Asia/Shanghai 当前日期，省略日期参数；“明天发／留到某日”进入候选排期，到期再发布。日期冲突、未来日期和久远回填按现有规则核对，不跳过检查。
 
@@ -27,7 +27,7 @@
 | `data.json` | 画廊数据源，按日期降序保存 |
 | `data.js`、`js/data.js` | 发布脚本生成的兼容数据文件，随数据源同步；不要独立编辑或删除 |
 | `images/` | 已发布画作及画廊图标；`app-icon-*.png` 是添加到主屏幕的图标（星盘与月洞窗） |
-| `images/thumbs/`、`tools/make_thumbs.py` | 画作缩略图（短边 320px，平均 28KB），脚本只补缺的；前端缺图时退回原图 |
+| `images/thumbs/`、`tools/make_thumbs.py` | 画作缩略图（短边 320px，平均 28KB）；脚本带日期只做那一天，不带日期补齐缺的；前端缺图时退回原图 |
 | `manifest.webmanifest` | 添加到主屏幕后像 App 一样全屏打开（名称、主题色、图标） |
 | `404.html` | 走错路时的页面：一扇空着的月洞窗，带回首页和长廊 |
 | `index.html`、`js/home.js`、`css/home.css` | 首页「星夜园林」：左边时间、中间星盘与月洞窗、右边话；月洞窗点开或按住散雾，月轮可转回最近三十天；纪念日存档入口 |

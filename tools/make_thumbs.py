@@ -7,10 +7,13 @@
 每张二三十 KB。
 
 前端找不到缩略图时会自动退回原图（见 js/script.js 的 thumbSrc），所以新画没补缩略图也不会坏，
-只是那几张多花一点流量。补齐：
+只是那几张多花一点流量。
 
-    python3 tools/make_thumbs.py            # 只补缺的、以及原图比缩略图新的
-    python3 tools/make_thumbs.py --force    # 全部重做
+    python3 tools/make_thumbs.py 2026-10-22     # 日更：只做这一天（可写多个日期，也可写 20261022）
+    python3 tools/make_thumbs.py                # 补齐：只补缺的、以及原图比缩略图新的
+    python3 tools/make_thumbs.py --force        # 全部重做
+
+指定日期时只读那几张原图，不扫描整个 images/（项目在 Google Drive 里，全目录读取可能很慢）。
 """
 
 import argparse
@@ -26,6 +29,7 @@ OUT = SRC / 'thumbs'
 SHORT_SIDE = 320
 QUALITY = 74
 NAME = re.compile(r'^\d{8}\.webp$')
+DATE = re.compile(r'^(\d{4})-?(\d{2})-?(\d{2})$')
 
 
 def make(src: Path, dst: Path) -> int:
@@ -41,10 +45,27 @@ def make(src: Path, dst: Path) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('dates', nargs='*', help='只处理这几天（YYYY-MM-DD 或 YYYYMMDD），总是重做')
     parser.add_argument('--force', action='store_true', help='全部重做')
     args = parser.parse_args()
 
     OUT.mkdir(exist_ok=True)
+
+    if args.dates:
+        for raw in args.dates:
+            match = DATE.match(raw.strip())
+            if not match:
+                print(f'日期格式不对：{raw}（要 YYYY-MM-DD 或 YYYYMMDD）', file=sys.stderr)
+                return 2
+            name = f'{"".join(match.groups())}.webp'
+            src = SRC / name
+            if not src.exists():
+                print(f'找不到原图：images/{name}', file=sys.stderr)
+                return 1
+            size = make(src, OUT / name)
+            print(f'images/thumbs/{name}  {size / 1024:.1f} KB')
+        return 0
+
     made = 0
     total = 0
     for src in sorted(SRC.iterdir()):
