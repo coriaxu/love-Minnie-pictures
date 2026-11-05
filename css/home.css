@@ -839,6 +839,57 @@ body.is-reduced .home-hint-hold {
     font-variant-numeric: lining-nums;
 }
 
+/* 一位一格：格子留出上下余量再收回，Bodoni 的笔画不会被裁 */
+.home-time-num .hd {
+    display: inline-block;
+    overflow: hidden;
+    padding: 0.1em 0;
+    margin: -0.1em 0;
+    vertical-align: top;
+}
+
+.home-time-num .hd-in {
+    display: inline-block;
+    transform: translateY(108%);
+    transition: transform 1.1s cubic-bezier(0.19, 1, 0.22, 1) calc(0.35s + var(--d, 0) * 0.08s);
+}
+
+body.is-ready .home-time-num .hd-in,
+body.is-reduced .home-time-num .hd-in {
+    transform: none;
+}
+
+.home-time-num .hd-in.is-back {
+    animation: hd-from-above 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-time-num .hd-in.is-fwd {
+    animation: hd-from-below 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes hd-from-above {
+    from {
+        transform: translateY(-70%);
+        opacity: 0;
+    }
+}
+
+@keyframes hd-from-below {
+    from {
+        transform: translateY(70%);
+        opacity: 0;
+    }
+}
+
+.home-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
 .home-time-since {
     font-size: 0.94rem;
     letter-spacing: 0.12em;

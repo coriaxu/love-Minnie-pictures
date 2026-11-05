@@ -332,6 +332,14 @@ body.gallery-page {
     outline: none;
 }
 
+/* 键盘走到顶栏时要看得出停在哪：鼠标悬停只变亮，键盘焦点再描一圈细金线 */
+.lm-mark:focus-visible,
+.lm-tab:focus-visible {
+    outline: 1px solid rgba(236, 208, 154, 0.55);
+    outline-offset: 2px;
+    border-radius: 999px;
+}
+
 .lm-tabs {
     display: flex;
     align-items: center;
@@ -366,7 +374,11 @@ body.gallery-page {
 .lm-tab:hover,
 .lm-tab:focus-visible {
     color: var(--text-primary);
-    outline: none;
+}
+
+/* 悬停时那颗金点先淡淡地亮一下，提示点下去会到这里 */
+.lm-tab:hover::after {
+    background: rgba(236, 208, 154, 0.38);
 }
 
 .lm-tab.is-active {
@@ -1334,10 +1346,39 @@ button.ruler-day:focus-visible {
 }
 
 .cor-cap {
+    position: relative;
     display: block;
     min-width: 0;
     padding-top: 14px;
     border-top: 1px solid var(--grid-line);
+}
+
+/* 悬停：展签上的横线从左往右描成金色，标题跟着暖一点 */
+.cor-cap::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ink-gold), rgba(236, 208, 154, 0.2));
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cor-item:hover .cor-cap::before,
+.cor-item:focus-visible .cor-cap::before {
+    transform: scaleX(1);
+}
+
+.cor-title {
+    transition: color 0.4s ease;
+}
+
+.cor-item:hover .cor-title,
+.cor-item:focus-visible .cor-title {
+    color: var(--ink-gold);
 }
 
 .cor-cap-row {
@@ -1447,9 +1488,38 @@ button.ruler-day:focus-visible {
     color: var(--ink-gold);
 }
 
-/* 两个标签挨得太近：后一个抬到上面一行 */
+/* 引线 + 刻度：从标签垂到进度条上那一天的位置（进度条的线在轨道顶下 30px） */
+.corridor-mark::before,
+.corridor-mark::after {
+    content: '';
+    position: absolute;
+    left: var(--tick, 50%);
+    pointer-events: none;
+}
+
+.corridor-mark::before {
+    top: calc(100% + 3px);
+    width: 1px;
+    height: var(--lead, 11px);
+    margin-left: -0.5px;
+    background: linear-gradient(to bottom, transparent, currentColor);
+    opacity: 0.55;
+}
+
+.corridor-mark::after {
+    top: calc(100% + 3px + var(--lead, 11px) - 1.5px);
+    width: 3px;
+    height: 3px;
+    margin-left: -1.5px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+}
+
+/* 两个标签挨得太近：后一个抬到上面一行，引线跟着拉长 */
 .corridor-mark.is-up {
     top: -15px;
+    --lead: 26px;
 }
 
 .corridor-mark.is-love {

@@ -284,6 +284,30 @@
 
     let currentHref = withPreview('gallery.html');
 
+    // 天数一位一格：第一次打开时从下面逐位升上来；转月轮时只有变了的那几位滚一下，
+    // 往回转从上面落下、往前转从下面升起。读屏读的是整数，不是一个个数字
+    let shownDays = 0;
+    function setDayNum(n) {
+        const str = String(n);
+        const cells = dayNumEl.querySelectorAll('.hd-in');
+        if (cells.length !== str.length) {
+            dayNumEl.innerHTML = `<span class="home-sr">${str}</span>` + [...str].map((ch, k) =>
+                `<span class="hd" aria-hidden="true" style="--d:${k}"><span class="hd-in">${ch}</span></span>`).join('');
+        } else if (n !== shownDays) {
+            const dir = n < shownDays ? 'is-back' : 'is-fwd';
+            dayNumEl.querySelector('.home-sr').textContent = str;
+            cells.forEach((cell, k) => {
+                if (cell.textContent === str[k]) return;
+                cell.textContent = str[k];
+                if (reduceMotion) return;
+                cell.classList.remove('is-back', 'is-fwd');
+                void cell.offsetWidth; // 连着转时让动画从头再来
+                cell.classList.add(dir);
+            });
+        }
+        shownDays = n;
+    }
+
     function render() {
         const d = addDays(today, -offset);
         const md = `${d.getMonth() + 1}月${d.getDate()}日`;
@@ -315,7 +339,7 @@
         ].join(sep) + `<span class="home-meta-days">${sep}${unit(`在一起的第 <span class="num">${n}</span> 天`)}</span>`;
 
         // 时间（桌面左栏）
-        dayNumEl.textContent = String(n);
+        setDayNum(n);
         let no = letterNo(d);
         // 今天的画已经传了、data.json 还没跟上（或缓存）时，序号先算上今天这封
         if (isToday && byDate && !byDate[todayIso] && todayStatus !== 'waiting') no += 1;

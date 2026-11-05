@@ -910,6 +910,8 @@
             const w = el.offsetWidth;
             const shift = clamp(w / 2, point + w - trackW - 7, point + 7);
             el.style.transform = `translateX(${(-shift).toFixed(1)}px)`;
+            // 刻度和引线始终落在那一天的真实位置上，标签挪开了也指得准
+            el.style.setProperty('--tick', `${shift.toFixed(1)}px`);
         });
         // 挨得太近的标签错开两行，再挤就只留前一个
         const rowEnds = [-Infinity, -Infinity];
@@ -1281,7 +1283,7 @@
                 month = key;
             }
             const d = item.dateObj;
-            const label = `<span class="tl-date num">${d.getMonth() + 1}.${d.getDate()}</span>`;
+            const label = `<span class="tl-date num">${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}</span>`;
             if (item.isFuture) {
                 thumb.classList.add('future');
                 thumb.disabled = true;
@@ -1517,12 +1519,13 @@
     const pagerNext = $('detail-next');
     function updatePager(item) {
         const index = sortedDates.indexOf(item.date);
-        const label = (iso) => (iso ? `${+iso.slice(5, 7)}.${+iso.slice(8, 10)}` : '');
+        // 和长廊、画历一样写成两位数的 MM.DD，各处的日期对得齐
+        const label = (iso) => (iso ? `${iso.slice(5, 7)}.${iso.slice(8, 10)}` : '');
         [[pagerPrev, sortedDates[index - 1], '前一封'], [pagerNext, sortedDates[index + 1], '后一封']].forEach(([btn, iso, word]) => {
             if (!btn) return;
             btn.disabled = !iso;
             btn.querySelector('.num').textContent = label(iso);
-            btn.setAttribute('aria-label', iso ? `${word}：${label(iso).replace('.', '月')}日` : `没有${word}了`);
+            btn.setAttribute('aria-label', iso ? `${word}：${+iso.slice(5, 7)}月${+iso.slice(8, 10)}日` : `没有${word}了`);
         });
     }
     pagerPrev?.addEventListener('click', () => navigateLetter(-1));
