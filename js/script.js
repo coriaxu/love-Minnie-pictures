@@ -1260,13 +1260,8 @@
 
     function renderTimeline() {
         timelineContainer.innerHTML = '';
+        // 只放已经收到的画信；还没到的日子不占位（原来末尾有 5 个虚线空框，像没加载出来的图）
         const allItems = [...galleryData].reverse();
-        const lastDate = allItems.length ? new Date(allItems[allItems.length - 1].dateObj) : getToday();
-        for (let i = 1; i <= 5; i++) {
-            const futureDate = new Date(lastDate);
-            futureDate.setDate(lastDate.getDate() + i);
-            allItems.push({ date: formatDateISO(futureDate), dateObj: futureDate, isFuture: true });
-        }
         const selectedKey = formatDateISO(selectedDate);
         const selectedIndex = Math.max(0, allItems.findIndex((item) => item.date === selectedKey));
 
@@ -1284,32 +1279,25 @@
             }
             const d = item.dateObj;
             const label = `<span class="tl-date num">${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}</span>`;
-            if (item.isFuture) {
-                thumb.classList.add('future');
-                thumb.disabled = true;
-                thumb.setAttribute('aria-hidden', 'true');
-                thumb.innerHTML = `<span class="tl-frame"></span>${label}`;
-            } else {
-                const img = document.createElement('img');
-                // 胶卷条只在看画时出现：先不给 src，第一次打开看画再加载，省下首屏流量
-                img.dataset.src = thumbSrc(item);
-                img.dataset.full = fullSrc(item);
-                img.alt = '';
-                img.decoding = 'async';
-                img.loading = Math.abs(index - selectedIndex) <= 24 ? 'eager' : 'lazy';
-                img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
-                if (timelineHydrated) hydrateThumb(img);
-                const frame = document.createElement('span');
-                frame.className = 'tl-frame';
-                frame.appendChild(img);
-                thumb.appendChild(frame);
-                thumb.insertAdjacentHTML('beforeend', label);
-                thumb.setAttribute('aria-label', getArtworkLabel(item));
-                thumb.addEventListener('click', () => {
-                    if (detailModal.classList.contains('open')) swapLetter(item);
-                    else selectDate(item.dateObj);
-                });
-            }
+            const img = document.createElement('img');
+            // 胶卷条只在看画时出现：先不给 src，第一次打开看画再加载，省下首屏流量
+            img.dataset.src = thumbSrc(item);
+            img.dataset.full = fullSrc(item);
+            img.alt = '';
+            img.decoding = 'async';
+            img.loading = Math.abs(index - selectedIndex) <= 24 ? 'eager' : 'lazy';
+            img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
+            if (timelineHydrated) hydrateThumb(img);
+            const frame = document.createElement('span');
+            frame.className = 'tl-frame';
+            frame.appendChild(img);
+            thumb.appendChild(frame);
+            thumb.insertAdjacentHTML('beforeend', label);
+            thumb.setAttribute('aria-label', getArtworkLabel(item));
+            thumb.addEventListener('click', () => {
+                if (detailModal.classList.contains('open')) swapLetter(item);
+                else selectDate(item.dateObj);
+            });
             if (item.date === selectedKey) thumb.classList.add('selected');
             timelineContainer.appendChild(thumb);
         });

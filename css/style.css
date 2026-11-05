@@ -2491,22 +2491,6 @@ body.modal-open .timeline-strip {
     background: rgba(236, 208, 154, 0.26);
 }
 
-/* 还没到的日子：一个虚线空框 */
-.timeline-thumb.future {
-    cursor: default;
-}
-
-.timeline-thumb.future .tl-frame {
-    border: 1px dashed rgba(236, 208, 154, 0.24);
-    background: none;
-    opacity: 0.6;
-    transform: none;
-}
-
-.timeline-thumb.future .tl-date {
-    opacity: 0.45;
-}
-
 /* ============================================================
     DETAIL MODAL · 看画（2026-10 星夜园林）
     展厅式：同一幅画的深色晕染铺满屏幕，画装细金框，
