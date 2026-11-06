@@ -2,6 +2,16 @@
 
 > 这里记录项目开发过程中的关键技术决策、坑点排查和复用模式。
 
+## 当前维护取舍（2026-09-08）
+
+- **项目重心**：稳定上画与回看。按徐老师“先备份，优先删除，其次简化”的要求，撤下空 Moments 栏目、年度回顾运行时代码与自动弹出、旧网页打包／ZIP 双击发布／批量导入链路，避免多个入口维护同一份日期与数据规则。Moments 旧链接保留跳转，设计文档仅作历史参考；这批功能不再进入活动待办。
+- **保留边界**：纯静态 HTML/CSS/JS、画廊与影院模式、季节主题、6000 天回看不变更技术路线；`data.json`、根 `data.js`、`js/data.js` 继续由现有日更脚本一起更新，不在此次精简中增加数据层迁移。
+- **正式日更输入即按既定流程执行**：徐老师确认以后提供照片、文案与当天日期／“今天”即可自动更新发布，不再重复确认。当天以 Asia/Shanghai 系统日期锚定并省略 `--date`；“明天发／后天用／留到某日”按排期处理，不提前上画；同日替换先核对意图。
+- **CSS 背景 URL 的基准**：把 `images/...` 直接写入自定义属性后，再由 `css/style.css` 的 `url()` 消费，可能按 CSS 文件位置解析到错误路径。Hero 与详情氛围底现改用已解析的 `img.src`／`detailImage.src` 绝对 URL；保留此做法避免 GitHub Pages 子路径下复发。
+- **低价值运行开销**：删除无消费方的光标坐标更新循环、无实际效果的 6000 天 EN 控件与闲置首页项目编号。不要为删掉的功能额外增加框架或自动化。
+- **已验范围与限制**：本地桌面／移动端导航、月份、设置、日历、详情焦点、随机、旧页跳转与 6000 天 Stage 2／情书检查通过；线上关键文件逐字节匹配，移动端导航／主题／详情开关通过。历史缩略图和字体仍有加载等待，完整 load 等待超时不能代替功能失败，也不能记为完整页面测试通过；Zeabur 独立路由未验。
+- **可追溯证据**：精简提交 `48c22c1`，GitHub Pages 构建成功；今日上传提交 `13e51e0`，脚本返回 `published-and-verified`。精简前备份 `/Users/surfin/Documents/Codex Backups/love-minnie-before-simplify-20260907-233259/` 包含 489 份已校验工作文件、变更与发布清单、`deployment.json` 和验证产物；不含完整 `.git` 历史。
+
 ## 🎨 Design System: "Starry Night" (星夜)
 
 - **核心配色**: 深蓝/紫渐变背景 (`#0a0514` ~ `#241734`) 配合暖色高光 (`#ffd700`, `#ff8cc6`)。
@@ -81,6 +91,54 @@
 
 ## 🛠 Engineering Patterns
 
+### 7. 首页刷新后标题左缘被切 (2026-09-07)
+
+- **现象**: 刷新 GitHub Pages 首页后，`VISUAL LETTERS` 显示成 `ISUAL ETTERS`，底部引文也缺开头字符。
+- **根因**: `ambient-light` 用 `position: absolute; width: 160vw` 参与文档流，把页面撑出横向滚动；Chrome 刷新会恢复 `scrollLeft`；首页 inline CSS 未 reset，`body` 还保留浏览器默认 margin。
+- **修复**: `html/body { margin: 0; overflow: hidden }`；`.ambient-light` 与 `.noise-overlay` 改 `position: fixed`。
+- **可复用经验**: 大比例全屏装饰层一律 `fixed`，不要 `absolute` 撑宽；独立首页也要做 margin reset，不能假设全局 `style.css` 已覆盖。
+
+### 8. 点滴页设置按钮与画廊行为不一致 (2026-09-07)
+
+> 历史修复：本轮已撤下 Moments 实现，以下保留跨页面交互一致性的经验。
+
+- **现象**: 画廊底部「设置」能打开主题面板，点滴页同按钮点击无响应。
+- **根因**: `moments.html` 只有 `nav-settings` 按钮，缺少 settings-sheet DOM 和对应 JS。
+- **修复**: 复用画廊同款 bottom sheet 结构，在 `moments.js` 接入主题切换（共用 `love-minnie-theme-v3` localStorage key）。
+- **可复用经验**: 多页共享 bottom nav 时，每个页面都要自带对应 sheet DOM；不能假设 `script.js` 的全局逻辑会自动覆盖独立页面。
+
+### 9. 画廊详情弹窗键盘焦点逃逸 (2026-09-07)
+
+- **现象**: 详情弹窗打开后，Tab 会进入背后页面的年度回顾入口和「上个月」按钮。
+- **根因**: 弹窗未设 focus trap；隐藏态 `.year-review-trigger` 仍在 Tab 序列；背景元素仍可聚焦。
+- **修复**: 打开时给背景 siblings 加 `inert`（保留 `.timeline-strip` 以便影院换画）；Tab 循环 trap；隐藏 🎁 设 `tabIndex=-1` + `visibility:hidden`；关闭后还原焦点。
+- **可复用经验**: `aria-hidden` 不等于不可 Tab；隐藏装饰按钮要同时 `tabIndex=-1`；modal 必须 trap + inert 双保险。
+
+### 10. 线上 QA 日更验证边界 (2026-09-07)
+
+> 历史测评：其中空 Moments 栏目已在本轮撤下，不再是待核对项。当前验证边界见本文顶部。
+
+- **背景**: 小萌对线上站做桌面 + 390×844 测评，主流程可用，报 6 项问题/待核对。
+- **已修复**: 点滴设置、详情焦点、aria-label、日历未来格数字、时间轴缩略图占位、首页切边。
+- **待核对(非 bug)**: 点滴页空栏是 `moments_data.js` 空数组（栏目未启用）；时间轴 8 月下旬黑块经核查为 lazy 加载非资源失效。
+- **可复用经验**: 日更上传默认不做页面级验证；改 UI/交互/无障碍后才需要浏览器复测。测评优先修中优先级阻断项，低优先级可同批顺手收。
+
+### 5. 首页入口按钮被纪念页视觉层挤压（2026-05-22）
+
+- **问题**: 首页底部的 `Unwrap Day ...` 进入按钮，在 6000 天纪念页相关样式存在时会被首屏高度与大字号计数器一起挤出可视区，导致看起来像“入口按钮没了”。
+- **处理**: 给 `.grid-container > main` 设 `min-height: 0`，让主区域可以真正收缩；同时把 `.grid-container > footer` 设为 `flex-shrink: 0` 并提升 `z-index`，保证按钮区固定停在首屏底部。
+- **可复用经验**: 这类首页首屏失焦问题，优先同时检查“全局大字号元素”和“flex 容器收缩能力”，不要只盯着按钮本身。
+
+### 6. 每日上画快路径固化为 skill（2026-05-27）
+
+- **背景**: 2026-05-27 日更发布时，本地浏览器检查和弹窗点击验证耗时偏重；徐老师明确要求把日常上传固定成更快的 skill。
+- **处理**: 新增全局 skill `love-minnie-daily-upload`，入口位于 `/Users/surfin/.agent/skills/love-minnie-daily-upload/SKILL.md`，脚本位于 `scripts/upload_daily_artwork.py`。
+- **固定流程**: 确认状态 → 转图 → 更新 `data.json` / `data.js` / `js/data.js` → bump `gallery.html` 的 `js/data.js?v=N` → 提交推送 → 查线上 `data.json` 和图片 200。
+- **默认验证边界**: 日更上传默认不开本地浏览器、不做 Playwright 点击；只有页面结构、样式或交互改动时才做页面级验证。
+- **可复用经验**: 对稳定日更流程，验证要贴着风险走；图片和数据发布只需线上数据与图片可访问，页面交互验证留给真正改 UI 的时候。
+- **线上校验失败的处理（2026-09-08 更新）**：脚本 exit 1 可能发生在已经提交／推送之后，先查现有提交与线上状态，不盲目重复上传。完成标准是远端提交对应本次结果、线上数据日期降序且无重复、目标条目日期／图片／文案精确匹配并报告位置、图片可访问。正常当天条目通常在首位，历史回填不要求首位。发现校验失败先查根因，不改数据或参数绕过。
+- **附件路径随当前客户端判断（2026-09-08 更新）**：2026-05-30 曾遇到只有内联图片、没有文件路径的输入；本次附件已提供可读本地路径，直接用于脚本。优先核对本轮给定路径，不把旧客户端行为当成通用限制；确实没有可用文件时再请用户提供，不扫描无关目录。
+
 ### 4. 6000 天纪念页的半自动电影模式（2026-05-13）
 
 - **问题**: 只靠“星空 / 主页变形 / 信封情书”三个显式按钮，熊老婆正常打开时可能不会主动点到情书。
@@ -98,8 +156,8 @@
 
 ### 2. 图片处理工作流
 
-- **Raw -> Web**: 使用 `update_gallery.py` (Python Pillow) 自动将 `raw_images` 中的大图压缩转换为 WebP 格式并生成缩略图。
-- **命名规范**: `YYYYMMDD.ext`，脚本自动解析日期。
+- **现行入口**：`love-minnie-daily-upload/scripts/upload_daily_artwork.py`，接收本轮图片路径并生成 `images/YYYYMMDD.webp`，同步三份数据和缓存号后提交、推送、核验。
+- **退役记录**：原 `tools/update_gallery.py` 的 Raw → Web 批量导入链路已删除，不再按旧方法处理 `raw_images`。
 
 ### 3. 数据驱动 (No-Backend)
 
@@ -111,6 +169,18 @@
 
 - **html2canvas**: 在已有 `backdrop-filter` 的元素上截图可能会失效或变黑。解决方案：生成截图时暂时移除玻璃态滤镜，或使用纯色背景替代。
 - **Safari iOS**: `100vh` 问题，建议使用 `dvh` (Dynamic Viewport Height) 或 JS 修正。
+
+### 🔥 移动端详情弹窗 100vh 裁切 + 底部导航 z-index 压字 (2026-06-12)
+
+- **现象**: 移动端影院模式里情话和落款被裁掉一截。两个独立原因叠加：① `.detail-dialog` 用 `height: 100vh`，移动端 layout viewport 比可视区高（地址栏未收起时），底部内容滑出屏幕；② `.mobile-bottom-nav` z-index 300 > `.detail-modal` 200，导航直接盖在文字上。
+- **修复**: dialog 改 `height: 100%` 直接继承 `position: fixed; inset: 0` 的 modal（fixed inset 永远贴合可视视口，比 `100dvh` 兼容性更稳）；600px 内 `.detail-modal` z-index 提到 400，看画时全屏沉浸。
+- **可复用经验**: 全屏弹层的尺寸**不要用 vh 单位**，让外层 fixed inset:0 容器定尺寸、内层用百分比继承；z-index 体系要有约定（弹层 > 全局导航）。
+
+### 🔥 Claude Preview 验证环境的渲染节流假象 (2026-06-12)
+
+- **现象**: preview 工具里 CSS transition/animation 永远卡在中间帧（`getAnimations()` 显示 running 不结束）、`requestAnimationFrame` 永不触发（eval 里等 rAF 直接超时）、截图偶发图片全空白（WebP 已 complete 但未 paint）。
+- **判定**: 这是 headless/后台标签页渲染节流，**不是页面 bug**。验证布局时用 `getBoundingClientRect` + `getComputedStyle` 读数据为准，截图只看大效果；测量前先 `el.style.animation='none'` 清掉进行中的动画；等待用 `setTimeout` 别用 rAF。
+- **顺手的真修复**: 初始化时要立即收起的元素（如移动端日历 sheet），先 `style.transition='none'` 再改 class，强制 reflow 后恢复——真机上也消除首帧闪现。
 
 ### 🔥 Gallery 详情弹窗底部偶发裁切 (2026-03-10)
 
