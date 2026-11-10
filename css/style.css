@@ -905,10 +905,30 @@ html.vt-arrive .hero-art img {
     grid-area: ruler;
     width: var(--art-w, 520px);
     margin-top: 28px;
+    container: hero-ruler / inline-size;
+}
+
+/* 竖图下面的尺子窄，三十个数字排不开：只留 1、5、10…和今天，其余日子只看月相 */
+@container hero-ruler (max-width: 620px) {
+    .today-hero:not(.is-stacked) .ruler-day:not(.is-tick) .ruler-num {
+        visibility: hidden;
+    }
+
+    .today-hero:not(.is-stacked) .ruler-num {
+        white-space: nowrap;
+    }
+}
+
+/* 更窄（矮屏上的竖图）：表头一行放不下，满月那半句让位，不折行 */
+@container hero-ruler (max-width: 340px) {
+    .ruler-sum-moon {
+        display: none;
+    }
 }
 
 .hero-ruler-head {
     display: flex;
+    white-space: nowrap;
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
@@ -1146,7 +1166,7 @@ button.ruler-day:focus-visible {
     ============================================================ */
 .view-corridor {
     /* 画的高度：跟着屏幕高和宽一起走，大屏上能同时看见两三幅 */
-    --cor-h: clamp(240px, min(100svh - 380px, 26vw), 500px);
+    --cor-h: clamp(240px, min(100svh - 380px, 31vw), 640px);
     display: flex;
     flex-direction: column;
     min-height: calc(100svh - 140px);
@@ -1923,7 +1943,8 @@ button.cal-special-item:focus-visible {
 .cal-win {
     position: relative;
     display: block;
-    width: min(84px, 100%);
+    /* 窗的大小跟着屏幕高走：大屏上六行排满一屏，不缩在上半屏 */
+    width: min(clamp(64px, calc((100svh - 190px) / 6 - 46px), 128px), 100%);
     aspect-ratio: 1;
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -2542,9 +2563,11 @@ body.modal-open .timeline-strip {
     height: 100%;
     max-height: 860px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
+    /* 画多宽、这一栏就多宽：竖图时画和展签靠在一起、整组居中，不再隔着一大片空 */
+    grid-template-columns: minmax(0, max-content) 300px;
+    justify-content: center;
     align-items: end;
-    gap: 32px;
+    gap: 40px;
     animation: modalIn 0.35s ease;
 }
 

@@ -591,7 +591,7 @@
             const maxH = compact
                 ? Math.max(vh - 120, 180)
                 : portrait
-                    ? Math.min(Math.max(vh - 240, 440), 760)
+                    ? Math.min(Math.max(vh - 264, 440), 760)
                     : Math.min(Math.max(vh - 330, 320), 640);
             artW = Math.min(availW, maxH * ratio);
         }
@@ -629,6 +629,12 @@
             const moon = moonStyle(moonLit(new Date(y, m, day)), 13);
             const shadow = isToday ? `${moon.shadow}, 0 0 0 3px var(--bg-color), 0 0 0 4px var(--ink-gold)` : moon.shadow;
             const cls = ['ruler-day'];
+            // 尺子窄（竖图）时只标 1、5、10…和今天 / 这一封，其余日子留给月相自己说话；紧挨着的刻度让位，数字不相撞
+            const curDay = current.dateObj.getDate();
+            const todayDay = todayStr.slice(0, 7) === iso.slice(0, 7) ? Number(todayStr.slice(8)) : 0;
+            const anchor = day === curDay || day === todayDay;
+            const crowded = Math.abs(day - curDay) === 1 || (todayDay && Math.abs(day - todayDay) === 1);
+            if (anchor || ((day === 1 || day % 5 === 0) && !crowded)) cls.push('is-tick');
             if (item) cls.push('has-letter');
             if (iso > todayStr) cls.push('is-future');
             if (iso === current.date) cls.push('is-current');
@@ -648,7 +654,7 @@
         ruler.innerHTML =
             '<div class="hero-ruler-head">' +
             `<span>${MONTH_CN[m]} · <span class="num">${y}</span></span>` +
-            `<span class="ruler-sum">已收到 <span class="num">${count}</span> 封 · 满月在 <span class="num">${m + 1}.${fullDay}</span></span>` +
+            `<span class="ruler-sum">已收到 <span class="num">${count}</span> 封<span class="ruler-sum-moon"> · 满月在 <span class="num">${m + 1}.${fullDay}</span></span></span>` +
             '</div>' +
             `<div class="hero-ruler-days">${cells.join('')}</div>`;
         // 手机上月相尺横向滚动：把这一封挪到看得见的位置
