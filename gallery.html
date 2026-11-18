@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="css/style.css?v=12.6">
     <link rel="stylesheet" href="css/day-6000.css?v=12.1">
     <!-- 画廊直接读取正式目录；从首页拆信时沿用刚读到的目录完成转场首帧。 -->
-    <link id="gallery-catalog" rel="preload" as="fetch" crossorigin href="data.json">
+    <link id="gallery-catalog" rel="alternate" type="application/json" href="data.json">
     <script src="js/script.js?v=13.6" defer blocking="render"></script>
     <script>
         // 从首页拆开进来：铺满屏幕的那幅画落进画框（跨页 View Transition；不支持的浏览器照常打开）。
