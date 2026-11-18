@@ -11,8 +11,8 @@
 统一使用 [love-minnie-daily-upload](/Users/surfin/.agent/skills/love-minnie-daily-upload/SKILL.md)。该入口负责：
 
 1. 检查图片、日期、现有条目和仓库状态，先做 dry-run。
-2. 转成 WebP，同步数据，并更新画廊的数据缓存版本。
-3. 只提交本次相关文件，推送后核验线上数据与图片。
+2. 转成 WebP，更新唯一作品目录 `data.json` 并生成当日缩略图。
+3. 只提交本次相关文件，推送后核验画廊实际引用的目录、当日条目、原图类型和内容。
 
 上画时一起生成缩略图：`python3 tools/make_thumbs.py YYYY-MM-DD`（只读那一天的原图），把 `images/thumbs/YYYYMMDD.webp` 加进提交清单。画历圆窗、看画胶卷条和"这个月的特别日子"用它；漏了也不会坏，那几处会自动退回原图，只是多花些流量。Skill 的改法见 [日更缩略图说明](docs/DAILY_UPLOAD_THUMBNAILS.md)。
 
@@ -25,7 +25,6 @@
 | 文件 | 用途 |
 | --- | --- |
 | `data.json` | 画廊数据源，按日期降序保存 |
-| `data.js`、`js/data.js` | 发布脚本生成的兼容数据文件，随数据源同步；不要独立编辑或删除 |
 | `images/` | 已发布画作及画廊图标；`app-icon-*.png` 是添加到主屏幕的图标（星盘与月洞窗） |
 | `images/thumbs/`、`tools/make_thumbs.py` | 画作缩略图（短边 320px，平均 28KB）；脚本带日期只做那一天，不带日期补齐缺的；前端缺图时退回原图 |
 | `manifest.webmanifest` | 添加到主屏幕后像 App 一样全屏打开（名称、主题色、图标） |
@@ -52,7 +51,7 @@ python3 -m http.server 5177 --bind 127.0.0.1
 
 - 首页：<http://127.0.0.1:5177/>
 - 画廊：<http://127.0.0.1:5177/gallery.html>
-- 6000 天完整预览：<http://127.0.0.1:5177/?d6k=1&d6kDev=1>
+- 6000 天回看固定取截至 2026-05-14 的作品，第二幕最近 12 封，第三幕最近 24 封按时间正序展开。完整预览：<http://127.0.0.1:5177/?d6k=1&d6kDev=1>
 - 分阶段预览：使用 `?d6k=stage1`、`?d6k=stage2` 或 `?d6k=stage3`。
 - 按日期预览首页和画廊：加 `?date=YYYY-MM-DD`，例如 `?date=2026-09-26` 可看"今天这封还在路上"的样子。
 - 直接打开某一封：画廊加 `?day=YYYY-MM-DD`（首页月轮选中某天后点开就是这个链接），不会越过"今天"。

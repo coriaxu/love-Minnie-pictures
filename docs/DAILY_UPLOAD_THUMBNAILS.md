@@ -28,7 +28,7 @@ python3 tools/make_thumbs.py 2026-10-22
 images/thumbs/YYYYMMDD.webp
 ```
 
-和 `images/YYYYMMDD.webp`、`data.json`、`data.js`、`js/data.js`、`gallery.html` 一起显式列出。不要 `git add images/thumbs/` 整个目录，也不要 `git add .`。
+和 `images/YYYYMMDD.webp`、`data.json` 一起显式列出。不要 `git add images/thumbs/` 整个目录，也不要 `git add .`。
 
 **3. 核验：推送后多查一个地址**
 

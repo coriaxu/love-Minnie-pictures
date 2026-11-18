@@ -1273,3 +1273,13 @@ body.is-opening .home-moon-art {
         animation: none;
     }
 }
+
+.retry-link {
+    color: inherit;
+    background: transparent;
+    border: 0;
+    padding: .5rem;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}

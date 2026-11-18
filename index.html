@@ -18,7 +18,7 @@
     <!-- 字体全部本地托管：手机不挂 VPN 也能打开。Bodoni Moda 只给数字，@font-face 在 day-6000.css -->
     <link rel="preload" href="fonts/memorial/bodoni-moda-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
-    <link rel="stylesheet" href="css/home.css?v=2.2">
+    <link rel="stylesheet" href="css/home.css?v=2.3">
     <link rel="stylesheet" href="css/day-6000.css?v=12.1">
     <link rel="prefetch" href="gallery.html">
 </head>
@@ -102,8 +102,10 @@
             <!-- 右：话（手机上在星盘上方） -->
             <div class="home-words">
                 <h1 class="home-greet">
-                    <span class="ts-u">熊老婆，</span><wbr><span class="ts-u home-status" id="home-status">今天的画信到了。</span>
+                    <span class="ts-u">熊老婆，</span><wbr><span class="ts-u home-status" id="home-status" aria-live="polite">正在翻开画信。</span>
                 </h1>
+                <p id="home-image-caption" class="home-meta" hidden></p>
+                <button type="button" id="home-retry" class="retry-link" hidden>重新加载</button>
                 <p class="home-meta" id="home-meta" aria-live="polite"></p>
                 <a class="home-cta" id="home-cta" href="gallery.html">
                     <span id="home-cta-label">拆开今天的画信</span>
@@ -145,8 +147,8 @@
     </noscript>
 
     <script src="js/typeset.js?v=1.1"></script>
-    <script src="js/home.js?v=2.2"></script>
-    <script src="js/day-6000.js?v=12.0"></script>
+    <script src="js/home.js?v=2.3"></script>
+    <script src="js/day-6000.js?v=12.1"></script>
     <script src="js/anniversary-effects.js?v=11.7"></script>
 </body>
 

@@ -425,10 +425,23 @@
         document.querySelector('#d6k-stage2-overlay')?.remove();
     };
 
+    let archiveRequest;
+    function anniversaryArtworks() {
+        if (!archiveRequest) {
+            archiveRequest = fetch('data.json', { cache: 'no-cache' })
+                .then((res) => {
+                    if (!res.ok) throw new Error(`画卷目录 ${res.status}`);
+                    return res.json();
+                })
+                .then((rows) => rows.filter((item) => item.date && item.date <= '2026-05-14'))
+                .catch((error) => { archiveRequest = null; throw error; });
+        }
+        return archiveRequest;
+    }
+
     const loadMemoryRibbon = async (track) => {
         try {
-            const res = await fetch('data.json', { cache: 'no-cache' });
-            const data = await res.json();
+            const data = await anniversaryArtworks();
             const frames = data.slice(0, 12);
 
             const fragment = document.createDocumentFragment();
@@ -843,8 +856,7 @@
 
     const loadAndRenderFilmstrip = async (track) => {
         try {
-            const res = await fetch('data.json', { cache: 'no-cache' });
-            const data = await res.json();
+            const data = await anniversaryArtworks();
 
             // data.json 是按日期降序的数组：[{ id, date, filename, ... }, ...]
             // 取最近的 24 张作为画卷

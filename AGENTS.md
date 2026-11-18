@@ -8,6 +8,8 @@ Love Minnie Pictures 🌻——徐老师送给熊老婆的"星空下的向日葵
 
 部署：GitHub Pages + Zeabur 自动同步。
 
+日更只更新 `data.json`、当日原图和缩略图。首页、画廊和纪念页共用这份目录。
+
 ---
 
 ## 多 AI 协作硬约定（重要）

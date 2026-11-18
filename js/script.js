@@ -715,7 +715,8 @@
             layoutHero();
             unveil();
         };
-        img.src = `images/${item.filename}`;
+        imageRetry(img, $('hero-retry'), fullSrc(item));
+        img.src = fullSrc(item);
         if (img.complete && img.naturalWidth) unveil();
         img.alt = getArtworkLabel(item);
         $('today-hero-art').setAttribute('aria-label', `看大图：${label}的画，${getArtworkLabel(item)}`);
@@ -744,6 +745,15 @@
         const btn = event.target.closest('button[data-date]');
         if (btn) openItem(dataByDate[btn.dataset.date]);
     });
+
+    function imageRetry(img, button, src) {
+        button.hidden = true;
+        img.onerror = () => { button.hidden = false; };
+        button.onclick = () => {
+            button.hidden = true;
+            img.src = src;
+        };
+    }
 
     function showEmptyState() {
         heroEl.hidden = true;
@@ -1262,10 +1272,9 @@
     // ============================================================
     // 胶卷条：看画时出现在底部，点哪张换哪张
     // ============================================================
-    let timelineHydrated = false;
 
     function renderTimeline() {
-        timelineContainer.innerHTML = '';
+        if (isMobileLayout() || timelineContainer.childElementCount) return;
         // 只放已经收到的画信；还没到的日子不占位（原来末尾有 5 个虚线空框，像没加载出来的图）
         const allItems = [...galleryData].reverse();
         const selectedKey = formatDateISO(selectedDate);
@@ -1286,14 +1295,12 @@
             const d = item.dateObj;
             const label = `<span class="tl-date num">${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}</span>`;
             const img = document.createElement('img');
-            // 胶卷条只在看画时出现：先不给 src，第一次打开看画再加载，省下首屏流量
-            img.dataset.src = thumbSrc(item);
             img.dataset.full = fullSrc(item);
             img.alt = '';
             img.decoding = 'async';
             img.loading = Math.abs(index - selectedIndex) <= 24 ? 'eager' : 'lazy';
             img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
-            if (timelineHydrated) hydrateThumb(img);
+            img.src = thumbSrc(item);
             const frame = document.createElement('span');
             frame.className = 'tl-frame';
             frame.appendChild(img);
@@ -1307,19 +1314,6 @@
             if (item.date === selectedKey) thumb.classList.add('selected');
             timelineContainer.appendChild(thumb);
         });
-    }
-
-    function hydrateThumb(img) {
-        if (!img.dataset.src) return;
-        img.src = img.dataset.src;
-        img.removeAttribute('data-src');
-        if (img.complete && img.naturalWidth) img.classList.add('is-loaded');
-    }
-
-    function hydrateTimeline() {
-        if (timelineHydrated) return;
-        timelineHydrated = true;
-        timelineContainer.querySelectorAll('img[data-src]').forEach(hydrateThumb);
     }
 
     // 把当前这一封挪到胶卷条正中（第一次打开看画时直接到位，之后平滑地走过去）
@@ -1443,7 +1437,8 @@
             rememberRatio(item.filename, detailImage);
             updateDetailOrientation();
         };
-        detailImage.src = `images/${item.filename}`;
+        imageRetry(detailImage, $('detail-retry'), fullSrc(item));
+        detailImage.src = fullSrc(item);
         detailImage.alt = getArtworkLabel(item);
         // 看画的同图氛围底：铺满整个屏幕
         detailModal.style.setProperty('--detail-bg', `url("${detailImage.src}")`);
@@ -1483,7 +1478,7 @@
         else fitDetailTitle();
         // 手机上不显示胶卷条，就不去加载它的图
         if (!isMobileLayout()) {
-            hydrateTimeline();
+            renderTimeline();
             centerTimeline(wasOpen);
         }
         maybeShowSwipeHint();
@@ -1683,7 +1678,13 @@
                 placeCorridorMarks();
                 syncCorridor();
             }
-            if (detailModal.classList.contains('open')) fitDetailTitle();
+            if (detailModal.classList.contains('open')) {
+                fitDetailTitle();
+                if (!isMobileLayout()) {
+                    renderTimeline();
+                    centerTimeline(false);
+                }
+            }
         }, 150);
     });
 
@@ -1691,8 +1692,15 @@
     // 数据
     // ============================================================
     const loadGalleryData = () => {
-        if (Array.isArray(window.__GALLERY_DATA__)) return Promise.resolve(window.__GALLERY_DATA__);
-        return fetch('data.json').then((res) => {
+        try {
+            const raw = sessionStorage.getItem('lm-catalog-transfer');
+            sessionStorage.removeItem('lm-catalog-transfer');
+            const transfer = JSON.parse(raw);
+            if (transfer?.to === location.href && Date.now() - transfer.at < 10000 && Array.isArray(transfer.rows)) {
+                return Promise.resolve(transfer.rows);
+            }
+        } catch { /* 隐私模式或无效记录，直接读取目录。 */ }
+        return fetch($('gallery-catalog').href, { cache: 'no-cache' }).then((res) => {
             if (!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
             return res.json();
         });
@@ -1700,38 +1708,42 @@
 
     setView(viewFromHash(), { scroll: false });
 
-    loadGalleryData()
-        .then((data) => {
-            const todayStr = formatDateISO(getToday());
-            galleryData = data
-                .filter((item) => item && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.filename && item.date <= todayStr)
-                .map((item) => ({ ...item, dateObj: parseISO(item.date) }))
-                .sort((a, b) => (a.date < b.date ? 1 : -1));
-            dataByDate = {};
-            galleryData.forEach((item) => {
-                dataByDate[item.date] = item;
+    function loadLetters() {
+        $('catalog-error').hidden = true;
+        return loadGalleryData()
+            .then((data) => {
+                const todayStr = formatDateISO(getToday());
+                galleryData = data
+                    .filter((item) => item && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.filename && item.date <= todayStr)
+                    .map((item) => ({ ...item, dateObj: parseISO(item.date) }))
+                    .sort((a, b) => (a.date < b.date ? 1 : -1));
+                dataByDate = {};
+                galleryData.forEach((item) => {
+                    dataByDate[item.date] = item;
+                });
+                sortedDates = Object.keys(dataByDate).sort();
+                chronoIndex = new Map(sortedDates.map((iso, i) => [iso, i + 1]));
+                dataReady = true;
+
+                const hero = renderTodayHero();
+                if (!hero) showEmptyState();
+                selectDate(hero ? hero.dateObj : getToday());
+                setView(viewFromHash(), { scroll: false });
+
+                // 从首页月轮选中某天进来（?day=YYYY-MM-DD）：直接打开那一封，不越过"今天"
+                const requestedDay = params.get('day') || '';
+                if (/^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && dataByDate[requestedDay]) {
+                    openItem(dataByDate[requestedDay]);
+                }
+            })
+            .catch((err) => {
+                console.error('Error loading data:', err);
+                dataReady = false;
+                $('catalog-error').hidden = false;
             });
-            sortedDates = Object.keys(dataByDate).sort();
-            chronoIndex = new Map(sortedDates.map((iso, i) => [iso, i + 1]));
-            dataReady = true;
-
-            const hero = renderTodayHero();
-            if (!hero) showEmptyState();
-            selectDate(hero ? hero.dateObj : getToday());
-            renderTimeline();
-            setView(viewFromHash(), { scroll: false });
-
-            // 从首页月轮选中某天进来（?day=YYYY-MM-DD）：直接打开那一封，不越过"今天"
-            const requestedDay = params.get('day') || '';
-            if (/^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && dataByDate[requestedDay]) {
-                openItem(dataByDate[requestedDay]);
-            }
-        })
-        .catch((err) => {
-            console.error('Error loading data:', err);
-            dataReady = true;
-            showEmptyState();
-        });
+    }
+    $('catalog-retry').addEventListener('click', loadLetters);
+    loadLetters();
 
     // ============================================================
     // 排版自检：URL 带 ?lmdev=1 时暴露钩子，可逐封渲染今日卡和看画页，

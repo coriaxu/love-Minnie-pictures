@@ -19,11 +19,11 @@
     <!-- 字体全部本地托管：手机不挂 VPN 也能打开。Bodoni Moda / Pinyon Script 的 @font-face 在 day-6000.css -->
     <link rel="preload" href="fonts/memorial/bodoni-moda-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
-    <link rel="stylesheet" href="css/style.css?v=12.5">
+    <link rel="stylesheet" href="css/style.css?v=12.6">
     <link rel="stylesheet" href="css/day-6000.css?v=12.1">
-    <!-- 画廊脚本在文档解析完后执行（defer），并挡住第一帧直到它跑完：今日画信先排好再出画面，
-         换页转场才拍得到那幅画。data.js、typeset.js 仍在 body 末尾按原样同步加载，先于它就位 -->
-    <script src="js/script.js?v=13.5" defer blocking="render"></script>
+    <!-- 画廊直接读取正式目录；从首页拆信时沿用刚读到的目录完成转场首帧。 -->
+    <link id="gallery-catalog" rel="preload" as="fetch" crossorigin href="data.json">
+    <script src="js/script.js?v=13.6" defer blocking="render"></script>
     <script>
         // 从首页拆开进来：铺满屏幕的那幅画落进画框（跨页 View Transition；不支持的浏览器照常打开）。
         // 首页把满屏时这幅画的位置大小记在 sessionStorage['lm-reveal']，这里让画框里的画
@@ -143,6 +143,7 @@
 
     <main class="lm-main">
         <!-- ===================== 今日 ===================== -->
+        <div id="catalog-error" class="empty-state" role="status" hidden>画信目录暂时没打开。 <button type="button" id="catalog-retry" class="retry-link">重新加载目录</button></div>
         <section class="lm-view view-today" id="view-today" aria-label="今日画信">
             <!-- 今日画信：细金框的画 + 旁边一封信（邮戳、落款、印章），画下是这个月的月相尺；
                  窄屏画在上、信在下。横图竖图同一套版式，只按画的比例分配空间 -->
@@ -166,6 +167,7 @@
                                 <span class="lm-seal" id="today-hero-seal" role="img" aria-label="落款：浩">浩</span>
                             </div>
                         </article>
+                        <button type="button" id="hero-retry" class="retry-link" hidden>重新加载图片</button>
                         <div class="hero-actions">
                             <button type="button" class="hero-action" id="today-hero-open">
                                 <svg class="icon" aria-hidden="true"><use href="#i-expand" /></svg>
@@ -304,6 +306,7 @@
         <div class="detail-dialog">
             <div class="detail-media">
                 <img id="detail-image" src="" alt="">
+                <button type="button" id="detail-retry" class="retry-link" hidden>重新加载图片</button>
                 <p class="detail-hint" id="detail-hint" aria-hidden="true">左右滑动，看前后几天</p>
             </div>
             <aside class="detail-side">
@@ -346,9 +349,8 @@
     <div class="lm-toast" id="lm-toast" role="status" aria-live="polite"></div>
 
     <!-- ===================== SCRIPTS ===================== -->
-    <script src="js/data.js?v=27.4"></script>
     <script src="js/typeset.js?v=1.1"></script>
-    <script src="js/day-6000.js?v=12.0"></script>
+    <script src="js/day-6000.js?v=12.1"></script>
     <!-- Anniversary Effects Engine -->
     <script src="js/anniversary-effects.js?v=11.7"></script>
 </body>

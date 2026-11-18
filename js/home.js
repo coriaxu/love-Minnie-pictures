@@ -56,8 +56,6 @@
 
     const dayNumber = Math.max(1, daysBetween(START, today) + 1);
     const letterCount = Math.max(0, daysBetween(FIRST_LETTER, today) + 1);
-    const todayIso = isoOf(today);
-    const todaySrc = `images/${todayIso.replace(/-/g, '')}.webp`;
 
     // 预览日期要带到画廊（放在 # 之前）
     const withPreview = (href) => {
@@ -130,36 +128,31 @@
         `${dotted(START)} — ${dayNumber} DAYS — EVERY DAY IS A STAR — ${dotted(today)} — LOVE MINNIE — EVERY DAY IS A STAR —`;
 
     // ------------------------------------------------------------
-    // 数据：哪些天有画信（读 data.json；读不到就按"第一封以来天天都有"推算）
+    // 数据：哪些天有画信，以目录为准
     // ------------------------------------------------------------
     let byDate = null;
     let letterDates = [];
+    let catalogReadAt = 0;
 
     const loadData = () => fetch('data.json', { cache: 'no-cache' })
         .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`data.json ${res.status}`))))
         .then((list) => {
-            if (!Array.isArray(list)) return;
+            if (!Array.isArray(list)) throw new Error('Invalid catalog');
             byDate = {};
             list.forEach((item) => {
                 if (item && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.filename) byDate[item.date] = item;
             });
             letterDates = Object.keys(byDate).sort();
+            catalogReadAt = Date.now();
+            catalogState = 'ready';
         })
         .catch(() => {
             byDate = null;
+            catalogState = 'error';
         });
 
-    const entryFor = (d) => {
-        const key = isoOf(d);
-        if (byDate) return byDate[key] || null;
-        return d >= FIRST_LETTER && d <= today ? { date: key, filename: `${key.replace(/-/g, '')}.webp` } : null;
-    };
-
-    const letterNo = (d) => {
-        const key = isoOf(d);
-        if (byDate) return letterDates.filter((x) => x <= key).length;
-        return Math.max(0, daysBetween(FIRST_LETTER, d) + 1);
-    };
+    const entryFor = (d) => byDate?.[isoOf(d)] || null;
+    const letterNo = (d) => letterDates.filter((key) => key <= isoOf(d)).length;
 
     // ------------------------------------------------------------
     // 月相：按月龄估算，够画一个小月亮和取名字
@@ -206,13 +199,15 @@
         ringDots.push(dot);
     }
 
-    let todayStatus = 'pending'; // pending | arrived | waiting
+    let catalogState = 'loading';
+    const retry = document.getElementById('home-retry');
+    const failedCaption = document.getElementById('home-image-caption');
     let offset = 0;              // 0 = 今天，往回数第几天
 
     const refreshRing = () => {
         ringDots.forEach((dot, k) => {
             const d = addDays(today, -k);
-            const hasLetter = k === 0 ? todayStatus !== 'waiting' : !!entryFor(d);
+            const hasLetter = !!entryFor(d);
             const m = d.getMonth();
             const date = d.getDate();
             dot.classList.toggle('is-today', k === 0);
@@ -245,6 +240,8 @@
     function showArt(src) {
         if (src === artSrc) return;
         artSrc = src;
+        failedCaption.hidden = true;
+        retry.hidden = true;
         const token = ++artToken;
         if (!src) {
             artRatio = 0;
@@ -266,6 +263,10 @@
             if (token !== artToken) return;
             artRatio = 0;
             moon.classList.remove('has-art', 'is-swapping');
+            failedCaption.textContent = entryFor(addDays(today, -offset))?.loveLetter || '';
+            failedCaption.hidden = !failedCaption.textContent;
+            retry.textContent = '重新加载图片';
+            retry.hidden = false;
         };
         img.src = src;
     }
@@ -313,25 +314,18 @@
         const md = `${d.getMonth() + 1}月${d.getDate()}日`;
         const n = Math.max(1, daysBetween(START, d) + 1);
         const isToday = offset === 0;
-        const kind = todayStatus === 'waiting' ? 'waiting' : 'arrived';
-        const entry = isToday ? (todayStatus === 'waiting' ? null : { filename: null }) : entryFor(d);
-
+        const entry = entryFor(d);
+        const kind = entry ? 'arrived' : 'waiting';
         refreshRing();
-
-        // 画
-        if (isToday) {
-            if (todayStatus === 'arrived') showArt(todaySrc);
-            else if (todayStatus === 'waiting') showArt(null);
+        showArt(entry ? `images/${entry.filename}` : null);
+        if (catalogState === 'error') {
+            status.textContent = '画信目录暂时没打开。';
+            retry.textContent = '重新加载目录';
+            retry.hidden = false;
+        } else if (catalogState === 'loading') {
+            status.textContent = '正在翻开画信。';
         } else {
-            showArt(entry ? `images/${entry.filename}` : null);
-        }
-
-        // 话
-        if (isToday) {
-            status.textContent = STATUS[kind].line;
-        } else {
-            // 日期在下一行，这句保持和"今天的画信到了。"一样短，桌面右栏放得下
-            status.textContent = entry ? '这是那天的画信。' : '那天没有画信。';
+            status.textContent = isToday ? STATUS[kind].line : (entry ? '这是那天的画信。' : '那天没有画信。');
         }
         meta.innerHTML = [
             unit(esc(md)),
@@ -340,9 +334,7 @@
 
         // 时间（桌面左栏）
         setDayNum(n);
-        let no = letterNo(d);
-        // 今天的画已经传了、data.json 还没跟上（或缓存）时，序号先算上今天这封
-        if (isToday && byDate && !byDate[todayIso] && todayStatus !== 'waiting') no += 1;
+        const no = letterNo(d);
         letterLine.hidden = !entry || no < 1;
         letterNumEl.textContent = String(no);
         const age = moonAge(d);
@@ -350,7 +342,11 @@
         moonNameEl.textContent = `${isToday ? '今晚' : '那晚'} · ${moonName(age)}`;
 
         // 去哪儿
-        if (isToday) {
+        if (catalogState !== 'ready') {
+            currentHref = withPreview('gallery.html');
+            ctaLabel.textContent = '去画廊看看';
+            moon.setAttribute('aria-label', '去画廊看看');
+        } else if (isToday) {
             currentHref = withPreview('gallery.html');
             ctaLabel.textContent = STATUS[kind].cta;
             moon.setAttribute('aria-label', STATUS[kind].label);
@@ -397,29 +393,19 @@
         }
     });
 
-    // 先藏起状态句，等知道今天的画到没到再显示，避免文案跳变
-    status.classList.add('is-pending');
+    retry.addEventListener('click', () => {
+        retry.hidden = true;
+        if (catalogState === 'error') {
+            catalogState = 'loading';
+            render();
+            loadData().then(render);
+        } else {
+            const src = artSrc;
+            artSrc = null;
+            showArt(src);
+        }
+    });
     render();
-
-    // ------------------------------------------------------------
-    // 今天的画：先按约定的文件名试着加载
-    // ------------------------------------------------------------
-    const settleToday = (kind) => {
-        if (todayStatus !== 'pending') return;
-        todayStatus = kind;
-        status.classList.remove('is-pending');
-        render();
-    };
-    const probe = new Image();
-    probe.decoding = 'async';
-    probe.onload = () => settleToday('arrived');
-    probe.onerror = () => settleToday('waiting');
-    probe.src = todaySrc;
-    // 网速很慢时先按"到了"显示文案；真没有画，onerror 会再改成"还在路上"
-    setTimeout(() => {
-        if (todayStatus === 'pending') status.classList.remove('is-pending');
-    }, 2500);
-
     loadData().then(render);
 
     // ------------------------------------------------------------
@@ -761,6 +747,12 @@
             reveal.style.viewTransitionName = 'lm-art';
             // 画廊据此让同一幅画从这个位置连续缩进画框（见 gallery.html 头部的 pagereveal）
             try {
+                // 同一标签页的这次拆信可直接排好首帧。久未刷新的首页交给画廊重新取目录。
+                if (byDate && Date.now() - catalogReadAt < 30000) {
+                    sessionStorage.setItem('lm-catalog-transfer', JSON.stringify({
+                        at: Date.now(), to: new URL(href, location.href).href, rows: Object.values(byDate)
+                    }));
+                }
                 sessionStorage.setItem('lm-reveal', JSON.stringify({
                     bx: cx - bw / 2, by: cy - bh / 2, bw, bh, vw: w, vh: h, t: Date.now()
                 }));

@@ -4038,3 +4038,20 @@ html.vt-reveal::view-transition-old(lm-art) {
         right: max(14px, env(safe-area-inset-right));
     }
 }
+
+.retry-link {
+    color: inherit;
+    background: transparent;
+    border: 0;
+    padding: .5rem;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.detail-media .retry-link {
+    position: absolute;
+    z-index: 1;
+    bottom: 1rem;
+    background: var(--bg-color);
+}
