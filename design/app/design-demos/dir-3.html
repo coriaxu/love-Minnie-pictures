@@ -33,8 +33,8 @@ body{color:var(--ink);font-family:var(--kai);-webkit-font-smoothing:antialiased}
 .lab{font:400 16px/1.45 var(--kai);color:#CBBFA9;margin-bottom:14px;max-width:300px}
 .lab b{display:block;font:400 19px/1.2 var(--kai);letter-spacing:.2em;color:var(--juan);margin-bottom:6px}
 .sc{transform-origin:top left}
-.s72 .sc{transform:scale(.72)} .s72 .ph{width:300px;height:631px}
-.s100 .ph{width:417px;height:876px}
+.s72 .sc{transform:scale(.72)} .s72 .ph{width:298px;height:625px}
+.s100 .ph{width:414px;height:868px}
 .btitle{position:absolute;right:0;top:0;width:190px;display:flex;flex-direction:row-reverse;gap:18px;height:640px}
 .btitle h1{writing-mode:vertical-rl;font:400 96px/1 var(--kai);letter-spacing:.2em;color:var(--juan)}
 .btitle p{writing-mode:vertical-rl;font:400 18px/1.8 var(--kai);color:#CBBFA9;letter-spacing:.12em;height:560px}
@@ -209,7 +209,7 @@ function mountPhone(slotId, initial) {
   function render() {
     const c = f.content; c.innerHTML = '';
     if (S.screen === 'lock') { c.style.top = '0'; c.style.bottom = '0'; return renderLock(c); }
-    c.style.top = '54px'; c.style.bottom = '34px';
+    c.style.top = '47px'; c.style.bottom = '34px';
     const app = LM.h(`<div class="app"><div class="main"></div><nav class="tabs">
       <button data-t="today">今页</button><button data-t="edge">书口</button><button data-t="mulu">目录</button><button data-t="nianbiao">年表</button></nav></div>`);
     c.appendChild(app);

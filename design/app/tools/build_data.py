@@ -14,7 +14,9 @@ REL = '../../../'  # 从 design/app/design-demos/ 回到仓库根
 
 def line_of(text):
     t = (text or '').split('\n')[0]
-    t = re.sub(r'^\s*♥️?\s*今日份爱你\s*', '', t).strip().lstrip('，,。 ')
+    t = re.sub(r'^[\s♥️❤️]*(今日份爱你)?\s*', '', t).strip().lstrip('，,。 ')
+    if not re.search(r'[\w\u4e00-\u9fff]', t):
+        return ''  # 只剩表情
     return t if len(t) <= 32 else ''  # 早期几封存的是生图提示词，不是那句话
 
 

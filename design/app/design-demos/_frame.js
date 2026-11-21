@@ -1,18 +1,22 @@
-/* iPhone 15 Pro 外壳（393×852）。
- * 逐项照搬 huashu-design assets/ios_frame.jsx 的常量：bezel 12、外圆角 60、屏圆角 48、
- * 灵动岛 124×36 top 12、状态栏高 54、内容区 top 54 / bottom 34、Home Indicator 140×5 bottom 10。
+/* iPhone 13 Pro 外壳（熊老婆的手机，390×844 pt，刘海屏，没有灵动岛）。
+ * 底子照搬 huashu-design assets/ios_frame.jsx（bezel 12、Home Indicator 140×5 bottom 10、底部安全区 34），
+ * 按 13 Pro 改了常量：屏幕 390×844、顶部安全区 47（状态栏高度，见 useyourloaf「iPhone 13 Screen Sizes」）、
+ * 灵动岛换成刘海。刘海尺寸 Apple 没有公布点数，这里按外观取 162×32，只影响画面，不影响布局（布局只认安全区 47）。
  * 原型用原生 JS，不走 React/Babel CDN（熊老婆的手机不挂 VPN，仓库约定不引外部 CDN）。
  */
 (function () {
   const css = `
   .ios-wrap{display:inline-block;padding:12px;background:#000;border-radius:60px;position:relative;
     box-shadow:0 0 0 2px #1f2937,0 20px 60px rgba(0,0,0,.3)}
-  .ios-screen{position:relative;border-radius:48px;overflow:hidden;width:393px;height:852px}
-  .ios-status{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;
-    justify-content:space-between;padding:0 32px;font:600 16px -apple-system,"SF Pro Text",sans-serif;
+  .ios-screen{position:relative;border-radius:47px;overflow:hidden;width:390px;height:844px}
+  .ios-status{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 26px 0 34px;font:600 16px -apple-system,"SF Pro Text",sans-serif;
     z-index:20;pointer-events:none}
-  .ios-island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:124px;height:36px;
-    background:#000;border-radius:999px;z-index:30}
+  .ios-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:162px;height:32px;
+    background:#000;border-radius:0 0 20px 20px;z-index:30}
+  .ios-notch:before,.ios-notch:after{content:'';position:absolute;top:0;width:8px;height:8px;
+    background:radial-gradient(circle at 0 100%,transparent 7.5px,#000 8px)}
+  .ios-notch:before{left:-8px;transform:scaleX(-1)}.ios-notch:after{right:-8px}
   .ios-icons{display:flex;align-items:center;gap:6px}
   .ios-signal{display:flex;align-items:flex-end;gap:2px;height:12px}
   .ios-signal i{width:3px;background:currentColor;border-radius:1px;display:block}
@@ -20,7 +24,7 @@
     position:relative;opacity:.8;box-sizing:border-box}
   .ios-batt b{display:block;height:100%;background:currentColor;border-radius:1px;opacity:.9}
   .ios-batt s{position:absolute;top:3px;right:-3px;width:2px;height:6px;background:currentColor;border-radius:0 1px 1px 0}
-  .ios-content{position:absolute;top:54px;left:0;right:0;bottom:34px;overflow:hidden}
+  .ios-content{position:absolute;top:47px;left:0;right:0;bottom:34px;overflow:hidden}
   .ios-content.full{top:0;bottom:0}
   .ios-home{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:140px;height:5px;
     background:rgba(0,0,0,.3);border-radius:999px;z-index:40;pointer-events:none}
@@ -49,7 +53,7 @@
             <div class="ios-batt"><b style="width:${battery}%"></b><s></s></div>
           </div>
         </div>
-        <div class="ios-island"></div>
+        <div class="ios-notch"></div>
         <div class="ios-content${full ? ' full' : ''}"></div>
         <div class="ios-home"></div>
       </div>`;
