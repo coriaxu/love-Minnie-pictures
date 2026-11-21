@@ -1,6 +1,6 @@
 # Love Minnie App · 设计稿
 
-把画廊网页做成熊老婆手机（iPhone 13 Pro）上的 App，用 huashu-design v3.4.2 的流程出的三个方向初稿。还没选定，选定后再做正式版。
+把画廊网页做成熊老婆手机（iPhone 13 Pro）上的 App，用 huashu-design v3.4.2 的流程出的三个方向初稿。2026-11-21 选定方向一「撕日历」，暂不开发；重启入口是 [`docs/MOBILE_APP_PLAN.md`](../../docs/MOBILE_APP_PLAN.md)，选定记录见 `direction-approved.md`。
 
 | 文件 | 内容 |
 | --- | --- |
@@ -10,6 +10,7 @@
 | `design-demos/dir-2.html` | 方向二「一画一屏」 |
 | `design-demos/dir-3.html` | 方向三「册页」 |
 | `design-demos/shot-dir-*.jpg` | 三版展示板截图 |
+| `direction-approved.md` | 展示了哪几版、徐老师的原话 |
 | `polish-log.md` | 每版打磨看到的问题和改法 |
 | `tools/build_data.py` | 从 `data.json` 生成原型用的 `_data.js`（平均色、主色、句子） |
 

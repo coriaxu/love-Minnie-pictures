@@ -74,4 +74,6 @@ Google Drive 文件读取超时时，先确认文件已下载到本地，再继�
 
 设计想法保留在 [点滴方案](docs/MOMENTS_DESIGN_SPEC.md) 和 [年度回顾方案](docs/YEAR_IN_REVIEW_PLAN.md)。需要重启时，先准备内容并确认要解决的使用需求，再做最小可用版本，通过验证后接入。
 
+移动端 App 已选定「撕日历」方向，暂不开发。方案和重启步骤见 [移动端 App 方案](docs/MOBILE_APP_PLAN.md)，设计稿在 `design/app/`。
+
 历史方案、`task_plan.md` 和 `findings.md` 留作参考；过去的日期待办和功能描述不能代替当前代码状态。协作边界见 [AGENTS.md](AGENTS.md)。
