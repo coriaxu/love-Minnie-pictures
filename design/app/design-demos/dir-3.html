@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>册页 · Love Minnie App 方向三</title>
+<link rel="stylesheet" href="../../../fonts/wenkai/lxgwwenkaiscreen.css">
+<style>
+:root{
+  --ling:#1F2C3B;  --ling2:#28384A; --ling3:#334659;   /* 靛青绫：裱边 */
+  --juan:#EEE6D6;  --juan2:#E4DAC6;                   /* 绢 */
+  --ink:#2A241F; --muted:#857A6C; --hair:#D5C9B4;
+  --zhu:#B23A2E;   /* 朱砂：只给印章和纪念日 */
+  --gold:#B49A68;
+  --kai:'LXGW WenKai Screen','Kaiti SC','STKaiti',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--ling)}
+body{color:var(--ink);font-family:var(--kai);-webkit-font-smoothing:antialiased}
+.damask{background-color:var(--ling);
+  background-image:
+    radial-gradient(circle at 50% 50%,rgba(255,255,255,.035) 0 22%,transparent 23%),
+    radial-gradient(circle at 0 0,rgba(255,255,255,.03) 0 12%,transparent 13%),
+    radial-gradient(circle at 100% 100%,rgba(255,255,255,.03) 0 12%,transparent 13%),
+    repeating-linear-gradient(45deg,rgba(255,255,255,.018) 0 1px,transparent 1px 7px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.018) 0 1px,transparent 1px 7px);
+  background-size:44px 44px,44px 44px,44px 44px,auto,auto}
+
+/* ───────── 展示板：错落＋局部特写 ───────── */
+.board{width:1440px;margin:0 auto;padding:72px;position:relative;color:var(--juan)}
+.stage{position:relative;height:1720px}
+.slot{position:absolute}
+.lab{font:400 16px/1.45 var(--kai);color:#CBBFA9;margin-bottom:14px;max-width:300px}
+.lab b{display:block;font:400 19px/1.2 var(--kai);letter-spacing:.2em;color:var(--juan);margin-bottom:6px}
+.sc{transform-origin:top left}
+.s72 .sc{transform:scale(.72)} .s72 .ph{width:300px;height:631px}
+.s100 .ph{width:417px;height:876px}
+.btitle{position:absolute;right:0;top:0;width:190px;display:flex;flex-direction:row-reverse;gap:18px;height:640px}
+.btitle h1{writing-mode:vertical-rl;font:400 96px/1 var(--kai);letter-spacing:.2em;color:var(--juan)}
+.btitle p{writing-mode:vertical-rl;font:400 18px/1.8 var(--kai);color:#CBBFA9;letter-spacing:.12em;height:560px}
+.btitle .tag{writing-mode:vertical-rl;font:400 13px/1 var(--kai);letter-spacing:.4em;color:#8E8A80;align-self:flex-end}
+.btitle .seal{width:40px;height:40px;background:var(--zhu);color:#F4E6D8;display:grid;place-items:center;font:400 20px/1 var(--kai);border-radius:3px;align-self:flex-end}
+.zoom{position:absolute}
+.zoom h3{font:400 22px/1.3 var(--kai);color:var(--juan);margin-bottom:6px}
+.zoom>p{font:400 14px/1.7 var(--kai);color:#CBBFA9;margin-bottom:18px;max-width:420px}
+
+/* ───────── App ───────── */
+.app{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column}
+.main{flex:1;position:relative;overflow:hidden}
+.tabs{height:56px;display:flex;justify-content:space-around;align-items:center;background:var(--ling);border-top:1px solid rgba(180,154,104,.35)}
+.tabs button{all:unset;cursor:pointer;font:400 16px/1 var(--kai);color:#9C9688;padding:10px 12px;letter-spacing:.18em;position:relative}
+.tabs button.on{color:var(--juan)}
+.tabs button.on:before{content:'';position:absolute;left:50%;top:-1px;width:22px;margin-left:-13px;height:2px;background:var(--gold)}
+.tabs button:hover{color:var(--juan)}
+.toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:var(--juan);font:400 14px/1 var(--kai);padding:11px 18px;border-radius:4px;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none;z-index:30;letter-spacing:.06em}
+.toast.show{opacity:1}
+
+/* 今页：上图下题 */
+.leaf{position:absolute;inset:0;background:var(--juan);color:var(--ink);display:flex;flex-direction:column;touch-action:pan-y;transition:transform .45s cubic-bezier(.3,.8,.3,1),opacity .45s}
+.leaf.out-r{transform:translateX(60%) rotateY(-12deg);opacity:0}
+.leaf.out-l{transform:translateX(-60%) rotateY(12deg);opacity:0}
+.mount{margin:0;padding:14px;background:var(--ling2);position:relative;box-shadow:inset 0 0 0 1px rgba(180,154,104,.55),inset 0 0 0 5px var(--ling2),inset 0 0 0 6px rgba(180,154,104,.35)}
+.mount .inner{padding:5px;background:#F2EBDD}
+.mount img{display:block;width:100%;height:232px;object-fit:cover;cursor:zoom-in}
+.mount img.port{object-fit:contain;background:#F2EBDD}
+.ti{flex:1;position:relative;display:flex;flex-direction:row-reverse;padding:22px 22px 34px 16px;gap:16px}
+.col{writing-mode:vertical-rl;text-orientation:upright}
+.c-main{font:400 33px/1.15 var(--kai);letter-spacing:.14em;color:var(--ink)}
+.c-date{font:400 16px/1.4 var(--kai);letter-spacing:.2em;color:#5E554A;margin-top:4px}
+.c-days{font:400 16px/1.4 var(--kai);letter-spacing:.2em;color:#5E554A;margin-top:4px}
+.c-sign{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:auto;align-self:flex-end}
+.c-sign span{writing-mode:vertical-rl;font:400 18px/1 var(--kai);letter-spacing:.3em}
+.seal{width:36px;height:36px;background:var(--zhu);color:#F6E9DA;display:grid;place-items:center;font:400 22px/1 var(--kai);border-radius:3px;
+  box-shadow:inset 0 0 0 2px var(--zhu),inset 0 0 0 3px rgba(246,233,218,.65);filter:url(#rough)}
+.slips{margin-right:auto;display:flex;flex-direction:column;gap:8px;justify-content:flex-end}
+.slips button{all:unset;cursor:pointer;writing-mode:vertical-rl;font:400 14px/1 var(--kai);letter-spacing:.24em;padding:10px 7px;background:var(--juan2);border-top:3px solid var(--ling3);color:#4D453B}
+.slips button:hover{background:#DCD0B8}
+.slips button.on{background:var(--zhu);border-top-color:#7F241C;color:#F6E9DA}
+.pageno-unused{position:absolute;left:18px;top:18px;writing-mode:vertical-rl;font:400 12.5px/1 var(--kai);letter-spacing:.3em;color:var(--muted)}
+.turnhint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font:400 12px/1 var(--kai);color:var(--muted);letter-spacing:.1em;white-space:nowrap}
+.edge{position:absolute;top:0;bottom:0;width:44px;cursor:pointer;z-index:4}
+.edge.r{right:0}.edge.l{left:0}
+
+/* 看画（展开） */
+.viewer{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:center;padding:0 14px;opacity:0;pointer-events:none;transition:opacity .3s}
+.viewer.show{opacity:1;pointer-events:auto}
+.viewer .mount img{height:auto;max-height:600px;object-fit:contain}
+.viewer p{color:var(--juan);text-align:center;font:400 16px/1 var(--kai);letter-spacing:.2em;margin-top:22px}
+.viewer button{all:unset;cursor:pointer;position:absolute;top:12px;right:18px;color:#CBBFA9;font:400 15px/1 var(--kai);padding:8px}
+
+/* 书口 */
+.shukou{position:absolute;inset:0;padding:18px 0 0 22px}
+.sk-h{font:400 30px/1 var(--kai);color:var(--juan);letter-spacing:.2em}
+.sk-s{font:400 13px/1.6 var(--kai);color:#A49D8F;margin-top:10px;width:180px}
+.peek{color:var(--ink);position:absolute;left:22px;top:150px;width:178px;background:var(--juan);padding:8px 8px 12px;box-shadow:0 18px 40px -16px rgba(0,0,0,.6);cursor:pointer;transition:transform .2s}
+.peek:hover{transform:translateY(-2px)}
+.peek img{display:block;width:100%;height:122px;object-fit:cover}
+.peek .pd{font:400 13px/1 var(--kai);color:var(--muted);margin-top:10px;letter-spacing:.1em}
+.peek .pl{font:400 18px/1.35 var(--kai);color:var(--ink);margin-top:6px}
+.peek .pn{font:400 12px/1 var(--kai);color:var(--muted);margin-top:10px}
+.peek .seal{width:26px;height:26px;font-size:15px;position:absolute;right:10px;bottom:10px}
+.book{position:absolute;right:58px;top:36px;width:98px;bottom:26px;display:flex;flex-direction:column;cursor:ns-resize;touch-action:none;
+  box-shadow:-10px 0 18px -10px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.15);background:#D9CCB3}
+.book i{flex:1;display:block;border-bottom:.5px solid rgba(255,250,240,.35)}
+.book i.sel{background:var(--juan)!important;box-shadow:0 0 0 1px var(--zhu);position:relative;z-index:2;flex:3}
+.cover{position:absolute;right:46px;top:30px;bottom:20px;width:12px;background:linear-gradient(90deg,var(--ling3),var(--ling2));border-radius:0 2px 2px 0}
+.cover.l{right:156px;border-radius:2px 0 0 2px}
+.ribbons{position:absolute;right:8px;top:36px;bottom:26px;width:38px}
+.rib{all:unset;cursor:pointer;position:absolute;right:0;width:30px;padding:6px 0;writing-mode:vertical-rl;text-align:center;font:400 12px/30px var(--kai);letter-spacing:.15em;color:#F1E6D2;background:var(--ling3);border-radius:0 3px 3px 0;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.rib:hover{background:#41566C}
+.rib.zhu{background:var(--zhu)}
+
+/* 目录 */
+.mulu{position:absolute;inset:0;background:var(--juan);color:var(--ink);padding:16px 14px 0}
+.ml-top{display:flex;justify-content:space-between;align-items:center;padding:0 6px 12px;border-bottom:1px solid var(--hair)}
+.ml-top b{font:400 26px/1 var(--kai);letter-spacing:.2em;font-weight:400}
+.ml-top .mons{display:flex;gap:4px}
+.ml-top .mons button{all:unset;cursor:pointer;font:400 14px/1 var(--kai);padding:8px 9px;color:var(--muted);letter-spacing:.1em}
+.ml-top .mons button.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+.reg{display:flex;flex-direction:row-reverse;justify-content:flex-start;gap:0;height:296px;border-bottom:1px solid var(--hair);padding:10px 0}
+.reg button{all:unset;cursor:pointer;width:30.5px;display:flex;flex-direction:column;align-items:center;gap:8px;border-left:1px dotted var(--hair);padding-top:2px}
+.reg button:hover{background:rgba(178,58,46,.06)}
+.reg .dn{writing-mode:vertical-rl;font:400 13px/1 var(--kai);color:var(--muted);letter-spacing:.05em}
+.reg .ln{writing-mode:vertical-rl;font:400 16px/1.15 var(--kai);letter-spacing:.08em;color:var(--ink);max-height:224px;overflow:hidden}
+.reg .ln.no{color:#B5AA98}
+.reg button.today .dn{color:var(--zhu)}
+
+/* 年表 */
+.nb{position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:20px 26px 30px}
+.nb::-webkit-scrollbar{display:none}
+.nb h2{font:400 30px/1 var(--kai);font-weight:400;color:var(--juan);letter-spacing:.2em}
+.nb .sub{font:400 13px/1.6 var(--kai);color:#A49D8F;margin:10px 0 18px}
+.ev{display:grid;grid-template-columns:86px 1fr;gap:0 14px;padding:14px 0;border-top:1px solid rgba(180,154,104,.22);cursor:pointer}
+.ev .y{font:400 18px/1.3 var(--kai);color:#A49D8F;letter-spacing:.06em}
+.ev .w b{display:block;font:400 19px/1.3 var(--kai);font-weight:400;color:var(--juan)}
+.ev .w span{display:block;font:400 13px/1.5 var(--kai);color:#A49D8F;margin-top:4px}
+.ev.now .w b{color:#fff}
+.ev.next{background:rgba(178,58,46,.12);margin:0 -12px;padding:14px 12px;border-top-color:transparent}
+.ev.next .y,.ev.next .w b{color:#F0B9AE}
+.ev.next .w span{color:#D9A59B}
+
+/* 锁屏 */
+.lock{position:absolute;inset:0;color:var(--juan)}
+.lock .clk{position:absolute;top:92px;left:0;right:0;text-align:center}
+.lock .clk .d{font:500 17px/1 -apple-system,'PingFang SC',sans-serif;opacity:.9}
+.lock .clk .t{font:300 92px/1 -apple-system,'SF Pro Display',sans-serif;margin-top:6px;letter-spacing:-.02em}
+.lock .hang{position:absolute;left:50%;top:262px;transform:translateX(-50%);width:262px}
+.lock .hang .mount{padding:10px}
+.lock .hang img{height:360px}
+.lock .vw{position:absolute;right:24px;top:268px;color:var(--juan);writing-mode:vertical-rl;font:400 15px/1 var(--kai);letter-spacing:.3em;opacity:.85}
+.lock .noti{all:unset;cursor:pointer;position:absolute;left:12px;right:12px;bottom:108px;border-radius:22px;background:rgba(238,230,214,.86);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--ink);padding:14px 16px;display:flex;gap:12px}
+.lock .noti .ic{width:40px;height:40px;border-radius:10px;background:var(--ling2);display:grid;place-items:center;flex:none;box-shadow:inset 0 0 0 3px var(--ling2),inset 0 0 0 4px rgba(180,154,104,.6)}
+.lock .noti .ic i{width:18px;height:18px;background:var(--zhu);color:#F6E9DA;font:400 12px/18px var(--kai);text-align:center;font-style:normal;border-radius:2px}
+.lock .noti .b{flex:1}
+.lock .noti .h{display:flex;justify-content:space-between;font:600 14px/1 -apple-system,'PingFang SC',sans-serif}
+.lock .noti .h span{font-weight:400;color:#6E6559;font-size:13px}
+.lock .noti .m{font:400 15px/1.4 var(--kai);margin-top:6px;letter-spacing:.04em}
+</style>
+</head>
+<body class="damask">
+<svg width="0" height="0" style="position:absolute"><filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></svg>
+<script src="_data.js"></script>
+<script src="_frame.js"></script>
+
+<div class="board">
+  <div class="stage">
+    <div class="slot s100" style="left:0;top:0" id="p-today"><div class="lab"><b>今页</b>上面裱着画，下面一页竖排题款。左右翻页——可以试，点两侧也能翻</div></div>
+    <div class="slot s72" style="left:460px;top:120px" id="p-lock"><div class="lab"><b>锁屏</b>早上收到：今日一页，已裱好</div></div>
+    <div class="slot s72" style="left:790px;top:40px" id="p-edge"><div class="lab"><b>书口</b>333 页叠成书的侧面，每页一条那幅画的颜色。在书口上拖</div></div>
+    <div class="btitle"><span class="seal">浩</span><span class="tag">Love Minnie App 方向三</span><p>一天裱一页，三百三十三页，已是一本册子。</p><h1>册页</h1></div>
+    <div class="slot s72" style="left:460px;top:880px" id="p-mulu"><div class="lab"><b>目录</b>一个月一页目录，竖排，点哪一行翻到哪一页</div></div>
+    <div class="slot s72" style="left:790px;top:820px" id="p-nianbiao"><div class="lab"><b>年表</b>我们的日子按年排，下一个要过的用朱砂</div></div>
+    <div class="zoom" style="left:0;top:980px;width:420px" id="zoom">
+      <h3>题款与印</h3>
+      <p>徐老师每天在画角落签「love Minnie 日期」，本来就是在题款。App 把这一笔放大成一页：写给她的那句话竖排，日期用中文数字，落款「浩 题」，一方朱印。朱红全 App 只出现在这里和纪念日上。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const D = LM.data, TODAY = LM.today, T = LM.byDate(TODAY);
+const ESC = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MCN = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+const DIG = '〇一二三四五六七八九';
+const cnYear = y => String(y).split('').map(d => DIG[d]).join('');
+const cnDay = d => d <= 10 ? (d === 10 ? '十' : DIG[d]) : d < 20 ? '十' + DIG[d - 10] : d === 20 ? '二十' : d < 30 ? '廿' + DIG[d - 20] : d === 30 ? '三十' : '三十一';
+function cnNum(n) { // 1–9999
+  const u = ['', '十', '百', '千']; const s = String(n); let out = '', zero = false;
+  for (let i = 0; i < s.length; i++) {
+    const d = +s[i], p = s.length - 1 - i;
+    if (d === 0) { zero = true; continue; }
+    if (zero && out) out += '〇';
+    zero = false; out += (d === 1 && p === 1 && i === 0 ? '' : DIG[d]) + u[p];
+  }
+  return out.replace(/〇/g, '零');
+}
+const cnDate = s => { const d = LM.parse(s); return `${cnYear(d.getFullYear())}年${MCN[d.getMonth()]}月${cnDay(d.getDate())}日`; };
+
+function mountPhone(slotId, initial) {
+  const slot = document.getElementById(slotId);
+  const lock = initial === 'lock';
+  const f = iosFrame({ dark: true, time: '7:30', battery: 82, full: true, bg: '#1F2C3B' });
+  f.screen.classList.add('damask');
+  const sc = document.createElement('div'); sc.className = 'sc'; sc.appendChild(f.el);
+  const ph = document.createElement('div'); ph.className = 'ph'; ph.appendChild(sc); slot.appendChild(ph);
+  const S = { screen: initial, cur: TODAY, edgeSel: TODAY, mon: '2026-11', liked: false };
+  const go = s => { S.screen = s; render(); };
+
+  function render() {
+    const c = f.content; c.innerHTML = '';
+    if (S.screen === 'lock') { c.style.top = '0'; c.style.bottom = '0'; return renderLock(c); }
+    c.style.top = '54px'; c.style.bottom = '34px';
+    const app = LM.h(`<div class="app"><div class="main"></div><nav class="tabs">
+      <button data-t="today">今页</button><button data-t="edge">书口</button><button data-t="mulu">目录</button><button data-t="nianbiao">年表</button></nav></div>`);
+    c.appendChild(app);
+    app.querySelectorAll('.tabs button').forEach(b => { b.classList.toggle('on', b.dataset.t === S.screen); b.onclick = () => { if (b.dataset.t === 'today') S.cur = TODAY; go(b.dataset.t); }; });
+    const main = app.querySelector('.main');
+    ({ today: renderLeaf, edge: renderEdge, mulu: renderMulu, nianbiao: renderNianbiao })[S.screen](main);
+    app.appendChild(LM.h(`<div class="toast"></div>`));
+  }
+  function toast(m) { const t = f.content.querySelector('.toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1700); }
+
+  function renderLeaf(main, dir) {
+    const e = LM.byDate(S.cur), i = D.indexOf(e);
+    const leaf = LM.h(`<div class="leaf${dir ? ' out-' + dir : ''}">
+      <figure class="mount"><div class="inner"><img class="${e.ratio < 1 ? 'port' : ''}" src="${e.img}" alt=""></div></figure>
+      <div class="ti">
+        <div class="col c-main">${ESC(e.line || '无题')}</div>
+        <div class="col c-date">${cnDate(e.date)}</div>
+        <div class="col c-days">相伴第${cnNum(LM.together(e.date))}日</div>
+        <div class="c-sign"><span class="col">浩 题</span><i class="seal">浩</i></div>
+        <div class="slips"><button data-a="heart" class="${S.liked && e.date === TODAY ? 'on' : ''}">回一颗心</button><button data-a="wall">设为壁纸</button><button data-a="save">存入相册</button></div>
+        <div class="turnhint">第${cnNum(LM.nth(e.date))}页 · ${i === 0 ? '向右翻，是前一页' : '左右翻页'}</div>
+      </div>
+      <div class="edge l"></div><div class="edge r"></div>
+    </div>`);
+    main.appendChild(leaf);
+    if (dir) requestAnimationFrame(() => requestAnimationFrame(() => leaf.classList.remove('out-' + dir)));
+    leaf.querySelector('.mount img').onclick = () => openViewer(main, e);
+    leaf.querySelectorAll('.slips button').forEach(b => b.onclick = () => {
+      if (b.dataset.a === 'save') toast('已存入相册');
+      if (b.dataset.a === 'wall') toast('已设为锁屏壁纸');
+      if (b.dataset.a === 'heart') { S.liked = !S.liked; b.classList.toggle('on', S.liked); if (S.liked) toast('浩那边收到了一颗心'); }
+    });
+    const turn = step => { // step +1 = 前一页（更早）
+      const j = i + step; if (j < 0 || j >= D.length) { toast(j < 0 ? '这是最新的一页' : '这是第一页'); return; }
+      leaf.classList.add(step > 0 ? 'out-r' : 'out-l');
+      setTimeout(() => { S.cur = D[j].date; main.innerHTML = ''; renderLeaf(main, step > 0 ? 'l' : 'r'); }, 260);
+    };
+    leaf.querySelector('.edge.r').onclick = () => turn(+1);
+    leaf.querySelector('.edge.l').onclick = () => turn(-1);
+    let x0 = null;
+    leaf.addEventListener('pointerdown', ev => { if (ev.target.closest('button,img,.edge')) return; x0 = ev.clientX; });
+    leaf.addEventListener('pointerup', ev => { if (x0 === null) return; const dx = ev.clientX - x0; x0 = null; if (Math.abs(dx) > 40) turn(dx > 0 ? +1 : -1); });
+  }
+
+  function openViewer(main, e) {
+    const v = LM.h(`<div class="viewer damask"><button>合上</button><figure class="mount"><div class="inner"><img src="${e.img}" alt=""></div></figure><p>${cnDate(e.date)}</p></div>`);
+    main.appendChild(v); requestAnimationFrame(() => v.classList.add('show'));
+    v.querySelector('button').onclick = () => { v.classList.remove('show'); setTimeout(() => v.remove(), 300); };
+  }
+
+  function renderEdge(main) {
+    const box = LM.h(`<div class="shukou"><div class="sk-h">书口</div><div class="sk-s">${D.length} 页叠起来的侧面。每一页一条，颜色取自那一页的画。</div></div>`);
+    const peek = LM.h(`<div class="peek"></div>`);
+    const setPeek = e => {
+      peek.innerHTML = `<img src="${e.thumb}" alt=""><div class="pd">${MCN[LM.parse(e.date).getMonth()]}月${cnDay(LM.parse(e.date).getDate())}日</div><div class="pl">${ESC(e.line || '无题')}</div><div class="pn">第${cnNum(LM.nth(e.date))}页</div><i class="seal">浩</i>`;
+      peek.onclick = () => { S.cur = e.date; go('today'); };
+    };
+    box.appendChild(peek);
+    box.appendChild(LM.h(`<div class="cover l"></div>`));
+    const book = LM.h(`<div class="book"></div>`);
+    const order = [...D].reverse(); // 书口从上到下：第一页在上
+    order.forEach(e => { const i = document.createElement('i'); i.style.background = mix(e.color, '#E6DAC2', .35); i.dataset.d = e.date; if (e.date === S.edgeSel) i.className = 'sel'; book.appendChild(i); });
+    const pick = ev => {
+      const r = book.getBoundingClientRect(); const k = Math.min(order.length - 1, Math.max(0, Math.floor((ev.clientY - r.top) / r.height * order.length)));
+      const e = order[k]; if (e.date === S.edgeSel) return;
+      book.querySelector('.sel')?.classList.remove('sel'); book.children[k].classList.add('sel'); S.edgeSel = e.date; setPeek(e);
+    };
+    let drag = false;
+    book.addEventListener('pointerdown', ev => { drag = true; book.setPointerCapture(ev.pointerId); pick(ev); });
+    book.addEventListener('pointermove', ev => { if (drag || ev.pointerType === 'mouse') pick(ev); });
+    book.addEventListener('pointerup', () => drag = false);
+    box.appendChild(book);
+    box.appendChild(LM.h(`<div class="cover"></div>`));
+    const ribs = LM.h(`<div class="ribbons"></div>`);
+    const months = [...new Set(order.map(e => e.date.slice(0, 7)))];
+    months.forEach(k => {
+      const first = order.findIndex(e => e.date.startsWith(k));
+      if (k === '2025-12') return;
+      const m = +k.slice(5);
+      const b = LM.h(`<button class="rib${m === 12 || m === 9 || m === 10 ? '' : ''}" style="top:calc(${Math.min(first / order.length * 100, 86)}% - 4px)">${MCN[m - 1]}月</button>`);
+      b.onclick = () => { S.mon = k; go('mulu'); };
+      if (m % 2 === 1 || m === 11) ribs.appendChild(b);
+    });
+    box.appendChild(ribs);
+    setPeek(LM.byDate(S.edgeSel));
+    main.appendChild(box);
+  }
+
+  function renderMulu(main) {
+    const list = D.filter(e => e.date.startsWith(S.mon)).reverse();
+    const m = +S.mon.slice(5);
+    const box = LM.h(`<div class="mulu"><div class="ml-top"><b>${MCN[m - 1]}月目录</b><div class="mons">
+      ${['2026-11', '2026-10', '2026-09'].map(k => `<button data-k="${k}" class="${k === S.mon ? 'on' : ''}">${MCN[+k.slice(5) - 1]}月</button>`).join('')}</div></div></div>`);
+    box.querySelectorAll('.mons button').forEach(b => b.onclick = () => { S.mon = b.dataset.k; go('mulu'); });
+    for (let r = 0; r < 2; r++) {
+      const reg = LM.h(`<div class="reg"></div>`);
+      list.slice(r * 16, r * 16 + 16).forEach(e => {
+        const d = LM.parse(e.date).getDate();
+        const b = LM.h(`<button class="${e.date === TODAY ? 'today' : ''}"><span class="dn">${cnDay(d)}</span><span class="ln${e.line ? '' : ' no'}">${ESC(e.line || '无题')}</span></button>`);
+        b.onclick = () => { S.cur = e.date; go('today'); };
+        reg.appendChild(b);
+      });
+      box.appendChild(reg);
+    }
+    main.appendChild(box);
+  }
+
+  function renderNianbiao(main) {
+    const up = LM.upcoming(TODAY)[0];
+    const evs = [
+      ['二〇〇九', '十二月十日', '在一起', '第一日'],
+      ['二〇一七', '十二月十六日', '领证', ''],
+      ['二〇一八', '十月三日', '婚礼', ''],
+      ['二〇二五', '十二月廿四日', '第一页画信', '平安夜，一起吃平安果'],
+      ['二〇二六', '五月十四日', '相伴第六千日', '那天有一封长信'],
+      ['二〇二六', '十一月廿一日', '今天', `相伴第${cnNum(LM.together(TODAY))}日 · 第${cnNum(D.length)}页`, 'now'],
+      ['二〇二六', '十二月十日', `在一起第${cnNum(up.nthYear)}年`, `还有${cnNum(up.days)}日`, 'next'],
+    ];
+    const box = LM.h(`<div class="nb"><h2>年表</h2><div class="sub">从相识那一页数起。朱色是下一个要过的日子。</div></div>`);
+    evs.forEach(([y, md, w, s, cls]) => {
+      const el = LM.h(`<div class="ev ${cls || ''}"><div class="y">${y}</div><div class="w"><b>${md} · ${w}</b>${s ? `<span>${s}</span>` : ''}</div></div>`);
+      el.onclick = () => { if (cls === 'now') { S.cur = TODAY; go('today'); } else if (cls === 'next') toast('那天的一页，会提前裱好'); else if (y === '二〇二五') { S.cur = '2025-12-24'; go('today'); } };
+      box.appendChild(el);
+    });
+    main.appendChild(box);
+  }
+
+  function renderLock(c) {
+    const e = D[1];
+    const el = LM.h(`<div class="lock damask">
+      <div class="clk"><div class="d">11月21日 星期六</div><div class="t">7:30</div></div>
+      <div class="vw">相伴第${cnNum(LM.together(TODAY))}日</div><div class="hang"><figure class="mount"><div class="inner"><img class="${e.ratio < 1 ? 'port' : ''}" src="${e.img}" alt=""></div></figure></div>
+      <button class="noti"><div class="ic"><i>浩</i></div><div class="b"><div class="h">Love Minnie<span>现在</span></div><div class="m">今日一页，已裱好。</div></div></button></div>`);
+    el.querySelector('.noti').onclick = () => { S.cur = TODAY; go('today'); };
+    c.appendChild(el);
+  }
+
+  render();
+}
+function mix(a, b, t) {
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v * (1 - t) + y[i] * t).toString(16).padStart(2, '0')).join('');
+}
+
+mountPhone('p-today', 'today');
+mountPhone('p-lock', 'lock');
+mountPhone('p-edge', 'edge');
+mountPhone('p-mulu', 'mulu');
+mountPhone('p-nianbiao', 'nianbiao');
+
+/* 局部特写：今天这一页的题款，放大 2 倍 */
+const z = document.getElementById('zoom');
+z.appendChild(LM.h(`<div style="background:var(--juan);width:420px;height:460px;display:flex;flex-direction:row-reverse;gap:26px;padding:30px 36px;box-shadow:0 30px 60px -30px rgba(0,0,0,.7)">
+  <div class="col" style="font:400 40px/1.1 var(--kai);letter-spacing:.06em;color:var(--ink)">${T.line}</div>
+  <div class="col" style="font:400 22px/1.4 var(--kai);letter-spacing:.2em;color:#5E554A">${cnDate(T.date)}</div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:14px;margin-left:auto;justify-content:flex-end">
+    <span class="col" style="font:400 26px/1 var(--kai);letter-spacing:.3em;color:var(--ink)">浩 题</span>
+    <i class="seal" style="width:58px;height:58px;font-size:34px">浩</i></div></div>`));
+</script>
+</body>
+</html>

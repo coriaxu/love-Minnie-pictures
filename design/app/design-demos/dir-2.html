@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>一画一屏 · Love Minnie App 方向二</title>
+<link rel="stylesheet" href="../../../fonts/wenkai/lxgwwenkaiscreen.css">
+<style>
+:root{
+  --bg:#0E0D0C; --fg:#F2EEE8; --dim:#9C958C; --line:rgba(255,255,255,.12);
+  --kai:'LXGW WenKai Screen','Kaiti SC','STKaiti',serif;
+  --sys:-apple-system,'SF Pro Display','PingFang SC','Helvetica Neue','Noto Sans SC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{color:var(--fg);font-family:var(--sys);-webkit-font-smoothing:antialiased}
+
+/* ───────── 展示板：主次 ───────── */
+.board{width:1440px;margin:0 auto;padding:72px 72px 80px;position:relative;overflow:hidden}
+.board:before{content:'';position:absolute;inset:-20%;background:var(--glow) center/cover;filter:blur(120px) saturate(1.1);opacity:.32;pointer-events:none}
+.board>*{position:relative}
+.bh{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:44px}
+.bh h1{font:200 64px/1 var(--sys);letter-spacing:-.01em}
+.bh h1 span{font:400 64px/1 var(--kai);margin-left:18px;letter-spacing:.06em}
+.bh small{display:block;font:400 16px/1 var(--kai);color:var(--dim);margin-bottom:18px}
+.bh p{max-width:500px;font:400 19px/1.65 var(--kai);color:#CFC8BE;text-align:right}
+.stage{position:relative;height:1530px}
+.slot{position:absolute}
+.slot .lab{font:400 16px/1.4 var(--kai);color:#CFC8BE;margin-bottom:14px}
+.slot .lab b{display:block;font:400 19px/1.2 var(--kai);color:var(--fg);margin-bottom:6px}
+.sc{transform-origin:top left}
+.s72 .sc{transform:scale(.72)} .s72 .ph{width:300px;height:631px}
+.s100 .ph{width:417px;height:876px}
+.strip-wrap{position:absolute;left:0;right:0;bottom:0}
+.strip-wrap h3{font:400 24px/1.3 var(--kai);margin-bottom:6px}
+.strip-wrap p{font:400 14px/1.6 var(--sys);color:var(--dim);margin-bottom:18px}
+.yearstrip{display:flex;height:120px;gap:1px;border-radius:6px;overflow:hidden}
+.yearstrip i{flex:1;display:block;cursor:pointer;transition:transform .15s}
+.yearstrip i:hover{transform:scaleY(1.08)}
+.yearstrip-axis{display:flex;justify-content:space-between;font:400 12px/1 var(--sys);color:var(--dim);margin-top:10px}
+
+/* ───────── App ───────── */
+.app{position:absolute;inset:0;background:#000;overflow:hidden;color:var(--fg)}
+.feed{position:absolute;inset:0;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none}
+.feed::-webkit-scrollbar{display:none}
+.day{position:relative;height:852px;scroll-snap-align:start;overflow:hidden;cursor:pointer;background:var(--c)}
+.day .blur{position:absolute;inset:-60px;background:var(--img) center/cover;filter:blur(38px) saturate(1.15) brightness(.7);transform:scale(1.15)}
+.day .art{position:absolute;left:0;right:0;top:50%;transform:translateY(-54%);width:100%;display:block;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
+.day.port .art{top:0;transform:none;height:100%;object-fit:cover}
+.day .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0,transparent 18%,transparent 62%,rgba(0,0,0,.55) 100%)}
+.ui{transition:opacity .3s}
+.app.bare .ui{opacity:0;pointer-events:none}
+.top{position:absolute;top:62px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:baseline}
+.top .d{font:200 30px/1 var(--sys);letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.top .n{font:400 13px/1 var(--sys);color:rgba(255,255,255,.75)}
+.cap{position:absolute;left:18px;bottom:112px;max-width:300px;padding:14px 18px 15px;border-radius:22px;
+  background:rgba(20,18,16,.32);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
+  box-shadow:inset 0 0 0 .5px rgba(255,255,255,.22);cursor:pointer}
+.cap .l{font:400 22px/1.3 var(--kai)}
+.cap .m{font:400 12.5px/1 var(--sys);color:rgba(255,255,255,.72);margin-top:8px}
+.more{position:absolute;right:20px;bottom:120px;font:400 12px/1.5 var(--sys);color:rgba(255,255,255,.6);text-align:right}
+.dock{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);display:flex;width:max-content;white-space:nowrap;gap:2px;padding:5px;border-radius:999px;
+  background:rgba(20,18,16,.38);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.2);z-index:10}
+.dock button{all:unset;cursor:pointer;padding:9px 18px;border-radius:999px;font:400 15px/1 var(--kai);color:rgba(255,255,255,.72)}
+.dock button.on{background:rgba(255,255,255,.9);color:#141210}
+.dock button:hover{color:#fff}.dock button.on:hover{color:#141210}
+
+/* 浮起的卡（借原生精修：点开的那一项浮起来） */
+.veil{position:absolute;inset:0;background:rgba(0,0,0,.42);opacity:0;pointer-events:none;transition:opacity .3s;z-index:20}
+.veil.show{opacity:1;pointer-events:auto}
+.card{position:absolute;left:12px;right:12px;bottom:24px;border-radius:30px;background:#F4F0EA;color:#1A1714;padding:22px 22px 18px;z-index:21;
+  box-shadow:0 2px 6px rgba(0,0,0,.18),0 30px 70px rgba(0,0,0,.45);transform:translateY(110%);transition:transform .45s cubic-bezier(.2,.9,.25,1)}
+.card.show{transform:none}
+.card .grab{width:38px;height:5px;border-radius:3px;background:#D3CCC2;margin:-10px auto 14px}
+.card .cl{font:400 28px/1.3 var(--kai)}
+.card .cm{font:400 13px/1.5 var(--sys);color:#7A7268;margin-top:8px}
+.card h4{font:600 11px/1 var(--sys);letter-spacing:.16em;color:#9A9288;margin:20px 0 10px}
+.sw{display:flex;gap:8px}
+.sw i{flex:1;height:44px;border-radius:12px;display:flex;align-items:flex-end;padding:6px 8px;font:500 10px/1 ui-monospace,Menlo,monospace;font-style:normal}
+.ca{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:18px}
+.ca button{all:unset;cursor:pointer;text-align:center;padding:12px 0 10px;border-radius:16px;background:#EAE4DB;font:400 13px/1.2 var(--kai)}
+.ca button svg{display:block;margin:0 auto 6px}
+.ca button:hover{background:#E1D9CD}
+.ca button.on{background:#1A1714;color:#F4F0EA}
+.toast{position:absolute;left:50%;top:70px;transform:translateX(-50%);background:rgba(244,240,234,.95);color:#1A1714;font:400 14px/1 var(--kai);padding:11px 18px;border-radius:999px;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none;z-index:30}
+.toast.show{opacity:1}
+
+/* 颜色 */
+.pane{position:absolute;inset:0;padding:62px 0 0;background:#0F0E0D;overflow-y:auto;scrollbar-width:none}
+.pane::-webkit-scrollbar{display:none}
+.pv{margin:6px 16px 0;height:176px;border-radius:24px;overflow:hidden;position:relative;cursor:pointer;background:var(--c)}
+.pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pv .g{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.6))}
+.pv .t{position:absolute;left:16px;bottom:13px;right:16px;display:flex;justify-content:space-between;align-items:baseline}
+.pv .t b{font:400 19px/1.2 var(--kai);font-weight:400}
+.pv .t span{font:300 13px/1 var(--sys);color:rgba(255,255,255,.8)}
+.ch{padding:22px 22px 4px;display:flex;justify-content:space-between;align-items:baseline}
+.ch b{font:400 24px/1 var(--kai);font-weight:400}
+.ch span{font:300 13px/1 var(--sys);color:var(--dim)}
+.mrow{display:flex;align-items:center;gap:10px;padding:0 18px 0 22px;height:40px}
+.mrow .ml{width:40px;white-space:nowrap;font:400 13px/1 var(--kai);color:var(--dim);flex:none}
+.mrow .bars{flex:1;display:grid;grid-template-columns:repeat(31,1fr);gap:1.5px;height:30px}
+.mrow .bars i{display:block;border-radius:2px;cursor:pointer;transition:transform .12s}
+.mrow .bars i:hover{transform:scaleY(1.18)}
+.mrow .bars i.sel{outline:1.5px solid #fff;outline-offset:1px}
+.mrow .bars i.empty{background:rgba(255,255,255,.05);cursor:default}
+
+/* 日子 */
+.days{position:absolute;inset:0;background:radial-gradient(120% 70% at 50% 0%,var(--c) 0,#0F0E0D 70%);padding:96px 26px 0}
+.days .k{font:400 15px/1 var(--kai);color:rgba(255,255,255,.72)}
+.days .big{font:100 128px/1 var(--sys);letter-spacing:-.04em;margin:10px 0 0;font-variant-numeric:tabular-nums}
+.days .big small{font:400 22px/1 var(--kai);letter-spacing:0;margin-left:6px}
+.days .sub{font:300 14px/1.6 var(--sys);color:rgba(255,255,255,.66);margin-top:12px}
+.years{display:flex;gap:4px;margin:30px 0 8px;height:40px;align-items:flex-end}
+.years i{flex:1;background:rgba(255,255,255,.22);border-radius:2px;height:100%}
+.years i:last-child{background:#fff;height:100%;opacity:.95;background:linear-gradient(#fff 0,#fff 89%,transparent 89%)}
+.yax{display:flex;justify-content:space-between;font:300 11px/1 var(--sys);color:var(--dim)}
+.nx{margin-top:34px;border-top:1px solid var(--line)}
+.nx button{all:unset;cursor:pointer;display:flex;align-items:baseline;width:100%;padding:17px 0;border-bottom:1px solid var(--line)}
+.nx button b{font:200 34px/1 var(--sys);width:78px;font-variant-numeric:tabular-nums}
+.nx button span{flex:1;font:400 17px/1.3 var(--kai)}
+.nx button em{font:300 13px/1 var(--sys);font-style:normal;color:var(--dim)}
+.nx button:first-child b{font-weight:300}
+
+/* 锁屏 */
+.lock{position:absolute;inset:0;background:var(--c);overflow:hidden}
+.lock .blur{position:absolute;inset:-60px;background:var(--img) center/cover;filter:blur(30px) brightness(.75);transform:scale(1.2)}
+.lock .art{position:absolute;left:0;width:100%;top:50%;transform:translateY(-36%);display:block}
+.lock .clk{position:absolute;top:84px;left:0;right:0;text-align:center;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.25)}
+.lock .clk .inl{font:500 15px/1 var(--sys);opacity:.95}
+.lock .clk .inl em{font:400 15px/1 var(--kai);font-style:normal}
+.lock .clk .t{font:200 104px/1 var(--sys);letter-spacing:-.03em;margin-top:4px}
+.lock .wd{position:absolute;top:236px;left:50%;transform:translateX(-50%);display:flex;gap:10px}
+.lock .wd div{white-space:nowrap;border-radius:18px;background:rgba(255,255,255,.16);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:10px 14px;color:#fff;font:400 12px/1.35 var(--sys)}
+.lock .wd b{display:block;font:300 24px/1 var(--sys)}
+.noti{all:unset;cursor:pointer;position:absolute;left:12px;right:12px;bottom:104px;border-radius:22px;background:rgba(30,26,22,.42);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);color:#fff;padding:14px 16px;display:flex;gap:12px;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.2)}
+.noti img{width:40px;height:40px;border-radius:10px;object-fit:cover;flex:none}
+.noti .h{display:flex;justify-content:space-between;font:600 14px/1 var(--sys);width:100%}
+.noti .h span{font-weight:400;opacity:.7;font-size:13px}
+.noti .m{font:400 15px/1.4 var(--sys);margin-top:5px}
+.noti .b{flex:1}
+</style>
+</head>
+<body>
+<script src="_data.js"></script>
+<script src="_frame.js"></script>
+
+<div class="board" id="board">
+  <div class="bh">
+    <div><small>Love Minnie App 方向二</small><h1>一画一屏<span></span></h1></div>
+    <p>界面让给画。每天一屏，往上滑是昨天；字只在左下角一枚玻璃里。底色从每一幅画里取。</p>
+  </div>
+  <div class="stage">
+    <div class="slot s100" style="left:0;top:0" id="p-today"><div class="lab"><b>今天</b>画铺满屏，往上滑是前一天，点一下藏起所有字</div></div>
+    <div class="slot s72" style="left:480px;top:40px" id="p-colors"><div class="lab"><b>往日：这一年的颜色</b>一天一根色条，点一根就是那天</div></div>
+    <div class="slot s72" style="left:836px;top:120px" id="p-lock"><div class="lab"><b>锁屏</b>今天的画自动换成壁纸</div></div>
+    <div class="slot s72" style="left:480px;top:760px" id="p-card"><div class="lab"><b>看一封</b>点左下角那枚玻璃，浮起一张卡</div></div>
+    <div class="slot s72" style="left:836px;top:840px" id="p-days"><div class="lab"><b>日子</b>一个大数，下面是下一个要过的日子</div></div>
+    <div class="slot" style="left:0;top:960px;width:417px">
+      <div class="strip-wrap" style="position:static">
+        <h3>333 天，333 种颜色</h3>
+        <p>每一幅画算出一个平均色，从 2025 年平安夜排到今天。这张图会跟着画信一起长。</p>
+        <div class="yearstrip" id="strip" style="height:220px"></div>
+        <div class="yearstrip-axis"><span>2025.12.24</span><span>2026.11.21</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const D = LM.data, TODAY = LM.today, T = LM.byDate(TODAY);
+const ESC = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MCN = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+document.getElementById('board').style.setProperty('--glow', `url('${T.img}')`);
+const ICON = {
+  save: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10 3v10M6 9l4 4 4-4M4 16h12"/></svg>',
+  wall: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5" y="2.5" width="10" height="15" rx="2.5"/><path d="M5 13l3-3 3 3 2-2 2 2"/></svg>',
+  heart: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10 16.5s-6-3.6-6-8A3.3 3.3 0 0110 6.6 3.3 3.3 0 0116 8.5c0 4.4-6 8-6 8z"/></svg>',
+  turn: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.5" y="6" width="15" height="9" rx="2"/><path d="M7 3.5h6"/></svg>',
+};
+
+function mountPhone(slotId, initial) {
+  const slot = document.getElementById(slotId);
+  const f = iosFrame({ dark: true, time: '7:30', battery: 82, full: true, bg: '#000' });
+  const sc = document.createElement('div'); sc.className = 'sc'; sc.appendChild(f.el);
+  const ph = document.createElement('div'); ph.className = 'ph'; ph.appendChild(sc); slot.appendChild(ph);
+  const S = { screen: initial === 'card' ? 'today' : initial, card: initial === 'card', cur: TODAY, sel: TODAY, liked: false };
+
+  const go = s => { S.screen = s; S.card = false; render(); };
+  function render() {
+    const c = f.content; c.innerHTML = '';
+    if (S.screen === 'lock') return renderLock(c);
+    const app = LM.h(`<div class="app"></div>`); c.appendChild(app);
+    if (S.screen === 'today') renderFeed(app);
+    if (S.screen === 'colors') renderColors(app);
+    if (S.screen === 'days') renderDays(app);
+    const dock = LM.h(`<nav class="dock ui"><button data-t="today">今天</button><button data-t="colors">颜色</button><button data-t="days">日子</button></nav>`);
+    dock.querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.t === S.screen); b.onclick = e => { e.stopPropagation(); if (b.dataset.t === 'today') S.cur = TODAY; go(b.dataset.t); }; });
+    app.appendChild(dock);
+    app.appendChild(LM.h(`<div class="toast"></div>`));
+  }
+  function toast(m) { const t = f.content.querySelector('.toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1700); }
+
+  function renderFeed(app) {
+    const feed = LM.h(`<div class="feed"></div>`);
+    const i0 = D.findIndex(e => e.date === S.cur);
+    const list = D.slice(Math.max(0, i0), i0 + 14);
+    list.forEach(e => {
+      const port = e.ratio < 1;
+      const d = LM.h(`<section class="day${port ? ' port' : ''}" style="--c:${e.color};--img:url('${e.img}')">
+        <div class="blur"></div><img class="art" src="${e.img}" alt="" loading="lazy"><div class="shade"></div>
+        <div class="top ui"><span class="d">${LM.md(e.date)}</span><span class="n">${e.date === TODAY ? '今天 · ' : ''}第 ${LM.nth(e.date)} 封</span></div>
+        <div class="cap ui"><div class="l">${ESC(e.line || '这一封只有画')}</div><div class="m">${LM.week(e.date)} · 在一起第 ${LM.together(e.date)} 天</div></div>
+        ${e.date === S.cur && e.date === TODAY ? '<div class="more ui">往上滑<br>是昨天</div>' : ''}
+      </section>`);
+      d.onclick = () => app.classList.toggle('bare');
+      d.querySelector('.cap').onclick = ev => { ev.stopPropagation(); openCard(app, e); };
+      feed.appendChild(d);
+    });
+    app.appendChild(feed);
+    app.appendChild(LM.h(`<div class="veil"></div>`));
+    if (S.card) setTimeout(() => openCard(app, list[0], true), 30);
+  }
+
+  function openCard(app, e, instant) {
+    app.querySelector('.card')?.remove();
+    const veil = app.querySelector('.veil');
+    const card = LM.h(`<div class="card"><div class="grab"></div>
+      <div class="cl">${ESC(e.line || '这一封只有画')}</div>
+      <div class="cm">${e.date.replace(/-/g, '.')} · ${LM.week(e.date)} · 第 ${LM.nth(e.date)} 封 · 在一起第 ${LM.together(e.date)} 天</div>
+      <h4>这一幅的颜色</h4>
+      <div class="sw">${e.palette.map(p => `<i style="background:${p};color:${lum(p) > .55 ? '#1A1714' : '#fff'}">${p.toUpperCase()}</i>`).join('')}</div>
+      <div class="ca"><button data-a="save">${ICON.save}存相册</button><button data-a="wall">${ICON.wall}设壁纸</button><button data-a="heart" class="${S.liked ? 'on' : ''}">${ICON.heart}回一颗心</button><button data-a="turn">${ICON.turn}横过来</button></div></div>`);
+    app.appendChild(card);
+    if (instant) { card.style.transition = 'none'; veil.style.transition = 'none'; }
+    requestAnimationFrame(() => { card.classList.add('show'); veil.classList.add('show'); });
+    const close = () => { card.classList.remove('show'); veil.classList.remove('show'); };
+    veil.onclick = close; card.querySelector('.grab').onclick = close;
+    card.querySelectorAll('.ca button').forEach(b => b.onclick = () => {
+      const a = b.dataset.a;
+      if (a === 'save') toast('已存进相册');
+      if (a === 'wall') toast('明早起，锁屏换成这一幅');
+      if (a === 'turn') toast('把手机横过来，画就铺满');
+      if (a === 'heart') { S.liked = !S.liked; b.classList.toggle('on', S.liked); if (S.liked) toast('浩那边收到了一颗心'); }
+    });
+  }
+
+  function renderColors(app) {
+    const pane = LM.h(`<div class="pane"></div>`);
+    const e = LM.byDate(S.sel);
+    const pv = LM.h(`<div class="pv" style="--c:${e.color}"><img src="${e.thumb}" alt=""><div class="g"></div>
+      <div class="t"><b>${ESC(e.line || '这一封只有画')}</b><span>${LM.md(e.date)}</span></div></div>`);
+    pv.onclick = () => { S.cur = e.date; go('today'); };
+    pane.appendChild(pv);
+    pane.appendChild(LM.h(`<div class="ch"><b>这一年的颜色</b><span>${D.length} 天 · 点一根看那天</span></div>`));
+    const months = {};
+    D.forEach(x => { const k = x.date.slice(0, 7); (months[k] = months[k] || {})[+x.date.slice(8)] = x; });
+    Object.keys(months).forEach(k => {
+      const m = +k.slice(5), y = +k.slice(0, 4), dim = new Date(y, m, 0).getDate();
+      const row = LM.h(`<div class="mrow"><span class="ml">${MCN[m - 1]}月</span><div class="bars"></div></div>`);
+      const bars = row.querySelector('.bars');
+      for (let d = 1; d <= 31; d++) {
+        const x = months[k][d];
+        const i = document.createElement('i');
+        if (d > dim) { i.style.visibility = 'hidden'; }
+        else if (!x) i.className = 'empty';
+        else {
+          i.style.background = x.color;
+          if (x.date === S.sel) i.className = 'sel';
+          i.onclick = () => { S.sel = x.date; const st = pane.scrollTop; renderColorsInto(app, st); };
+        }
+        bars.appendChild(i);
+      }
+      pane.appendChild(row);
+    });
+    pane.appendChild(LM.h(`<div style="height:110px"></div>`));
+    app.appendChild(pane);
+    return pane;
+  }
+  function renderColorsInto(app, st) { app.querySelector('.pane').remove(); const p = renderColors(app); p.scrollTop = st; app.appendChild(app.querySelector('.dock')); app.appendChild(app.querySelector('.toast')); }
+
+  function renderDays(app) {
+    const up = LM.upcoming(TODAY);
+    const el = LM.h(`<div class="days" style="--c:${T.color}">
+      <div class="k">在一起</div>
+      <div class="big">${LM.together(TODAY)}<small>天</small></div>
+      <div class="sub">2009 年 12 月 10 日起。第十七个年头，画信 ${D.length} 封。</div>
+      <div class="years">${Array.from({ length: 17 }, () => '<i></i>').join('')}</div>
+      <div class="yax"><span>2009</span><span>2026</span></div>
+      <div class="nx">${up.map(a => `<button><b>${a.days}</b><span>${a.name}${a.md === '09-22' ? '' : ` · 第 ${a.nthYear} 年`}</span><em>${a.date.getMonth() + 1}月${a.date.getDate()}日</em></button>`).join('')}</div>
+    </div>`);
+    el.querySelectorAll('.nx button').forEach((b, i) => b.onclick = () => toast(i === 0 ? '那天的画信，会是特别的一封' : `还有 ${up[i].days} 天`));
+    app.appendChild(el);
+  }
+
+  function renderLock(c) {
+    const e = T;
+    const el = LM.h(`<div class="lock" style="--c:${e.color};--img:url('${e.img}')"><div class="blur"></div><img class="art" src="${e.img}" alt="">
+      <div class="clk"><div class="inl">11月21日 星期六 · <em>${ESC(e.line)}</em></div><div class="t">7:30</div></div>
+      <div class="wd"><div><b>6191</b>在一起的天数</div><div><b>19</b>天后 · 十七年</div></div>
+      <button class="noti"><img src="${e.thumb}" alt=""><div class="b"><div class="h">Love Minnie<span>现在</span></div><div class="m">今天这一幅到了。也已经是你的锁屏。</div></div></button></div>`);
+    el.querySelector('.noti').onclick = () => { S.cur = TODAY; go('today'); };
+    c.appendChild(el);
+  }
+
+  render();
+}
+function lum(h) { const n = parseInt(h.slice(1), 16); return (.299 * (n >> 16) + .587 * (n >> 8 & 255) + .114 * (n & 255)) / 255; }
+
+mountPhone('p-today', 'today');
+mountPhone('p-colors', 'colors');
+mountPhone('p-lock', 'lock');
+mountPhone('p-card', 'card');
+mountPhone('p-days', 'days');
+
+const strip = document.getElementById('strip');
+[...D].reverse().forEach(e => { const i = document.createElement('i'); i.style.background = e.color; i.title = `${e.date} ${e.line}`; strip.appendChild(i); });
+</script>
+</body>
+</html>
