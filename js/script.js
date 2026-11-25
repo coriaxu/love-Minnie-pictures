@@ -16,7 +16,7 @@
 (() => {
     const $ = (id) => document.getElementById(id);
     const params = new URLSearchParams(window.location.search);
-    const { enter, preference } = window.LoveMotion;
+    const { preference = matchMedia('(prefers-reduced-motion: reduce)'), enter = () => {} } = window.LoveMotion || {};
     const reduceMotion = () => preference.matches;
 
     // ============================================================

@@ -35,7 +35,7 @@
     };
 
     const params = new URLSearchParams(window.location.search);
-    const { preference, enter } = window.LoveMotion;
+    const { preference = matchMedia('(prefers-reduced-motion: reduce)'), enter = () => {} } = window.LoveMotion || {};
 
     const today = (() => {
         const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(params.get('date') || '');

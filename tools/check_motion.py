@@ -67,6 +67,15 @@ def check(base):
         expect(page.locator(".timeline-thumb")).to_have_count(0)
         page.set_viewport_size({"width": 1200, "height": 800})
         expect(page.locator(".timeline-thumb.selected")).to_have_attribute("data-date", newest["date"])
+
+        # 动效脚本偶尔断网时，首页和画廊仍应能阅读。
+        page.route("**/js/motion.js*", lambda route: route.abort())
+        page.goto(base + "?" + urlencode({"date": newest["date"]}), wait_until="domcontentloaded")
+        moon = page.locator("#home-moon")
+        expect(moon).to_have_attribute("data-date", newest["date"])
+        moon.click()
+        page.locator("#today-hero-art").click()
+        expect(art).to_have_attribute("data-date", newest["date"])
         assert not errors, errors
         browser.close()
 
@@ -75,4 +84,4 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("url", nargs="?", default="http://127.0.0.1:5177/")
     check(parser.parse_args().url.rstrip("/") + "/")
-    print("通过：手机跟手、取消回位、慢图连续翻页、横竖屏胶卷。")
+    print("通过：手机跟手、取消回位、慢图连续翻页、横竖屏胶卷、动效断网后拆信。")
