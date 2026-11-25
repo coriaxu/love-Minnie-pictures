@@ -137,9 +137,8 @@
     // 状态收纳
     const state = {
         anniversary: null,
-        canvas: null,
-        canvasCtx: null,
-        starfield: null,
+        run: 0,
+        returnFocus: null,
         audioEl: null,
         autoOpenTimer: null,
         cleanupFns: [],
@@ -158,8 +157,6 @@
 
     const prefersReducedMotion = () =>
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
     // 简易种子伪随机（用于历史星图暗背景星海的稳定分布）
     const mulberry32 = (seed) => {
@@ -265,26 +262,22 @@
     };
 
     // 用逻辑像素绘制（setTransform 已经把 DPR 缩放挂上）
-    const renderStarfield = (canvas, ctx, stars, scrollProgress = 1) => {
+    const renderStarfield = (ctx, stars, from, to) => {
         const w = window.innerWidth;
         const h = window.innerHeight;
         const cx = w / 2;
         const cy = h / 2;
         const radius = Math.min(w, h) * 0.42;
 
-        ctx.clearRect(0, 0, w, h);
-
-        // 全局银河淡蓝叠加（冷色基调）
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.2);
-        grad.addColorStop(0, 'rgba(180, 210, 255, 0.08)');
-        grad.addColorStop(1, 'rgba(180, 210, 255, 0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
-
-        // 渐进显示（scrollProgress 0→1 控制可见星数）
-        const visibleCount = Math.floor(stars.length * scrollProgress);
-
-        for (let i = 0; i < visibleCount; i++) {
+        if (from === 0) {
+            ctx.clearRect(0, 0, w, h);
+            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.2);
+            grad.addColorStop(0, 'rgba(180, 210, 255, 0.08)');
+            grad.addColorStop(1, 'rgba(180, 210, 255, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+        }
+        for (let i = from; i < to; i++) {
             const s = stars[i];
             const px = cx + s.x * radius;
             const py = cy + s.y * radius;
@@ -314,43 +307,25 @@
         }
     };
 
-    // DPR 缩放：每次 resize 都重置 transform 再 scale，避免叠加
-    const setupCanvas = () => {
+    // 每颗星只补画一次；调整窗口后按当前进度重画，暂停在最后一帧时也一样。
+    const runStage1_Starfield = ({ keepText = false } = {}) => {
+        document.body.classList.add('d6k-active', 'd6k-stage1-only');
+        const stage = document.createElement('div');
+        stage.id = 'd6k-stage';
         const canvas = document.createElement('canvas');
         canvas.id = 'd6k-canvas';
         const ctx = canvas.getContext('2d');
-
+        const stars = computeStarfield();
+        let count = 0;
         const resize = () => {
-            const dpr = window.devicePixelRatio || 1;
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            canvas.width = w * dpr;
-            canvas.height = h * dpr;
-            canvas.style.width = w + 'px';
-            canvas.style.height = h + 'px';
-            ctx.setTransform(1, 0, 0, 1, 0, 0); // 关键：先 reset 再 scale
-            ctx.scale(dpr, dpr);
+            const dpr = Math.min(devicePixelRatio || 1, 2);
+            canvas.width = Math.round(innerWidth * dpr);
+            canvas.height = Math.round(innerHeight * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            renderStarfield(ctx, stars, 0, count);
         };
         resize();
         window.addEventListener('resize', resize);
-        onCleanup(() => window.removeEventListener('resize', resize));
-
-        return { canvas, ctx };
-    };
-
-    // 跑 stage 1 直到数字 + 副标题完全可见 + 驻留 4.5s 结束。
-    // 返回 { number, subtitle } 让 caller 决定是否淡出（开发模式可保留）。
-    const runStage1_Starfield = async ({ keepText = false } = {}) => {
-        // 接管页面：隐藏玫瑰星云、噪点、鼠标光晕、主页内容
-        document.body.classList.add('d6k-active', 'd6k-stage1-only');
-
-        const stage = document.createElement('div');
-        stage.id = 'd6k-stage';
-
-        const { canvas, ctx } = setupCanvas();
-        state.canvas = canvas;
-        state.canvasCtx = ctx;
-        state.starfield = computeStarfield();
 
         const number = document.createElement('div');
         number.id = 'd6k-number';
@@ -365,51 +340,42 @@
         stage.appendChild(subtitle);
         document.body.appendChild(stage);
 
-        // 渐进绘制：星点从 0 数到 6000
-        const drawDuration = prefersReducedMotion() ? 500 : 2200;
-        const startT = performance.now();
-        await new Promise((resolve) => {
-            const tick = (now) => {
-                const elapsed = now - startT;
-                const p = Math.min(1, elapsed / drawDuration);
-                const eased = 1 - Math.pow(1 - p, 3);
-                renderStarfield(canvas, ctx, state.starfield, eased);
-                if (p < 1) {
-                    requestAnimationFrame(tick);
-                } else {
-                    resolve();
-                }
-            };
-            requestAnimationFrame(tick);
-        });
-
+        const skip = document.createElement('button');
+        skip.type = 'button';
+        skip.className = 'd6k-skip';
+        skip.textContent = '跳到信封';
+        stage.appendChild(skip);
+        skip.focus({ preventScroll: true });
         canvas.classList.add('is-visible');
-        await sleep(250);
-
-        // 数字浮现：CSS opacity transition 2s
-        number.classList.add('is-visible');
-        // 副标题错峰浮现
-        await sleep(600);
-        subtitle.classList.add('is-visible');
-
-        // 等数字浮现完成
-        await sleep(900);
-        // 数字完全可见后短暂停留，让她能认出"6000"和读完"我数过每一天"
-        await sleep(2800);
-
-        if (keepText) {
-            // 测试模式：保留数字 + 副标题，停在驻留状态，等用户主动 cleanup
-            return { number, subtitle };
-        }
-
-        number.style.transition = 'opacity 1s ease';
-        subtitle.style.transition = 'opacity 1s ease';
-        number.style.opacity = '0';
-        subtitle.style.opacity = '0';
-        await sleep(1000);
-        number.remove();
-        subtitle.remove();
-        return { number: null, subtitle: null };
+        return new Promise(resolve => {
+            let frame, timer;
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                cancelAnimationFrame(frame);
+                clearTimeout(timer);
+                window.removeEventListener('resize', resize);
+                resolve();
+            };
+            onCleanup(finish);
+            skip.addEventListener('click', finish, { once: true });
+            const start = performance.now();
+            const draw = now => {
+                const progress = prefersReducedMotion() ? 1 : Math.min(1, (now - start) / 900);
+                const next = Math.floor(stars.length * (1 - (1 - progress) ** 2));
+                renderStarfield(ctx, stars, count, next);
+                count = next;
+                if (progress < 1) {
+                    frame = requestAnimationFrame(draw);
+                    return;
+                }
+                number.classList.add('is-visible');
+                subtitle.classList.add('is-visible');
+                if (!keepText) timer = setTimeout(finish, 1800);
+            };
+            frame = requestAnimationFrame(draw);
+        });
     };
 
     // ============================================================
@@ -439,6 +405,14 @@
         return archiveRequest;
     }
 
+    function setFrameImage(img, item) {
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.alt = item.loveLetter || item.date;
+        img.addEventListener('error', () => { img.src = `images/${item.filename}`; }, { once: true });
+        img.src = `images/thumbs/${item.filename}`;
+    }
+
     const loadMemoryRibbon = async (track) => {
         try {
             const data = await anniversaryArtworks();
@@ -449,9 +423,7 @@
                 const frame = document.createElement('figure');
                 frame.className = 'd6k-memory-frame';
                 const img = document.createElement('img');
-                img.loading = 'lazy';
-                img.alt = item.loveLetter || item.date || 'Love Minnie memory';
-                img.src = `images/${item.filename}`;
+                setFrameImage(img, item);
                 frame.appendChild(img);
                 fragment.appendChild(frame);
             }
@@ -567,22 +539,8 @@
             runStage3_LetterOpen();
         };
         letterBtn.addEventListener('click', openLetter);
-        letterBtn.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                openLetter();
-            }
-        });
-
-        // 触发淡入
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => overlay.classList.add('is-visible'));
-        });
-
-        setTimeout(() => {
-            overlay.classList.add('is-letter-ready');
-        }, 1800);
-
+        letterBtn.focus({ preventScroll: true });
+        requestAnimationFrame(() => overlay.classList.add('is-visible', 'is-letter-ready'));
         state.autoOpenTimer = setTimeout(openLetter, 9500);
     };
 
@@ -607,7 +565,7 @@
         }
 
         // 5. 等淡出完成
-        await sleep(prefersReducedMotion() ? 350 : 1000);
+        await Promise.allSettled((stage?.getAnimations() || []).map(a => a.finished));
 
         if (stage) stage.remove();
     };
@@ -626,7 +584,16 @@
 
     const runStage3_LetterOpen = () => {
         const overlay = document.createElement('div');
+        document.querySelector('#d6k-letter-overlay:not(.is-open)')?.remove();
         overlay.id = 'd6k-letter-overlay';
+        clearTimeout(state.autoOpenTimer);
+        state.autoOpenTimer = null;
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-label', '6000 天情书');
+        const envelope = document.getElementById('d6k-envelope');
+        const stage2 = document.getElementById('d6k-stage2-overlay');
+        if (stage2) stage2.inert = true;
 
         // 历史星图背景 Canvas
         const skyCanvas = document.createElement('canvas');
@@ -638,7 +605,9 @@
         toggleBtn.id = 'd6k-letter-toggle';
         toggleBtn.setAttribute('aria-label', '折起信纸，只看星空');
         toggleBtn.title = '折起信纸，只看星空';
-        toggleBtn.textContent = '✦';
+        toggleBtn.innerHTML = '<span aria-hidden="true">✦</span><span aria-hidden="true">✉</span>';
+        toggleBtn.setAttribute('aria-controls', 'd6k-letter');
+        toggleBtn.setAttribute('aria-expanded', 'true');
         toggleBtn.type = 'button';
 
         // 关闭按钮
@@ -653,7 +622,7 @@
         letter.setAttribute('role', 'document');
 
         // 情书每一行
-        const lineEls = LETTER_LINES.map(text => {
+        LETTER_LINES.forEach((text, index) => {
             const p = document.createElement('p');
             p.className = 'd6k-letter-line';
             if (text === '') {
@@ -665,7 +634,7 @@
                 p.textContent = text;
             }
             letter.appendChild(p);
-            return p;
+            p.style.setProperty('--line-order', Math.min(index, 4));
         });
 
         // 画卷收束容器（情书末尾）
@@ -683,29 +652,40 @@
         document.body.appendChild(overlay);
 
         // 触发淡入
-        requestAnimationFrame(() => overlay.classList.add('is-open'));
+        overlay.classList.add('is-open');
+        closeBtn.focus({ preventScroll: true });
 
         // 渲染历史星图（先用占位伪随机分布，A3 阶段替换）
         renderHistoricalSky(skyCanvas);
-        const onResize = () => renderHistoricalSky(skyCanvas);
+        let skyFrame = 0;
+        const onResize = () => {
+            if (skyFrame) return;
+            skyFrame = requestAnimationFrame(() => {
+                skyFrame = 0;
+                renderHistoricalSky(skyCanvas);
+            });
+        };
         window.addEventListener('resize', onResize);
-        onCleanup(() => window.removeEventListener('resize', onResize));
+        const detachSky = () => {
+            cancelAnimationFrame(skyFrame);
+            window.removeEventListener('resize', onResize);
+        };
 
         // 启动音频
         playMusic();
 
-        // 逐行浮现情书
-        revealLetterLines(lineEls).then(() => {
-            // 情书读完后展开画卷
-            return loadAndRenderFilmstrip(filmstrip.querySelector('#d6k-filmstrip-track'));
-        }).then(() => {
+        // 整封信立即可读，画卷在缩略图目录返回后接上。
+        const track = filmstrip.querySelector('#d6k-filmstrip-track');
+        loadAndRenderFilmstrip(track).then(() => {
+            filmstrip.hidden = !track.childElementCount;
             filmstrip.classList.add('is-visible');
         });
 
         // 折起/展开交互
         toggleBtn.addEventListener('click', () => {
             const hidden = overlay.classList.toggle('is-letter-hidden');
-            toggleBtn.textContent = hidden ? '✉' : '✦';
+            letter.inert = hidden;
+            toggleBtn.setAttribute('aria-expanded', String(!hidden));
             toggleBtn.setAttribute('aria-label',
                 hidden ? '展开情书' : '折起信纸，只看星空');
             toggleBtn.title = hidden ? '展开情书' : '折起信纸，只看星空';
@@ -713,11 +693,29 @@
 
         // 关闭交互
         closeBtn.addEventListener('click', closeLetter);
+        overlay.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                e.stopPropagation();
+                closeLetter();
+            } else if (e.key === 'Tab') {
+                // 信纸只有这两个操作，键盘焦点留在打开的信里。
+                e.preventDefault();
+                (document.activeElement === closeBtn ? toggleBtn : closeBtn).focus();
+            }
+        });
+        onCleanup(detachSky);
 
         function closeLetter() {
+            if (overlay.inert) return;
+            detachSky();
+            state.cleanupFns = state.cleanupFns.filter(fn => fn !== detachSky);
             overlay.classList.remove('is-open');
+            if (stage2) stage2.inert = false;
+            envelopeOpened = false;
+            envelope?.focus({ preventScroll: true });
+            overlay.inert = true;
             stopMusic();
-            setTimeout(() => overlay.remove(), 1100);
+            Promise.allSettled(overlay.getAnimations().map(a => a.finished)).then(() => overlay.remove());
         }
     };
 
@@ -728,7 +726,7 @@
      */
     const renderHistoricalSky = (canvas) => {
         const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         const w = window.innerWidth;
         const h = window.innerHeight;
         canvas.width = w * dpr;
@@ -844,16 +842,6 @@
         );
     };
 
-    const revealLetterLines = async (lineEls) => {
-        const baseDelay = prefersReducedMotion() ? 60 : 320;
-        for (const el of lineEls) {
-            el.classList.add('is-visible');
-            await sleep(el.classList.contains('is-blank') ? baseDelay * 0.4 : baseDelay);
-        }
-        // 让最后一行驻留一会儿再展开画卷
-        await sleep(prefersReducedMotion() ? 300 : 800);
-    };
-
     const loadAndRenderFilmstrip = async (track) => {
         try {
             const data = await anniversaryArtworks();
@@ -867,9 +855,7 @@
                 const frame = document.createElement('div');
                 frame.className = 'd6k-filmstrip-frame';
                 const img = document.createElement('img');
-                img.loading = 'lazy';
-                img.alt = item.title || item.date || '';
-                img.src = `images/${item.filename}`;
+                setFrameImage(img, item);
                 frame.appendChild(img);
                 fragment.appendChild(frame);
             }
@@ -901,6 +887,7 @@
             const start = performance.now();
             const fade = (now) => {
                 const p = Math.min(1, (now - start) / fadeMs);
+                if (state.audioEl !== audio) return;
                 audio.volume = target * p;
                 if (p < 1) requestAnimationFrame(fade);
             };
@@ -914,6 +901,7 @@
     const stopMusic = () => {
         if (!state.audioEl) return;
         const audio = state.audioEl;
+        state.audioEl = null;
         const start = performance.now();
         const startVol = audio.volume;
         const fade = (now) => {
@@ -924,7 +912,6 @@
             } else {
                 audio.pause();
                 audio.remove();
-                state.audioEl = null;
             }
         };
         requestAnimationFrame(fade);
@@ -934,23 +921,36 @@
     // 入口与清理
     // ============================================================
 
+    function begin() {
+        state.returnFocus = document.activeElement;
+        document.body.dataset.d6kRunning = '1';
+        for (const el of document.querySelectorAll('body > .home, body > .lm-header, body > main, body > nav, #detail-modal, #season-sheet')) {
+            if (!el.inert) {
+                el.inert = true;
+                onCleanup(() => { el.inert = false; });
+            }
+        }
+        return ++state.run;
+    }
+
     const start = async (anniversary) => {
         if (document.body.dataset.d6kRunning === '1') {
             console.warn('Day6000: 已经在运行中，忽略重复触发');
             return;
         }
-        document.body.dataset.d6kRunning = '1';
+        const run = begin();
         state.anniversary = anniversary;
 
         try {
             await runStage1_Starfield();
-            await runTransition_StageOut();
+            if (run === state.run) await runTransition_StageOut();
         } catch (e) {
             console.error('Day6000: 叙事流出错', e);
         }
     };
 
     const cleanup = () => {
+        state.run++;
         if (state.autoOpenTimer) {
             clearTimeout(state.autoOpenTimer);
             state.autoOpenTimer = null;
@@ -968,18 +968,24 @@
         stopMusic();
         state.cleanupFns.forEach(fn => { try { fn(); } catch {} });
         state.cleanupFns = [];
+        if (state.returnFocus?.isConnected) state.returnFocus.focus({ preventScroll: true });
+        state.returnFocus = null;
     };
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && document.body.dataset.d6kRunning === '1') cleanup();
+    });
+
 
     // 测试单个阶段（开发用，独立短路，不连贯走完整流）
     const testStage = async (n) => {
         cleanup();
-        await sleep(80); // 让 DOM 与样式过渡完成
-        document.body.dataset.d6kRunning = '1';
+        const run = begin();
 
         if (n === 1) {
             // 测试 stage 1：保留数字 + 副标题在画面上，让用户看清完整状态。
             // 用户看完后点 "清空" 退出。
             await runStage1_Starfield({ keepText: true });
+            if (run === state.run) await runTransition_StageOut();
         } else if (n === 2) {
             // 直接进入 stage2 状态：变形主页 + 信封浮现，跳过星空
             runStage2_HeroAndEnvelope();

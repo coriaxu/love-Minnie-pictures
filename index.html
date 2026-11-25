@@ -18,8 +18,9 @@
     <!-- 字体全部本地托管：手机不挂 VPN 也能打开。Bodoni Moda 只给数字，@font-face 在 day-6000.css -->
     <link rel="preload" href="fonts/memorial/bodoni-moda-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
-    <link rel="stylesheet" href="css/home.css?v=2.3">
-    <link rel="stylesheet" href="css/day-6000.css?v=12.1">
+    <link rel="stylesheet" href="css/motion.css?v=1">
+    <link rel="stylesheet" href="css/home.css?v=2.4">
+    <link rel="stylesheet" href="css/day-6000.css?v=12.2">
     <link rel="prefetch" href="gallery.html">
 </head>
 
@@ -27,8 +28,6 @@
 
     <!-- 背景零星的星；向日葵星盘画在 .home-disc 里，跟着版面走 -->
     <canvas class="home-sky" id="home-sky" aria-hidden="true"></canvas>
-    <!-- 夜空里会闪的几颗星和偶尔的一颗流星（减少动态效果时不出现） -->
-    <div class="home-night" id="home-night" aria-hidden="true"></div>
 
     <div class="home">
         <header class="home-top">
@@ -61,10 +60,9 @@
             <!-- 中：星盘 + 月轮 + 月洞窗 -->
             <div class="home-stage">
                 <div class="home-disc" id="home-disc">
-                    <!-- 向日葵花盘极慢地转；纪念日和生日那几颗星在上面轻轻闪 -->
+                    <!-- 每一天是一颗星，生日与纪念日另有颜色 -->
                     <div class="home-spin" aria-hidden="true">
                         <canvas class="home-disc-canvas" id="home-disc-canvas"></canvas>
-                        <div class="home-glints" id="home-glints"></div>
                     </div>
                     <svg class="home-orbit" viewBox="0 0 600 600" aria-hidden="true" focusable="false">
                         <defs>
@@ -78,7 +76,9 @@
                     <span class="home-moon-halo" aria-hidden="true"></span>
                     <!-- 月洞窗：隔着窗纸看见那天的画；点一下拆开，按住等雾散开 -->
                     <a class="home-moon" id="home-moon" href="gallery.html" aria-label="拆开今天的画信">
-                        <span class="home-moon-art" id="home-moon-art"></span>
+                        <span class="home-moon-art"></span>
+                        <span class="home-moon-art"></span>
+                        <span class="home-moon-clear"></span>
                         <span class="home-moon-paper" aria-hidden="true"></span>
                     </a>
                 </div>
@@ -139,17 +139,15 @@
         </footer>
     </div>
 
-    <!-- 拆开到底时铺满屏幕的那幅画：和放大到底的月洞窗分毫不差；换页时它落进画廊的画框（跨页 View Transition） -->
-    <div class="home-reveal" id="home-reveal" aria-hidden="true"></div>
-
     <noscript>
         <p class="home-noscript"><a href="gallery.html">打开画廊，看看今天的画与话。</a></p>
     </noscript>
 
     <script src="js/typeset.js?v=1.1"></script>
-    <script src="js/home.js?v=2.3"></script>
-    <script src="js/day-6000.js?v=12.1"></script>
-    <script src="js/anniversary-effects.js?v=11.7"></script>
+    <script src="js/motion.js?v=1"></script>
+    <script src="js/home.js?v=2.4"></script>
+    <script src="js/day-6000.js?v=12.2"></script>
+    <script src="js/anniversary-effects.js?v=11.8"></script>
 </body>
 
 </html>

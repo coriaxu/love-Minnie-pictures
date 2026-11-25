@@ -19,81 +19,13 @@
     <!-- 字体全部本地托管：手机不挂 VPN 也能打开。Bodoni Moda / Pinyon Script 的 @font-face 在 day-6000.css -->
     <link rel="preload" href="fonts/memorial/bodoni-moda-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="fonts/wenkai/lxgwwenkaiscreen.css">
-    <link rel="stylesheet" href="css/style.css?v=12.6">
-    <link rel="stylesheet" href="css/day-6000.css?v=12.1">
+    <link rel="stylesheet" href="css/motion.css?v=1">
+    <link rel="stylesheet" href="css/style.css?v=12.7">
+    <link rel="stylesheet" href="css/day-6000.css?v=12.2">
     <!-- 画廊直接读取正式目录；从首页拆信时沿用刚读到的目录完成转场首帧。 -->
     <link id="gallery-catalog" rel="alternate" type="application/json" href="data.json">
-    <script src="js/script.js?v=13.6" defer blocking="render"></script>
-    <script>
-        // 从首页拆开进来：铺满屏幕的那幅画落进画框（跨页 View Transition；不支持的浏览器照常打开）。
-        // 首页把满屏时这幅画的位置大小记在 sessionStorage['lm-reveal']，这里让画框里的画
-        // 从那个位置、那个大小连续缩回来，一幅画到底，不叠影。
-        addEventListener('pagereveal', function (e) {
-            var vt = e.viewTransition;
-            var from = null;
-            try {
-                from = JSON.parse(sessionStorage.getItem('lm-reveal'));
-                sessionStorage.removeItem('lm-reveal');
-            } catch (err) { /* 读不到就照常淡入 */ }
-            if (!vt) return;
-            var art = document.querySelector('.detail-modal.open #detail-image') ||
-                document.querySelector('.today-hero:not([hidden]) #today-hero-img');
-            if (!art) return;
-            // 信纸单独成层、压在画上面：画缩回画框的一路上不会把信盖住
-            var letter = art.id === 'today-hero-img' ? document.querySelector('.hero-letter-col') : null;
-            var root = document.documentElement;
-            art.style.viewTransitionName = 'lm-art';
-            if (letter) {
-                letter.style.viewTransitionName = 'lm-letter';
-                document.getElementById('today-hero').classList.add('is-arriving');
-            }
-            root.classList.add('vt-arrive'); // 画由转场送进来，不再自己揭幕
-            vt.finished.finally(function () {
-                art.style.viewTransitionName = '';
-                if (letter) letter.style.viewTransitionName = '';
-                root.classList.remove('vt-arrive');
-            });
-            if (!from || Date.now() - from.t > 10000 || from.vw !== innerWidth || from.vh !== innerHeight) return;
-            vt.ready.then(function () {
-                var r = art.getBoundingClientRect();
-                var cs = getComputedStyle(art);
-                var px = function (p) { return parseFloat(cs[p]) || 0; };
-                var left = px('paddingLeft') + px('borderLeftWidth');
-                var top = px('paddingTop') + px('borderTopWidth');
-                var inner = r.width - left - px('paddingRight') - px('borderRightWidth');
-                if (!inner) return;
-                var innerH = r.height - top - px('paddingBottom') - px('borderBottomWidth');
-                var k = from.bw / inner;
-                var pct = function (v, base) { return (v / base * 100).toFixed(3) + '%'; };
-                var timing = { duration: 900, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'both' };
-                var ax = left / r.width, ay = top / r.height, aw = inner / r.width, ah = innerH / r.height;
-                try {
-                    // 画框里的画：从满屏时的位置大小缩回画框
-                    root.animate([
-                        {
-                            left: pct(from.bx - left * k, from.vw), top: pct(from.by - top * k, from.vh),
-                            width: pct(r.width * k, from.vw), height: pct(r.height * k, from.vh)
-                        },
-                        { left: '0%', top: '0%', width: '100%', height: '100%' }
-                    ], Object.assign({ pseudoElement: '::view-transition-new(lm-art)' }, timing));
-                    // 首页留下的满屏快照（清晰）：按同一个比例跟着缩，盖在上面，前半程不糊；末段淡出交给画框里的画
-                    root.animate([
-                        { left: '0%', top: '0%', width: '100%', height: '100%' },
-                        {
-                            left: ((ax - from.bx / from.bw * aw) * 100).toFixed(3) + '%',
-                            top: ((ay - from.by / from.bh * ah) * 100).toFixed(3) + '%',
-                            width: (from.vw / from.bw * aw * 100).toFixed(3) + '%',
-                            height: (from.vh / from.bh * ah * 100).toFixed(3) + '%'
-                        }
-                    ], Object.assign({ pseudoElement: '::view-transition-old(lm-art)' }, timing));
-                    root.classList.add('vt-reveal');
-                } catch (err) {
-                    return; // 浏览器不支持给转场伪元素做动画：退回普通的放大淡入
-                }
-                vt.finished.finally(function () { root.classList.remove('vt-reveal'); });
-            });
-        });
-    </script>
+    <script src="js/motion.js?v=1" defer></script>
+    <script src="js/script.js?v=13.7" defer blocking="render"></script>
 </head>
 
 <body class="gallery-page" data-view="today">
@@ -123,7 +55,6 @@
     <div class="ambient-light"></div>
     <div class="noise-overlay"></div>
     <div class="bg-blur" id="bg-blur"></div>
-    <div class="cursor-torch" id="torch"></div>
 
     <!-- ===================== 顶栏 ===================== -->
     <header class="lm-header">
@@ -143,14 +74,14 @@
 
     <main class="lm-main">
         <!-- ===================== 今日 ===================== -->
-        <div id="catalog-error" class="empty-state" role="status" hidden>画信目录暂时没打开。 <button type="button" id="catalog-retry" class="retry-link">重新加载目录</button></div>
+        <div id="catalog-error" class="empty-state" role="status" hidden><span id="catalog-message">正在翻开画信…</span> <button type="button" id="catalog-retry" class="retry-link">重新加载目录</button></div>
         <section class="lm-view view-today" id="view-today" aria-label="今日画信">
             <!-- 今日画信：细金框的画 + 旁边一封信（邮戳、落款、印章），画下是这个月的月相尺；
                  窄屏画在上、信在下。横图竖图同一套版式，只按画的比例分配空间 -->
             <section id="today-hero" class="today-hero" hidden aria-label="今日画信">
                 <div class="hero-stage">
                     <button type="button" class="hero-art" id="today-hero-art" aria-label="看大图">
-                        <img id="today-hero-img" src="" alt="今日画作" fetchpriority="high">
+                        <img id="today-hero-img" alt="今日画作" fetchpriority="high">
                     </button>
                     <div class="hero-letter-col">
                         <article class="hero-letter">
@@ -284,7 +215,7 @@
 
     <!-- ===================== 四季 ===================== -->
     <div class="season-overlay" id="season-overlay"></div>
-    <div class="season-sheet" id="season-sheet" role="dialog" aria-modal="true" aria-labelledby="season-title" aria-hidden="true">
+    <div class="season-sheet" id="season-sheet" role="dialog" aria-modal="true" aria-labelledby="season-title" aria-hidden="true" inert>
         <div class="season-head">
             <div>
                 <h2 class="season-title" id="season-title">四季</h2>
@@ -298,14 +229,16 @@
     </div>
 
     <!-- ===================== 看画 ===================== -->
-    <div id="detail-modal" class="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
+    <div id="detail-modal" class="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true" inert>
         <!-- 关闭键挂在弹窗最外层：画和展签都有入场位移，挂在里面会被 transform 带着跑 -->
         <button id="detail-close" class="detail-close" type="button" aria-label="关闭">
             <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
         </button>
         <div class="detail-dialog">
             <div class="detail-media">
-                <img id="detail-image" src="" alt="">
+                <img id="detail-image" alt="" draggable="false">
+                <img id="detail-neighbour" aria-hidden="true" alt="" draggable="false" hidden>
+                <span class="detail-loading" id="detail-loading" role="status" hidden>正在展画…</span>
                 <button type="button" id="detail-retry" class="retry-link" hidden>重新加载图片</button>
                 <p class="detail-hint" id="detail-hint" aria-hidden="true">左右滑动，看前后几天</p>
             </div>
@@ -350,9 +283,9 @@
 
     <!-- ===================== SCRIPTS ===================== -->
     <script src="js/typeset.js?v=1.1"></script>
-    <script src="js/day-6000.js?v=12.1"></script>
+    <script src="js/day-6000.js?v=12.2"></script>
     <!-- Anniversary Effects Engine -->
-    <script src="js/anniversary-effects.js?v=11.7"></script>
+    <script src="js/anniversary-effects.js?v=11.8"></script>
 </body>
 
 </html>

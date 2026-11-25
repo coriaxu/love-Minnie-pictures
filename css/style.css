@@ -29,12 +29,6 @@
     /* Ambient + Torch：紫夜为主，季节色只淡淡一层 */
     --ambient-core: rgba(120, 72, 170, 0.14);
     --ambient-glow: rgba(243, 174, 191, 0.06);
-    --torch-idle-strong: rgba(160, 110, 220, 0.12);
-    --torch-idle-soft: rgba(243, 174, 191, 0.06);
-    --torch-active-strong: rgba(236, 208, 154, 0.16);
-    --torch-active-soft: rgba(243, 174, 191, 0.08);
-    --torch-dot: #fff4e6;
-    --torch-dot-glow: rgba(236, 208, 154, 0.9);
 
     /* 看画 */
     --modal-overlay: rgba(13, 8, 22, 0.94);
@@ -88,7 +82,6 @@
     --love-glow: rgba(168, 216, 194, 0.34);
     --love-mist: rgba(168, 216, 194, 0.12);
     --ambient-glow: rgba(168, 216, 194, 0.05);
-    --torch-idle-soft: rgba(168, 216, 194, 0.06);
 }
 
 :root[data-theme='autumn'] {
@@ -96,7 +89,6 @@
     --love-glow: rgba(235, 192, 111, 0.36);
     --love-mist: rgba(235, 192, 111, 0.12);
     --ambient-glow: rgba(235, 192, 111, 0.06);
-    --torch-idle-soft: rgba(235, 192, 111, 0.06);
 }
 
 :root[data-theme='winter'] {
@@ -104,7 +96,6 @@
     --love-glow: rgba(200, 214, 242, 0.34);
     --love-mist: rgba(200, 214, 242, 0.12);
     --ambient-glow: rgba(200, 214, 242, 0.05);
-    --torch-idle-soft: rgba(200, 214, 242, 0.06);
 }
 
 /* === RESET & BASE === */
@@ -118,7 +109,7 @@
 
 html {
     font-size: 16px;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     color-scheme: dark;
     scrollbar-color: rgba(236, 208, 154, 0.26) transparent;
 }
@@ -146,7 +137,6 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-    transition: background-color 1.5s ease;
 }
 
 button,
@@ -223,7 +213,6 @@ input {
     opacity: 0.7;
     z-index: -3;
     pointer-events: none;
-    transition: background-image 0.8s ease, background-color 0.8s ease;
 }
 
 /* 噪点层 */
@@ -237,21 +226,6 @@ input {
     z-index: -1;
     pointer-events: none;
     mix-blend-mode: overlay;
-}
-
-/* --- 交互光标 (The Rose Torch) --- */
-.cursor-torch {
-    position: fixed;
-    width: 400px;
-    height: 400px;
-    /* 光标也带一点紫色 */
-    background: radial-gradient(circle, var(--torch-idle-strong) 0%, var(--torch-idle-soft) 50%, transparent 70%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    mix-blend-mode: screen;
-    z-index: 9999;
-    transition: width 0.4s, height 0.4s, background 0.4s;
 }
 
 /* === TYPOGRAPHY === */
@@ -323,7 +297,7 @@ body.gallery-page {
     color: rgba(236, 208, 154, 0.82);
     text-decoration: none;
     white-space: nowrap;
-    transition: color 0.3s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .lm-mark:hover,
@@ -359,7 +333,7 @@ body.gallery-page {
     color: var(--text-muted);
     text-decoration: none;
     white-space: nowrap;
-    transition: color 0.3s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .lm-tab::after {
@@ -368,7 +342,7 @@ body.gallery-page {
     height: 4px;
     border-radius: 50%;
     background: transparent;
-    transition: background 0.3s ease;
+    transition: background var(--lm-feedback) var(--lm-ease);
 }
 
 .lm-tab:hover,
@@ -411,7 +385,7 @@ body.gallery-page {
     letter-spacing: 0.1em;
     white-space: nowrap;
     cursor: pointer;
-    transition: background 0.3s ease, border-color 0.3s ease;
+    transition: background var(--lm-feedback) var(--lm-ease), border-color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .lm-season:hover,
@@ -431,8 +405,7 @@ body.gallery-page {
 .lm-main {
     position: relative;
     padding: 8px max(40px, env(safe-area-inset-right)) 56px max(40px, env(safe-area-inset-left));
-    /* 入场时邮戳放大、信纸带一点旋转，会短暂伸出屏幕：手机浏览器一见横向溢出就把整页缩小，
-       跨页转场也会因视口变了被中止。只裁横向，不影响吸顶和纵向滚动 */
+    /* 裁掉边缘的衬框，手机转场时视口宽度保持稳定。 */
     overflow-x: clip;
 }
 
@@ -459,6 +432,8 @@ body.gallery-page {
         margin: 0 0 24px;
     }
 }
+
+#catalog-error { z-index: 2; min-height: 55svh; }
 
 .empty-state[hidden] {
     display: none;
@@ -510,7 +485,7 @@ body.gallery-page {
     color: inherit;
     font: inherit;
     cursor: zoom-in;
-    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+    transition: border-color var(--lm-feedback) var(--lm-ease), box-shadow var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .hero-art:hover,
@@ -531,11 +506,11 @@ body.gallery-page {
 /* 画下载好再揭开：先暗着、略大，到了就淡入并落回原位（从首页拆开进来时由转场接手，不再揭） */
 .hero-art img.is-veiled {
     opacity: 0;
-    transform: scale(1.035);
+    transform: scale(1.012);
 }
 
 .hero-art img.is-unveiling {
-    transition: opacity 0.9s ease, transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity var(--lm-enter) var(--lm-ease), transform var(--lm-enter) var(--lm-ease);
 }
 
 html.vt-arrive .hero-art img {
@@ -714,13 +689,13 @@ html.vt-arrive .hero-art img {
 }
 
 .lm-seal.is-stamping {
-    animation: sealStamp 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) 0.9s both;
+    animation: sealStamp var(--lm-enter) var(--lm-ease) both;
 }
 
 @keyframes sealStamp {
     from {
         opacity: 0;
-        transform: rotate(-4deg) scale(1.6);
+        transform: rotate(-4deg) scale(1.08);
     }
 
     to {
@@ -752,20 +727,20 @@ html.vt-arrive .hero-art img {
     color: var(--ink-gold);
     text-decoration: none;
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .hero-action .icon {
     width: 1em;
     height: 1em;
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform var(--lm-feedback) var(--lm-ease);
 }
 
 /* 文字下一条细金线，指上去从左往右画出来 */
 .hero-action-label {
     background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
     padding-bottom: 3px;
-    transition: background-size 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: background-size var(--lm-feedback) var(--lm-ease);
 }
 
 .hero-action:hover .hero-action-label,
@@ -789,115 +764,12 @@ html.vt-arrive .hero-art img {
     transform: scale(1.15);
 }
 
-/* ---------------- 今日画信入场（只在打开画廊的第一次） ----------------
-   画框先亮 → 画揭开（下载好才揭）→ 信纸像被放到桌上 → 字一行行浮上来、横线画出来 →
-   邮戳落下 → "love Minnie"一笔写出来 → 印章盖下（第一次读这封时）→ 月相尺一颗颗亮起 */
-@keyframes lm-rise {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-}
-
-@keyframes lm-fade {
-    from {
-        opacity: 0;
-    }
-}
-
-@keyframes lm-paper-in {
-    from {
-        opacity: 0;
-        transform: translate(10px, 34px) rotate(2.2deg);
-    }
-}
-
-@keyframes lm-postmark-in {
-    0% {
-        opacity: 0;
-        transform: rotate(-26deg) scale(1.6);
-    }
-
-    70% {
-        opacity: 1;
-        transform: rotate(-6deg) scale(0.96);
-    }
-
-    100% {
-        transform: rotate(-8deg) scale(1);
-    }
-}
-
-@keyframes lm-rule-draw {
-    from {
-        transform: scaleX(0);
-    }
-}
-
-@keyframes lm-write {
-    from {
-        clip-path: inset(-40% 100% -40% -12%);
-    }
-
-    to {
-        clip-path: inset(-40% -12% -40% -12%);
-    }
-}
-
-.today-hero.is-entering .hero-art {
-    animation: lm-fade 1s ease both;
-}
-
-/* 从首页拆开进来：画先由转场送进画框，信和其余的字整体晚一点再来 */
-.today-hero.is-arriving {
-    --o: 0.45s;
-}
-
+/* 信纸作为一个整体入场，标题、日期和按钮从第一帧就可读。 */
 .today-hero.is-entering .hero-letter-col {
-    animation: lm-paper-in 1s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--o, 0s) + 0.32s) both;
+    animation: lm-paper-in var(--lm-enter) var(--lm-ease);
 }
-
-.today-hero.is-entering .hero-postmark {
-    animation: lm-postmark-in 0.55s cubic-bezier(0.3, 1.3, 0.6, 1) calc(var(--o, 0s) + 1.05s) both;
-}
-
-.today-hero.is-entering .hero-letter > p,
-.today-hero.is-entering .hero-title {
-    animation: lm-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(var(--o, 0s) + 0.6s + var(--d, 0) * 75ms);
-}
-
-.today-hero.is-entering .hero-no { --d: 0; }
-.today-hero.is-entering .hero-note { --d: 1; }
-.today-hero.is-entering .hero-sign { --d: 1.5; }
-.today-hero.is-entering .hero-title { --d: 2.5; }
-.today-hero.is-entering .hero-date { --d: 4.5; }
-.today-hero.is-entering .hero-days { --d: 5.5; }
-
-.today-hero.is-entering .hero-rule {
-    transform-origin: left center;
-    animation: lm-rule-draw 0.8s cubic-bezier(0.65, 0, 0.35, 1) calc(var(--o, 0s) + 0.9s) both;
-}
-
-.today-hero.is-entering .hero-hand {
-    animation: lm-write 1.1s cubic-bezier(0.55, 0.1, 0.35, 1) calc(var(--o, 0s) + 1.2s) both;
-}
-
-.today-hero.is-entering .lm-seal.is-stamping {
-    animation-delay: calc(var(--o, 0s) + 2.05s);
-}
-
-.today-hero.is-entering .hero-actions {
-    animation: lm-fade 0.8s ease calc(var(--o, 0s) + 1.5s) both;
-}
-
-.today-hero.is-entering .hero-ruler-head {
-    animation: lm-fade 0.8s ease calc(var(--o, 0s) + 1s) both;
-}
-
-.today-hero.is-entering .ruler-day {
-    animation: lm-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(var(--o, 0s) + 1.05s + var(--i, 0) * 22ms);
+@keyframes lm-paper-in {
+    from { opacity: .76; transform: translateY(6px); }
 }
 
 /* 月相尺 */
@@ -996,7 +868,7 @@ button.ruler-day {
     height: 13px;
     border-radius: 50%;
     background: var(--night-3);
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform var(--lm-feedback) var(--lm-ease);
 }
 
 .ruler-num {
@@ -1226,7 +1098,7 @@ button.ruler-day:focus-visible {
     letter-spacing: 0.08em;
     white-space: nowrap;
     cursor: pointer;
-    transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), border-color var(--lm-feedback) var(--lm-ease), background var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .month-chip:hover,
@@ -1325,7 +1197,7 @@ button.ruler-day:focus-visible {
     overflow: hidden;
     background: rgba(13, 8, 22, 0.5);
     box-shadow: 0 0 0 1px rgba(236, 208, 154, 0.2), 0 40px 70px -36px rgba(0, 0, 0, 0.8);
-    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.42s ease;
+    transition: transform var(--lm-feedback) var(--lm-ease), box-shadow var(--lm-feedback) var(--lm-ease);
 }
 
 .cor-img {
@@ -1335,25 +1207,16 @@ button.ruler-day:focus-visible {
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity var(--lm-feedback) var(--lm-ease);
 }
 
 .cor-img.is-loaded {
     opacity: 1;
 }
 
-/* 跳到远处的月份：先暗下去，换好位置再亮起来 */
-.corridor-scroll {
-    transition: opacity 0.18s ease;
-}
-
-.corridor-scroll.is-jumping {
-    opacity: 0;
-}
-
 .cor-item:hover .cor-frame,
 .cor-item:focus-visible .cor-frame {
-    transform: translateY(-6px);
+    transform: translateY(-2px);
     box-shadow: 0 0 0 1px rgba(236, 208, 154, 0.5), 0 50px 80px -36px rgba(0, 0, 0, 0.85);
 }
 
@@ -1384,7 +1247,7 @@ button.ruler-day:focus-visible {
     background: linear-gradient(90deg, var(--ink-gold), rgba(236, 208, 154, 0.2));
     transform: scaleX(0);
     transform-origin: left center;
-    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform var(--lm-feedback) var(--lm-ease);
 }
 
 .cor-item:hover .cor-cap::before,
@@ -1393,7 +1256,7 @@ button.ruler-day:focus-visible {
 }
 
 .cor-title {
-    transition: color 0.4s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .cor-item:hover .cor-title,
@@ -1501,7 +1364,7 @@ button.ruler-day:focus-visible {
     white-space: nowrap;
     color: var(--ink-gold-soft);
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .corridor-mark:hover {
@@ -1606,43 +1469,7 @@ button.ruler-day:focus-visible {
     white-space: nowrap;
 }
 
-/* 第一次走进长廊：前几幅一幅接一幅浮上来 */
-.corridor-scroll.is-entering .cor-item,
-.corridor-scroll.is-entering .cor-month {
-    animation: lm-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(0.1s + var(--k, 8) * 80ms);
-}
-
-/* 长廊里的光：两头的画隐在暗处，走近才亮起来（滚动驱动；不支持的浏览器保持原样）。
-   不缩放、不平移画面：画右下角的签名一点都不裁 */
-@supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-        .cor-item {
-            animation: cor-light linear both;
-            animation-timeline: view(inline);
-        }
-
-        .corridor-scroll.is-entering .cor-item {
-            animation: lm-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
-            animation-delay: calc(0.1s + var(--k, 8) * 80ms);
-        }
-    }
-}
-
-@keyframes cor-light {
-    0% {
-        opacity: 0.28;
-    }
-
-    16%,
-    84% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0.28;
-    }
-}
+.corridor-scroll.is-scrubbing { scroll-snap-type: none; }
 
 /* ============================================================
     画历 · ALMANAC
@@ -1706,7 +1533,7 @@ button.ruler-day:focus-visible {
     letter-spacing: 0.1em;
     white-space: nowrap;
     cursor: pointer;
-    transition: border-color 0.3s ease, background 0.3s ease;
+    transition: border-color var(--lm-feedback) var(--lm-ease), background var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .cal-nav-btn .icon {
@@ -1852,7 +1679,7 @@ button.cal-special-item:focus-visible {
 
 .cal-special-name {
     font-size: 1rem;
-    transition: color 0.3s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .cal-random {
@@ -1871,7 +1698,7 @@ button.cal-special-item:focus-visible {
     font-size: 0.94rem;
     letter-spacing: 0.12em;
     cursor: pointer;
-    transition: background 0.3s ease, border-color 0.3s ease;
+    transition: background var(--lm-feedback) var(--lm-ease), border-color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .cal-random[hidden] {
@@ -1881,7 +1708,7 @@ button.cal-special-item:focus-visible {
 .cal-random .icon {
     width: 16px;
     height: 16px;
-    transition: transform 0.35s ease;
+    transition: transform var(--lm-feedback) var(--lm-ease);
 }
 
 .cal-random:hover,
@@ -1946,7 +1773,7 @@ button.cal-special-item:focus-visible {
     /* 窗的大小跟着屏幕高走：大屏上六行排满一屏，不缩在上半屏 */
     width: min(clamp(64px, calc((100svh - 190px) / 6 - 46px), 128px), 100%);
     aspect-ratio: 1;
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform var(--lm-feedback) var(--lm-ease);
 }
 
 .cal-win-edge,
@@ -1958,7 +1785,7 @@ button.cal-special-item:focus-visible {
 .cal-win-edge {
     inset: 0;
     background: rgba(236, 208, 154, 0.26);
-    transition: background 0.3s ease;
+    transition: background var(--lm-feedback) var(--lm-ease);
 }
 
 .cal-win-art {
@@ -2082,38 +1909,6 @@ button.cal-special-item:focus-visible {
     height: 12px;
 }
 
-/* 翻月：圆窗按对角线一扇扇浮现；左栏的月份和小结一起换 */
-@keyframes cal-in {
-    from {
-        opacity: 0;
-        transform: scale(0.84);
-    }
-}
-
-.cal-grid.is-flipping .cal-day:not(.is-blank) {
-    animation: cal-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(var(--w, 0) * 32ms);
-}
-
-.cal-side.is-flipping .cal-month,
-.cal-side.is-flipping .cal-en,
-.cal-side.is-flipping .cal-count,
-.cal-side.is-flipping .cal-special {
-    animation: lm-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.cal-side.is-flipping .cal-en {
-    animation-delay: 0.06s;
-}
-
-.cal-side.is-flipping .cal-count {
-    animation-delay: 0.12s;
-}
-
-.cal-side.is-flipping .cal-special {
-    animation-delay: 0.2s;
-}
-
 /* 今天：当季的窗形 + 当季的光晕 */
 .cal-day.is-today .cal-win {
     filter: drop-shadow(0 0 12px var(--love-glow));
@@ -2148,7 +1943,7 @@ button.cal-special-item:focus-visible {
     background: rgba(8, 4, 14, 0.62);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--lm-feedback) var(--lm-ease);
 }
 
 .season-overlay.show {
@@ -2169,11 +1964,11 @@ button.cal-special-item:focus-visible {
     border: 1px solid rgba(236, 208, 154, 0.18);
     background: rgba(21, 13, 33, 0.97);
     box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
-    transform: translate(-50%, -46%);
+    transform: translate(-50%, calc(-50% + 8px));
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.4s;
+    transition: opacity var(--lm-feedback) var(--lm-ease), transform var(--lm-enter) var(--lm-ease), visibility 0s linear var(--lm-enter);
 }
 
 .season-sheet.open {
@@ -2181,7 +1976,7 @@ button.cal-special-item:focus-visible {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity var(--lm-feedback) var(--lm-ease), transform var(--lm-enter) var(--lm-ease);
 }
 
 .season-head {
@@ -2232,6 +2027,7 @@ button.cal-special-item:focus-visible {
 }
 
 .season-opt {
+    position: relative;
     --opt: var(--ink-gold);
     display: flex;
     flex-direction: column;
@@ -2246,7 +2042,7 @@ button.cal-special-item:focus-visible {
     font: inherit;
     text-align: center;
     cursor: pointer;
-    transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+    transition: border-color var(--lm-feedback) var(--lm-ease), background var(--lm-feedback) var(--lm-ease), transform var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .season-opt[data-season='spring'] { --opt: #f3aebf; }
@@ -2264,6 +2060,19 @@ button.cal-special-item:focus-visible {
     border-color: var(--opt);
     background: rgba(246, 237, 228, 0.07);
 }
+
+.season-opt::after {
+    content: '✓';
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    color: var(--opt);
+    font: 600 14px/1.5 system-ui, sans-serif;
+    opacity: 0;
+    transform: scale(.8);
+    transition: opacity var(--lm-feedback) var(--lm-ease), transform var(--lm-feedback) var(--lm-ease);
+}
+.season-opt[aria-checked='true']::after { opacity: 1; transform: none; }
 
 .season-win {
     position: relative;
@@ -2350,6 +2159,7 @@ button.cal-special-item:focus-visible {
     每个月之间一道细竖线。手机上不出现，用左右滑代替。
     ============================================================ */
 .timeline-strip {
+    visibility: hidden;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -2363,11 +2173,13 @@ button.cal-special-item:focus-visible {
     background: linear-gradient(to top, rgba(10, 6, 16, 0.94) 0%, rgba(10, 6, 16, 0.66) 58%, rgba(10, 6, 16, 0) 100%);
     transform: translateY(100%);
     opacity: 0;
-    transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease;
+    transition: transform var(--lm-enter) var(--lm-ease), opacity var(--lm-feedback) var(--lm-ease), visibility 0s linear var(--lm-enter);
 }
 
 /* 看画时：胶卷条在看画弹窗（200）之上，可以直接点着换 */
 body.modal-open .timeline-strip {
+    visibility: visible;
+    transition-delay: 0s;
     transform: none;
     opacity: 1;
     z-index: 300;
@@ -2392,7 +2204,7 @@ body.modal-open .timeline-strip {
     background: transparent;
     color: var(--ink-gold-soft);
     cursor: pointer;
-    transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+    transition: border-color var(--lm-feedback) var(--lm-ease), color var(--lm-feedback) var(--lm-ease), background var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .timeline-nav-btn .icon {
@@ -2450,7 +2262,7 @@ body.modal-open .timeline-strip {
     overflow: hidden;
     background: rgba(246, 237, 228, 0.04);
     opacity: 0.46;
-    transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+    transition: opacity var(--lm-feedback) var(--lm-ease), transform var(--lm-feedback) var(--lm-ease), box-shadow var(--lm-feedback) var(--lm-ease);
 }
 
 .tl-frame img {
@@ -2459,7 +2271,7 @@ body.modal-open .timeline-strip {
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--lm-feedback) var(--lm-ease);
 }
 
 .tl-frame img.is-loaded {
@@ -2471,7 +2283,7 @@ body.modal-open .timeline-strip {
     line-height: 1;
     letter-spacing: 0.06em;
     color: var(--text-muted);
-    transition: color 0.3s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .timeline-thumb:hover .tl-frame {
@@ -2522,7 +2334,12 @@ body.modal-open .timeline-strip {
     position: fixed;
     inset: 0;
     background: var(--modal-overlay);
-    display: none;
+    display: flex;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    touch-action: pan-y pinch-zoom;
+    transition: opacity var(--lm-feedback) var(--lm-ease), visibility 0s linear var(--lm-feedback);
     align-items: center;
     justify-content: center;
     padding: 76px 96px 150px;
@@ -2554,7 +2371,10 @@ body.modal-open .timeline-strip {
 }
 
 .detail-modal.open {
-    display: flex;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s;
 }
 
 .detail-dialog {
@@ -2568,19 +2388,6 @@ body.modal-open .timeline-strip {
     justify-content: center;
     align-items: end;
     gap: 40px;
-    animation: modalIn 0.35s ease;
-}
-
-@keyframes modalIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.98);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
 }
 
 .detail-media {
@@ -2591,6 +2398,32 @@ body.modal-open .timeline-strip {
     align-items: center;
     justify-content: center;
 }
+
+.detail-media { transition: transform var(--lm-enter) var(--lm-ease); }
+.detail-media.is-dragging { transition: none; }
+.detail-loading, #detail-retry {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 1.25rem;
+    padding: .45rem 1rem;
+    background: #241a2d;
+    color: #f6ede4;
+    white-space: nowrap;
+}
+.detail-loading { pointer-events: none; }
+.detail-media img.has-failed, .hero-art img.has-failed { visibility: hidden; }
+
+#detail-neighbour {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(calc(-50% + var(--neighbour-x)), -50%);
+    pointer-events: none;
+}
+#detail-neighbour[hidden] { display: none; }
+#detail-neighbour:not(.is-loaded) { visibility: hidden; }
 
 /* 画框：细金线 + 一圈深色衬底，框贴着画走（不框住留白） */
 .detail-media img {
@@ -2623,7 +2456,7 @@ body.modal-open .timeline-strip {
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transition: opacity var(--lm-feedback) var(--lm-ease);
 }
 
 .detail-hint.is-visible {
@@ -2690,25 +2523,6 @@ body.modal-open .timeline-strip {
     color: var(--paper-ink);
 }
 
-/* 展签跟在画后面进来 */
-.detail-modal.open .detail-side {
-    animation: lm-side-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
-}
-
-@keyframes lm-side-in {
-    from {
-        opacity: 0;
-        transform: translateX(18px);
-    }
-}
-
-@keyframes lm-side-up {
-    from {
-        opacity: 0;
-        transform: translateY(16px);
-    }
-}
-
 /* 前一封 / 后一封：浮在展签上方，邮戳之上留足空 */
 .detail-pager {
     position: absolute;
@@ -2732,7 +2546,7 @@ body.modal-open .timeline-strip {
     color: var(--ink-gold-soft);
     font: inherit;
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: color var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
 }
 
 .pager-btn .num {
@@ -2744,7 +2558,7 @@ body.modal-open .timeline-strip {
 .pager-btn .icon {
     width: 18px;
     height: 18px;
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform var(--lm-feedback) var(--lm-ease);
 }
 
 .pager-btn:hover:not(:disabled),
@@ -2779,37 +2593,8 @@ body.modal-open .timeline-strip {
     opacity: 0.6;
 }
 
-/* 打开 / 关上 / 换一封：画从一处挪到另一处（见 js/script.js 的 morphArt），其余整页交叉淡化 */
-html.vt-detail .detail-dialog {
-    animation: none;
-}
-
-html.vt-detail::view-transition-group(lm-art),
-html.vt-swap::view-transition-group(lm-art) {
-    animation-duration: 0.62s;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-html.vt-detail::view-transition-old(lm-art),
-html.vt-detail::view-transition-new(lm-art),
-html.vt-swap::view-transition-old(lm-art),
-html.vt-swap::view-transition-new(lm-art) {
-    mix-blend-mode: plus-lighter;
-}
-
-html.vt-detail::view-transition-old(lm-art),
-html.vt-swap::view-transition-old(lm-art),
-html.vt-detail::view-transition-old(root),
-html.vt-swap::view-transition-old(root) {
-    animation: 0.42s ease both lm-vt-out;
-}
-
-html.vt-detail::view-transition-new(lm-art),
-html.vt-swap::view-transition-new(lm-art),
-html.vt-detail::view-transition-new(root),
-html.vt-swap::view-transition-new(root) {
-    animation: 0.42s ease both lm-vt-in;
-}
+/* 图片沿共享画框打开时，展签只出现一次。 */
+html.vt-detail .detail-modal, html.vt-arrive .detail-modal { transition: none; }
 
 /* 关闭：钉在屏幕右上角（弹窗本身铺满屏幕） */
 .detail-close {
@@ -2826,7 +2611,7 @@ html.vt-swap::view-transition-new(root) {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: border-color 0.3s ease, background 0.3s ease;
+    transition: border-color var(--lm-feedback) var(--lm-ease), background var(--lm-feedback) var(--lm-ease), scale var(--lm-press) var(--lm-ease);
     z-index: 3;
 }
 
@@ -3009,7 +2794,7 @@ body.modal-open {
     min-width: 64px;
     min-height: 48px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color var(--lm-feedback) ease, scale var(--lm-press) var(--lm-ease);
     -webkit-tap-highlight-color: transparent;
     /* 移除点击高亮 */
 }
@@ -3017,7 +2802,7 @@ body.modal-open {
 .mobile-bottom-nav .nav-item .icon {
     width: 24px;
     height: 24px;
-    transition: transform 0.2s ease;
+    transition: transform var(--lm-feedback) var(--lm-ease);
 }
 
 .mobile-bottom-nav .nav-item.active {
@@ -3029,7 +2814,7 @@ body.modal-open {
 }
 
 .mobile-bottom-nav .nav-item:active {
-    transform: scale(0.92);
+    transform: none;
 }
 
 /* Sunflower Icon */
@@ -3039,7 +2824,7 @@ body.modal-open {
     object-fit: contain;
     vertical-align: middle;
     filter: var(--sunflower-filter);
-    transition: transform 0.3s ease, filter 0.5s ease;
+    transition: transform var(--lm-feedback) var(--lm-ease), filter var(--lm-feedback) var(--lm-ease);
 }
 
 .sunflower-icon:hover {
@@ -3054,7 +2839,7 @@ body.modal-open {
     position: fixed;
     left: 50%;
     bottom: 36px;
-    transform: translate(-50%, 12px);
+    transform: translate(-50%, 5px);
     max-width: calc(100vw - 32px);
     padding: 10px 18px;
     border-radius: 999px;
@@ -3069,7 +2854,7 @@ body.modal-open {
     opacity: 0;
     pointer-events: none;
     z-index: 500;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity var(--lm-feedback) var(--lm-ease), transform var(--lm-feedback) var(--lm-ease);
 }
 
 .lm-toast.show {
@@ -3080,362 +2865,6 @@ body.modal-open {
 @media (max-width: 600px) {
     .lm-toast {
         bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-    }
-}
-
-/* ============================================================
-   ANNIVERSARY EFFECTS ANIMATIONS (纪念日特效动画)
-   ============================================================ */
-
-/* === 蝴蝶飞舞 (生日) === */
-@keyframes butterflyFly {
-    0% {
-        opacity: 0;
-        transform: translateY(0) rotate(var(--rotation, 0deg)) scale(0);
-    }
-
-    10% {
-        opacity: 1;
-        transform: translateY(-10vh) rotate(var(--rotation, 0deg)) scale(1);
-    }
-
-    100% {
-        opacity: 0;
-        left: var(--end-x, 50%);
-        top: var(--end-y, -20%);
-        transform: translateY(-100vh) rotate(calc(var(--rotation, 0deg) + 180deg)) scale(0.8);
-    }
-}
-
-@keyframes butterflyWing {
-
-    0%,
-    100% {
-        transform: scaleX(1);
-    }
-
-    50% {
-        transform: scaleX(0.7);
-    }
-}
-
-@keyframes sparkleRise {
-    0% {
-        opacity: 0;
-        transform: translateY(0) scale(0);
-    }
-
-    20% {
-        opacity: 1;
-        transform: translateY(-20vh) scale(1);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(-100vh) scale(0.5);
-    }
-}
-
-/* === 玫瑰金几何 (恋爱纪念日) === */
-@keyframes goldenFall {
-    0% {
-        opacity: 0;
-        transform: translateY(0) rotate(0deg);
-    }
-
-    10% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(110vh) rotate(var(--rotation, 360deg));
-    }
-}
-
-@keyframes grainFade {
-    0% {
-        opacity: 0;
-    }
-
-    50% {
-        opacity: 0.08;
-    }
-
-    100% {
-        opacity: 0.05;
-    }
-}
-
-/* === 玫瑰花瓣雨 (结婚纪念日) === */
-@keyframes petalFall {
-    0% {
-        transform: translateY(0) rotate(var(--rotation, 0deg)) translateX(0);
-    }
-
-    25% {
-        transform: translateY(25vh) rotate(calc(var(--rotation, 0deg) + 45deg)) translateX(var(--sway, 20px));
-    }
-
-    50% {
-        transform: translateY(50vh) rotate(calc(var(--rotation, 0deg) + 90deg)) translateX(calc(var(--sway, 20px) * -1));
-    }
-
-    75% {
-        transform: translateY(75vh) rotate(calc(var(--rotation, 0deg) + 135deg)) translateX(var(--sway, 20px));
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(110vh) rotate(calc(var(--rotation, 0deg) + 180deg)) translateX(0);
-    }
-}
-
-@keyframes petalBlowAway {
-    0% {
-        transform: translateX(0) rotate(0deg);
-        opacity: 0.85;
-    }
-
-    100% {
-        transform: translateX(200px) translateY(-50px) rotate(180deg);
-        opacity: 0;
-    }
-}
-
-/* === 烟花 (新年) === */
-@keyframes fireworkRise {
-    0% {
-        bottom: 0;
-        opacity: 1;
-    }
-
-    100% {
-        bottom: calc(100% - var(--end-y, 20%));
-        opacity: 0;
-    }
-}
-
-@keyframes fireworkExplode {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-
-    100% {
-        transform:
-            translate(-50%, -50%) translateX(calc(cos(var(--angle, 0)) * var(--distance, 50px))) translateY(calc(sin(var(--angle, 0)) * var(--distance, 50px) + 100px));
-        opacity: 0;
-    }
-}
-
-/* === 霓虹爱心 (情人节) === */
-@keyframes heartBeat {
-    0% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-    }
-
-    20% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 1;
-    }
-
-    40% {
-        transform: translate(-50%, -50%) scale(0.9);
-    }
-
-    60% {
-        transform: translate(-50%, -50%) scale(1.1);
-    }
-
-    80% {
-        transform: translate(-50%, -50%) scale(0.95);
-    }
-
-    100% {
-        transform: translate(-50%, -50%) scale(1);
-    }
-}
-
-@keyframes heartExplode {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-
-    50% {
-        transform: translate(-50%, -50%) scale(1.5);
-        opacity: 0.5;
-    }
-
-    100% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-    }
-}
-
-@keyframes neonBurst {
-    0% {
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-    }
-
-    20% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-
-    100% {
-        left: var(--end-x, 50%);
-        top: var(--end-y, 50%);
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 0;
-    }
-}
-
-/* === 情话浮动 === */
-@keyframes quoteFloat {
-    0% {
-        opacity: 0;
-        transform: translateY(0);
-    }
-
-    20% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(-40px);
-    }
-}
-
-/* ============================================================
-   转场（View Transition；不支持的浏览器照常换页、照常切视图）
-   - 跨页：从首页拆开进来时，铺满屏幕的那幅画落进今天的画框（或看画的画框），
-     其余整页淡入；名字由 gallery.html 头部的 pagereveal 脚本临时挂上。
-   - 视图切换（今日 / 长廊 / 画历）：旧视图淡出，新视图从下面浮上来；顶栏、底栏不动。
-   ============================================================ */
-@media (prefers-reduced-motion: no-preference) {
-    @view-transition {
-        navigation: auto;
-    }
-}
-
-/* 只在切视图时给顶栏、底栏起名（让它们原地不动）；跨页时它们跟着整页淡入，
-   不然会在打开的看画弹窗上面闪一下 */
-html.vt-view .lm-header {
-    view-transition-name: lm-header;
-}
-
-html.vt-view .mobile-bottom-nav {
-    view-transition-name: lm-tabbar;
-}
-
-::view-transition-group(lm-header),
-::view-transition-group(lm-tabbar) {
-    animation-duration: 0.3s;
-}
-
-::view-transition-old(root) {
-    animation: 0.42s cubic-bezier(0.4, 0, 1, 1) both lm-vt-out;
-}
-
-::view-transition-new(root) {
-    animation: 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both lm-vt-in;
-}
-
-html.vt-view::view-transition-old(root) {
-    animation: 0.22s cubic-bezier(0.4, 0, 1, 1) both lm-vt-out-down;
-}
-
-html.vt-view::view-transition-new(root) {
-    animation: 0.56s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both lm-vt-in-up;
-}
-
-::view-transition-group(lm-art) {
-    animation-duration: 0.86s;
-    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-::view-transition-old(lm-art),
-::view-transition-new(lm-art) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    mix-blend-mode: normal;
-}
-
-::view-transition-old(lm-art) {
-    animation: 0.5s ease 0.3s both lm-vt-out;
-}
-
-::view-transition-new(lm-art) {
-    animation: 0.5s ease 0.12s both lm-vt-in;
-}
-
-/* 知道首页满屏时那幅画的位置：画框当窗、画在窗里从满屏的大小缩回原样（位置由头部脚本逐帧给） */
-html.vt-reveal::view-transition-group(lm-art) {
-    overflow: clip;
-    animation-duration: 0.9s;
-}
-
-html.vt-reveal::view-transition-new(lm-art),
-html.vt-reveal::view-transition-old(lm-art) {
-    position: absolute;
-    inset: auto;
-    object-fit: fill;
-}
-
-html.vt-reveal::view-transition-new(lm-art) {
-    animation: none;
-}
-
-/* 满屏快照在上（z-index），和画框里的画逐像素对齐地一起缩，最后 0.3 秒淡出 */
-html.vt-reveal::view-transition-old(lm-art) {
-    z-index: 1;
-    animation: 0.3s ease 0.6s both lm-vt-out;
-}
-
-/* 信纸：转场里照常演它自己的入场（见"今日画信入场"），这一层只负责压在画上面 */
-::view-transition-group(lm-letter),
-::view-transition-new(lm-letter) {
-    animation: none;
-}
-
-@keyframes lm-vt-out {
-    to { opacity: 0; }
-}
-
-@keyframes lm-vt-in {
-    from { opacity: 0; }
-}
-
-@keyframes lm-vt-out-down {
-    to { opacity: 0; transform: translateY(-6px); }
-}
-
-@keyframes lm-vt-in-up {
-    from { opacity: 0; transform: translateY(14px); }
-}
-
-/* ============================================================
-   无障碍：用户偏好减少动效时，全站动画一律即时完成
-   ============================================================ */
-@media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-delay: 0s !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        transition-delay: 0s !important;
-        scroll-behavior: auto !important;
     }
 }
 
@@ -3498,10 +2927,6 @@ html.vt-reveal::view-transition-old(lm-art) {
         width: min(520px, calc(100% - 32px));
         max-height: 42%;
         margin-top: 14px;
-    }
-
-    .detail-modal.open .detail-side {
-        animation-name: lm-side-up;
     }
 
     .detail-pager {
@@ -3899,11 +3324,6 @@ html.vt-reveal::view-transition-old(lm-art) {
         display: none;
     }
 
-    /* === 隐藏桌面端光标 === */
-    .cursor-torch {
-        display: none !important;
-    }
-
     /* === 看画：全屏，画在上、展签在下，互不遮挡 === */
     .detail-modal {
         /* 高于 .mobile-bottom-nav(300)：看画时全屏沉浸 */
@@ -4024,10 +3444,6 @@ html.vt-reveal::view-transition-old(lm-art) {
         align-self: center;
     }
 
-    .detail-modal.open .detail-side {
-        animation-name: lm-side-in;
-    }
-
     .detail-pager,
     .timeline-strip {
         display: none;
@@ -4047,11 +3463,4 @@ html.vt-reveal::view-transition-old(lm-art) {
     font: inherit;
     text-decoration: underline;
     cursor: pointer;
-}
-
-.detail-media .retry-link {
-    position: absolute;
-    z-index: 1;
-    bottom: 1rem;
-    background: var(--bg-color);
 }

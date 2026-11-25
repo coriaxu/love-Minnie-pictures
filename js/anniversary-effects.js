@@ -130,6 +130,12 @@
     // ============================================================
     // 特效容器管理
     // ============================================================
+    const timers = new Set();
+    const later = (callback, delay) => {
+        const timer = setTimeout(() => { timers.delete(timer); callback(); }, delay);
+        timers.add(timer);
+        return timer;
+    };
     let effectsContainer = null;
     let textOverlay = null;
 
@@ -150,6 +156,7 @@
     };
 
     const createTextOverlay = (title, colors) => {
+        textOverlay?.remove();
         textOverlay = document.createElement('div');
         textOverlay.id = 'anniversary-text';
         textOverlay.style.cssText = `
@@ -159,9 +166,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.28);
             opacity: 0;
-            transition: opacity 0.8s ease;
+            transition: opacity var(--lm-enter) var(--lm-ease);
             pointer-events: none;
         `;
 
@@ -180,17 +187,19 @@
                 0 0 60px ${colors[2] || colors[0]}40;
             text-align: center;
             padding: 0 20px;
-            transform: translateY(20px);
+            transform: translateY(5px);
             opacity: 0;
-            transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
+            transition: opacity var(--lm-enter) var(--lm-ease), transform var(--lm-enter) var(--lm-ease);
         `;
 
         textOverlay.appendChild(text);
         document.body.appendChild(textOverlay);
 
         // 触发动画
+        const overlay = textOverlay;
         requestAnimationFrame(() => {
-            textOverlay.style.opacity = '1';
+            if (!overlay.isConnected) return;
+            overlay.style.opacity = '1';
             text.style.opacity = '1';
             text.style.transform = 'translateY(0)';
         });
@@ -200,23 +209,23 @@
 
     const removeTextOverlay = (delay = 3000) => {
         if (!textOverlay) return;
-        setTimeout(() => {
+        later(() => {
             if (textOverlay) {
                 textOverlay.style.opacity = '0';
-                setTimeout(() => {
+                later(() => {
                     textOverlay?.remove();
                     textOverlay = null;
-                }, 800);
+                }, 220);
             }
         }, delay);
     };
 
     const removeEffectsContainer = (delay = 5000) => {
-        setTimeout(() => {
+        later(() => {
             if (effectsContainer) {
-                effectsContainer.style.transition = 'opacity 1s ease';
+                effectsContainer.style.transition = 'opacity var(--lm-enter) var(--lm-ease)';
                 effectsContainer.style.opacity = '0';
-                setTimeout(() => {
+                later(() => {
                     effectsContainer?.remove();
                     effectsContainer = null;
                 }, 1000);
@@ -231,11 +240,10 @@
     // 蝴蝶飞舞 (生日)
     const playButterflyEffect = (colors) => {
         const container = createEffectsContainer();
-        const butterflies = [];
-        const count = 35;
+        const count = 10;
 
         for (let i = 0; i < count; i++) {
-            setTimeout(() => {
+            later(() => {
                 const butterfly = document.createElement('div');
                 butterfly.className = 'effect-butterfly';
                 const size = 30 + Math.random() * 40;
@@ -260,21 +268,18 @@
                     filter: hue-rotate(${colorIndex * 40}deg) drop-shadow(0 0 8px ${colors[colorIndex]});
                     opacity: 0;
                     transform: rotate(${rotation}deg) scale(0);
-                    animation: 
-                        butterflyFly ${duration}ms ${delay}ms ease-out forwards,
-                        butterflyWing 200ms ease-in-out infinite;
-                    --end-x: ${endX}%;
-                    --end-y: ${endY}%;
+                    animation: butterflyFly ${duration}ms ${delay}ms ease-out forwards;
+                    --fly-x: ${endX - startX}vw;
+                    --fly-y: ${endY - startY}vh;
                 `;
 
                 container.appendChild(butterfly);
-                butterflies.push(butterfly);
             }, i * 80);
         }
 
         // 添加金色星尘
-        for (let i = 0; i < 60; i++) {
-            setTimeout(() => {
+        for (let i = 0; i < 16; i++) {
+            later(() => {
                 const sparkle = document.createElement('div');
                 sparkle.className = 'effect-sparkle';
                 const size = 4 + Math.random() * 6;
@@ -302,7 +307,7 @@
     const playGoldenShapesEffect = (colors) => {
         const container = createEffectsContainer();
         const shapes = ['◇', '◆', '✧', '❖', '⬡', '♡'];
-        const count = 40;
+        const count = 14;
 
         // 添加胶片颗粒感
         const grain = document.createElement('div');
@@ -317,7 +322,7 @@
         container.appendChild(grain);
 
         for (let i = 0; i < count; i++) {
-            setTimeout(() => {
+            later(() => {
                 const shape = document.createElement('div');
                 const shapeChar = shapes[Math.floor(Math.random() * shapes.length)];
                 const size = 16 + Math.random() * 24;
@@ -369,11 +374,11 @@
         container.appendChild(centralHeart);
 
         // 2秒后爆发成多个霓虹心
-        setTimeout(() => {
+        later(() => {
             centralHeart.style.animation = 'heartExplode 0.5s ease forwards';
 
-            for (let i = 0; i < 50; i++) {
-                setTimeout(() => {
+            for (let i = 0; i < 16; i++) {
+                later(() => {
                     const heart = document.createElement('div');
                     const size = 24 + Math.random() * 40;
                     const angle = Math.random() * Math.PI * 2;
@@ -397,8 +402,8 @@
                         transform: translate(-50%, -50%) rotate(${rotation}deg) scale(0);
                         opacity: 0;
                         animation: neonBurst ${duration}ms ease-out forwards;
-                        --end-x: ${endX}%;
-                        --end-y: ${endY}%;
+                        --fly-x: ${endX - 50}vw;
+                        --fly-y: ${endY - 50}vh;
                     `;
 
                     container.appendChild(heart);
@@ -414,7 +419,6 @@
     // 玫瑰花瓣雨 (结婚纪念日)
     const playRosePetalsEffect = (colors) => {
         const container = createEffectsContainer();
-        container.style.pointerEvents = 'auto'; // 允许交互
 
         // 调整网站氛围光为暖红色
         const ambientLight = document.querySelector('.ambient-light');
@@ -427,10 +431,10 @@
         }
 
         let petalsOnScreen = 0;
-        const maxPetals = 15;
+        const maxPetals = 7;
 
         const createPetal = () => {
-            if (petalsOnScreen >= maxPetals) return;
+            if (petalsOnScreen >= maxPetals || document.hidden || document.body.classList.contains('d6k-active')) return;
 
             const petal = document.createElement('div');
             petal.className = 'effect-petal';
@@ -454,6 +458,7 @@
                 transform: rotate(${rotation}deg);
                 opacity: 0.85;
                 cursor: pointer;
+                pointer-events: auto;
                 animation: petalFall ${duration}ms linear forwards;
                 --sway: ${swayAmount}px;
                 --rotation: ${rotation + 180}deg;
@@ -461,9 +466,9 @@
 
             // 鼠标交互：吹走花瓣
             petal.addEventListener('mouseenter', () => {
-                petal.style.animation = 'petalBlowAway 1s ease-out forwards';
-                petalsOnScreen--;
-            });
+                petal.style.setProperty('--petal-pose', getComputedStyle(petal).transform);
+                petal.style.animation = 'petalBlowAway var(--lm-travel) var(--lm-ease) forwards';
+            }, { once: true });
 
             // 点击彩蛋：显示情话
             petal.addEventListener('click', () => {
@@ -476,7 +481,7 @@
             petalsOnScreen++;
 
             // 花瓣落地后移除
-            setTimeout(() => {
+            later(() => {
                 if (petal.parentNode) {
                     petal.remove();
                     petalsOnScreen--;
@@ -501,10 +506,11 @@
         const container = createEffectsContainer();
 
         const createFirework = () => {
+            if (document.hidden || document.body.classList.contains('d6k-active')) return;
             const x = 10 + Math.random() * 80;
             const y = 5 + Math.random() * 25; // 屏幕上方 1/3
             const colorIndex = Math.floor(Math.random() * colors.length);
-            const particleCount = 20 + Math.floor(Math.random() * 15);
+            const particleCount = 10 + Math.floor(Math.random() * 6);
 
             // 发射轨迹
             const trail = document.createElement('div');
@@ -518,12 +524,12 @@
                 border-radius: 50%;
                 box-shadow: 0 0 6px ${colors[colorIndex]};
                 animation: fireworkRise 1s ease-out forwards;
-                --end-y: ${y}%;
+                --fly-y: ${y - 100}vh;
             `;
             container.appendChild(trail);
 
             // 1秒后爆炸
-            setTimeout(() => {
+            later(() => {
                 trail.remove();
 
                 for (let i = 0; i < particleCount; i++) {
@@ -547,7 +553,7 @@
                     `;
                     container.appendChild(particle);
 
-                    setTimeout(() => particle.remove(), 2000);
+                    later(() => particle.remove(), 2000);
                 }
             }, 1000);
         };
@@ -591,8 +597,8 @@
             animation: quoteFloat 2s ease-out forwards;
             z-index: 10000;
         `;
-        document.body.appendChild(quote);
-        setTimeout(() => quote.remove(), 2000);
+        element.parentNode?.appendChild(quote);
+        later(() => quote.remove(), 2000);
     };
 
     // ============================================================
@@ -621,13 +627,13 @@
             };
             // 等 day-6000.js 初始化完成（同一帧内）
             if (window.Day6000) launch();
-            else setTimeout(launch, 50);
+            else later(launch, 50);
             return true;
         }
 
         const force = params.get('anniversary');
         if (force) {
-            setTimeout(() => window.AnniversaryEffects?.test(force), 100);
+            later(() => window.AnniversaryEffects?.test(force), 100);
             return true;
         }
 
@@ -635,7 +641,7 @@
     };
 
     const checkAndPlayEffect = () => {
-        // URL 测试钩子优先（开发用，不受 prefers-reduced-motion 限制）
+        // 纪念内容可直接预览，装饰效果仍遵守系统偏好。
         if (checkUrlOverride()) {
             console.log('Anniversary: URL override active, skipping date check.');
             return;
@@ -666,7 +672,7 @@
             };
             // once 类型本身就只触发一次，不再用 hasShownToday 二次拦截
             // 模块内部自行管理"用户已看过"的状态
-            setTimeout(launch, 600);
+            later(launch, 600);
             return;
         }
 
@@ -680,7 +686,7 @@
             markAsShown(anniversary.id);
 
             // 稍微延迟，等页面加载完
-            setTimeout(() => {
+            later(() => {
                 // 显示标题
                 if (anniversary.title) {
                     createTextOverlay(anniversary.title, anniversary.colors);
@@ -707,7 +713,7 @@
 
         // 方案 B: 持续显示
         if (anniversary.type === 'B') {
-            setTimeout(() => {
+            later(() => {
                 // 短暂显示标题 (如果有)
                 if (anniversary.title) {
                     createTextOverlay(anniversary.title, anniversary.colors);
@@ -736,9 +742,25 @@
         checkAndPlayEffect();
     }
 
+    function stopEffects() {
+        for (const timer of timers) clearTimeout(timer);
+        timers.clear();
+        window._anniversaryCleanup?.();
+        window._anniversaryCleanup = null;
+        effectsContainer?.remove();
+        textOverlay?.remove();
+        effectsContainer = null;
+        textOverlay = null;
+    }
+    window.addEventListener('pagehide', stopEffects);
+    matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
+        if (e.matches) stopEffects();
+    });
+
     // 暴露测试接口 (开发用)
     window.AnniversaryEffects = {
         test: (id) => {
+            stopEffects();
             const anniversary = ANNIVERSARIES.find(a => a.id === id);
             if (!anniversary) {
                 console.warn(`Anniversary: id="${id}" not found. Available:`, ANNIVERSARIES.map(a => a.id));
@@ -756,6 +778,7 @@
                 return;
             }
 
+            if (prefersReducedMotion()) return;
             if (anniversary.title) {
                 createTextOverlay(anniversary.title, anniversary.colors);
                 removeTextOverlay(3000);
@@ -771,9 +794,7 @@
         },
         list: () => ANNIVERSARIES.map(a => `${a.once || a.date}: ${a.name} (${a.id})`),
         cleanup: () => {
-            if (window._anniversaryCleanup) window._anniversaryCleanup();
-            effectsContainer?.remove();
-            textOverlay?.remove();
+            stopEffects();
             if (window.Day6000 && typeof window.Day6000.cleanup === 'function') {
                 window.Day6000.cleanup();
             }

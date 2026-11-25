@@ -16,7 +16,8 @@
 (() => {
     const $ = (id) => document.getElementById(id);
     const params = new URLSearchParams(window.location.search);
-    const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const { enter, preference } = window.LoveMotion;
+    const reduceMotion = () => preference.matches;
 
     // ============================================================
     // DOM
@@ -50,29 +51,6 @@
     const seasonOptions = $('season-options');
 
     // ============================================================
-    // 跟随鼠标的柔光（仅桌面，鼠标本身保持系统光标）
-    // ============================================================
-    const torch = $('torch');
-    if (torch) {
-        const moveCursor = (x, y) => {
-            torch.style.left = `${x}px`;
-            torch.style.top = `${y}px`;
-        };
-        moveCursor(window.innerWidth / 2, window.innerHeight / 2);
-        document.addEventListener('mousemove', (e) => moveCursor(e.clientX, e.clientY));
-    }
-
-    const setTorchMode = (isActive) => {
-        if (!torch) return;
-        const size = isActive ? '600px' : '400px';
-        torch.style.width = size;
-        torch.style.height = size;
-        torch.style.background = isActive
-            ? 'radial-gradient(circle, var(--torch-active-strong) 0%, var(--torch-active-soft) 50%, transparent 70%)'
-            : 'radial-gradient(circle, var(--torch-idle-strong) 0%, var(--torch-idle-soft) 50%, transparent 70%)';
-    };
-
-    // ============================================================
     // 日期与数据
     // ============================================================
     const RELATIONSHIP_START = new Date('2009-12-10T00:00:00');
@@ -91,7 +69,9 @@
         d.setHours(0, 0, 0, 0);
         return d;
     };
-    const isMobileLayout = () => window.matchMedia('(max-width: 600px)').matches;
+    const mobileLayout = window.matchMedia('(max-width: 600px)');
+    const isMobileLayout = () => mobileLayout.matches;
+    const hiddenTimeline = window.matchMedia('(max-width: 600px), (orientation: landscape) and (max-height: 520px)');
 
     const pad2 = (n) => String(n).padStart(2, '0');
     const formatDateISO = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
@@ -150,19 +130,25 @@
         }
     })();
     const knownRatio = (filename) => Number(ratioCache[filename]) || 0;
+    let ratioSaveTimer;
     function rememberRatio(filename, img) {
         if (!filename || !img.naturalWidth) return;
         const ratio = Number((img.naturalWidth / img.naturalHeight).toFixed(4));
         if (ratioCache[filename] === ratio) return;
         ratioCache[filename] = ratio;
-        const keys = Object.keys(ratioCache);
-        if (keys.length > 600) keys.slice(0, keys.length - 600).forEach((key) => delete ratioCache[key]);
-        try {
-            localStorage.setItem(RATIO_KEY, JSON.stringify(ratioCache));
-        } catch (err) {
-            // 存不下也没关系，只是下次多跳一下
-        }
+        clearTimeout(ratioSaveTimer);
+        ratioSaveTimer = setTimeout(saveRatios, 250);
     }
+
+    function saveRatios() {
+        if (!ratioSaveTimer) return;
+        clearTimeout(ratioSaveTimer);
+        ratioSaveTimer = 0;
+        const keys = Object.keys(ratioCache);
+        keys.slice(0, Math.max(0, keys.length - 600)).forEach(key => delete ratioCache[key]);
+        try { localStorage.setItem(RATIO_KEY, JSON.stringify(ratioCache)); } catch { /* 可在内存中继续使用。 */ }
+    }
+    addEventListener('pagehide', saveRatios);
 
     function getArtworkThemeText(item) {
         const raw = String(item.loveLetter || item.title || item.description || '');
@@ -259,12 +245,12 @@
     function applyImageTone(filename) {
         if (!bgBlur || !filename) return;
         bgBlur.style.setProperty('--bg-blur-image', `url('../images/${filename}')`);
+        const requestId = ++bgToneRequestId;
         const cached = bgToneCache.get(filename);
         if (cached) {
             setBgBlurOverlay(cached);
             return;
         }
-        const requestId = ++bgToneRequestId;
         const img = new Image();
         img.decoding = 'async';
         img.src = `images/${filename}`;
@@ -339,7 +325,9 @@
             }
         }
         const s = SEASONS[theme];
-        seasonBtn.querySelector('use').setAttribute('href', `#i-${theme}`);
+        const icon = seasonBtn.querySelector('use');
+        if (persist && icon.getAttribute('href') !== `#i-${theme}`) enter(icon.parentElement, 0, 2);
+        icon.setAttribute('href', `#i-${theme}`);
         $('season-label').textContent = `${s.name} · ${s.flower}`;
         seasonBtn.setAttribute('aria-label', `季节：${s.name}，${s.flower}。点开换季节`);
         seasonOptions.querySelectorAll('.season-opt').forEach((btn) => {
@@ -351,23 +339,27 @@
     }
 
     let seasonReturnFocus = null;
+    let seasonDismiss = 0;
     function openSeasonSheet() {
         seasonReturnFocus = document.activeElement;
-        renderSeasonOptions();
+        clearTimeout(seasonDismiss);
+        seasonSheet.inert = false;
         seasonSheet.classList.add('open');
         seasonSheet.setAttribute('aria-hidden', 'false');
         seasonOverlay.classList.add('show');
         seasonBtn.setAttribute('aria-expanded', 'true');
         const current = seasonOptions.querySelector('[aria-checked="true"]') || seasonOptions.querySelector('.season-opt');
-        requestAnimationFrame(() => current?.focus());
+        current?.focus({ preventScroll: true });
     }
     function closeSeasonSheet() {
         if (!seasonSheet.classList.contains('open')) return;
+        clearTimeout(seasonDismiss);
+        (seasonReturnFocus?.isConnected ? seasonReturnFocus : seasonBtn).focus({ preventScroll: true });
+        seasonSheet.inert = true;
         seasonSheet.classList.remove('open');
         seasonSheet.setAttribute('aria-hidden', 'true');
         seasonOverlay.classList.remove('show');
         seasonBtn.setAttribute('aria-expanded', 'false');
-        (seasonReturnFocus && document.contains(seasonReturnFocus) ? seasonReturnFocus : seasonBtn).focus();
     }
 
     seasonBtn.addEventListener('click', openSeasonSheet);
@@ -377,7 +369,9 @@
         const btn = e.target.closest('.season-opt');
         if (!btn) return;
         applySeason(btn.dataset.season);
-        setTimeout(closeSeasonSheet, 260);
+        clearTimeout(seasonDismiss);
+        if (reduceMotion()) closeSeasonSheet();
+        else seasonDismiss = setTimeout(closeSeasonSheet, 160);
     });
     seasonSheet.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -479,7 +473,6 @@
             stamped = [];
         }
         if (!Array.isArray(stamped) || stamped.includes(date)) return;
-        void seal.offsetWidth; // 重新触发动画
         seal.classList.add('is-stamping');
         stamped.push(date);
         try {
@@ -492,47 +485,54 @@
     // ------------------------------------------------------------
     // 画的位移转场（View Transition）：同一幅画从一处挪到另一处、大小跟着变，其余整页交叉淡化。
     //   vt-detail：点开看画 / 关上看画（从点的那张图放大进画框，关上落回去）
-    //   vt-swap：看画里换一封（画框从这一幅的尺寸变成下一幅的）
     // 不支持、减少动态效果、或页面在后台时直接换。
     // ------------------------------------------------------------
     const canMorph = () => !!document.startViewTransition && !reduceMotion() && !document.hidden;
-    const imageSettled = (img, cap) => new Promise((resolve) => {
-        if (img.complete && img.naturalWidth) {
-            resolve();
-            return;
-        }
-        const done = () => resolve();
-        img.addEventListener('load', done, { once: true });
-        img.addEventListener('error', done, { once: true });
-        setTimeout(done, cap);
-    });
-    let morphSeq = 0;
-    function morphArt(kind, fromEl, update, toEl) {
+    let morph = null;
+    function cancelMorph(finishUpdate = false) {
+        if (!morph) return;
+        const old = morph;
+        morph = null;
+        old.transition.skipTransition();
+        old.clear();
+        if (finishUpdate) old.apply();
+    }
+    function morphArt(fromEl, update, toEl) {
+        cancelMorph();
         if (!canMorph() || !fromEl) {
             update();
             return;
         }
-        const seq = ++morphSeq;
         const root = document.documentElement;
-        let target = null;
-        root.classList.remove('vt-detail', 'vt-swap');
-        root.classList.add(kind);
-        fromEl.style.viewTransitionName = 'lm-art';
-        const transition = document.startViewTransition(async () => {
-            fromEl.style.viewTransitionName = '';
+        let target, applied = false;
+        const apply = () => {
+            if (applied) return;
+            applied = true;
             update();
+        };
+        const clear = () => {
+            fromEl.style.viewTransitionName = '';
+            if (target) target.style.viewTransitionName = '';
+            root.classList.remove('vt-detail');
+        };
+        root.classList.add('vt-detail');
+        fromEl.style.viewTransitionName = 'lm-art';
+        const transition = document.startViewTransition(() => {
+            if (morph?.transition !== transition) return;
+            fromEl.style.viewTransitionName = '';
+            apply();
             target = toEl();
-            if (target) {
-                target.style.viewTransitionName = 'lm-art';
-                // 等那幅画解码好（最多 0.4 秒）再拍新画面，免得放大到一半是空框
-                const img = target instanceof HTMLImageElement ? target : target.querySelector('img');
-                if (img) await imageSettled(img, 400);
-            }
+            if (target) target.style.viewTransitionName = 'lm-art';
+        });
+        morph = { transition, clear, apply };
+        // 原生转场被后一次操作打断时，ready 按规范会拒绝。
+        transition.ready.catch(error => {
+            if (error.name !== 'AbortError') console.warn('画框转场已降级', error);
         });
         transition.finished.finally(() => {
-            if (target) target.style.viewTransitionName = '';
-            fromEl.style.viewTransitionName = '';
-            if (seq === morphSeq) root.classList.remove(kind);
+            if (morph?.transition !== transition) return;
+            morph = null;
+            clear();
         });
     }
 
@@ -543,7 +543,7 @@
             selectDate(item.dateObj);
             openDetail(item);
         };
-        if (fromEl && !detailModal.classList.contains('open')) morphArt('vt-detail', fromEl, run, () => detailImage);
+        if (fromEl && !detailModal.classList.contains('open')) morphArt(fromEl, run, () => detailImage);
         else run();
     }
 
@@ -702,6 +702,7 @@
         heroEl.dataset.file = item.filename;
         // 第一次打开：画先藏在暗处，下载好了再揭开（入场编排见 style.css"今日画信入场"）
         const entering = !heroEntered && !reduceMotion();
+        img.dataset.date = item.date;
         const unveil = () => {
             if (!img.classList.contains('is-veiled')) return;
             requestAnimationFrame(() => {
@@ -711,6 +712,7 @@
         };
         if (entering) img.classList.add('is-veiled');
         img.onload = () => {
+            img.setAttribute('aria-busy', 'false');
             rememberRatio(item.filename, img);
             layoutHero();
             unveil();
@@ -731,15 +733,15 @@
         if (entering) {
             heroEntered = true;
             heroEl.classList.add('is-entering');
-            setTimeout(() => heroEl.classList.remove('is-entering', 'is-arriving'), 3700);
+            heroEl.querySelector('.hero-letter-col').addEventListener('animationend', event => {
+                if (event.target === event.currentTarget) heroEl.classList.remove('is-entering');
+            }, { once: true });
         }
         return item;
     }
 
     const openHero = () => openItem(dataByDate[heroEl.dataset.date], $('today-hero-img'));
     $('today-hero-art').addEventListener('click', openHero);
-    $('today-hero-art').addEventListener('mouseenter', () => setTorchMode(true));
-    $('today-hero-art').addEventListener('mouseleave', () => setTorchMode(false));
     $('today-hero-open').addEventListener('click', openHero);
     $('today-hero-ruler').addEventListener('click', (event) => {
         const btn = event.target.closest('button[data-date]');
@@ -748,9 +750,19 @@
 
     function imageRetry(img, button, src) {
         button.hidden = true;
-        img.onerror = () => { button.hidden = false; };
+        img.onerror = () => {
+            if (img === detailImage && !pendingDate) setLoading(false);
+            img.classList.remove('is-veiled');
+            img.classList.add('has-failed');
+            img.setAttribute('aria-busy', 'false');
+            button.hidden = false;
+        };
+        img.classList.remove('has-failed');
         button.onclick = () => {
             button.hidden = true;
+            img.classList.remove('has-failed');
+            img.setAttribute('aria-busy', 'true');
+            if (img === detailImage) setLoading(true);
             img.src = src;
         };
     }
@@ -770,6 +782,7 @@
     // ============================================================
     let corridorBuilt = false;
     let corridorItems = [];
+    let corridorLandmarks = [];
     let activeMonth = null;
 
     function corridorTag(item, isToday) {
@@ -810,13 +823,13 @@
             const moon = moonStyle(moonLit(d), 13);
             const tag = corridorTag(item, isToday);
             const title = letterParts(item).title || getArtworkThemeText(item);
-            const src = `images/${item.filename}`;
+            const src = thumbSrc(item);
             const label = `${d.getMonth() + 1}月${d.getDate()}日，${title}，在一起的第 ${getDayNumber(d)} 天`;
             const ratio = knownRatio(item.filename);
             html.push(
                 `<button type="button" class="cor-item${isToday ? ' is-today' : ''}" data-date="${item.date}" aria-label="${escapeHtml(label)}"${ratio ? ` style="--r:${ratio}"` : ''}>` +
                 '<span class="cor-frame">' +
-                `<img class="cor-img" src="${src}" alt="" loading="${i < 6 ? 'eager' : 'lazy'}" decoding="async">` +
+                `<img class="cor-img" src="${src}" data-full="${fullSrc(item)}" alt="" loading="${i < 3 ? 'eager' : 'lazy'}" decoding="async">` +
                 '</span>' +
                 '<span class="cor-cap"><span class="cor-cap-row"><span class="cor-when">' +
                 `<span class="cor-date">${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}</span>` +
@@ -830,26 +843,49 @@
         });
         corridorScroll.innerHTML = html.join('');
         corridorItems = [...corridorScroll.querySelectorAll('.cor-item')];
+        corridorLandmarks = corridorItems.filter(card => {
+            const special = specialFor(card.dataset.date);
+            return special && special.short !== '第一封';
+        });
 
-        // 画框按真实比例定（加载前先按 16:9 占位）。桌面上框多宽这一格就多宽：
-        // 视野左边的画加载完会变宽变窄，把差值补回 scrollLeft，眼前这幅就不会被挤走（手机每格同宽，差值总是 0）
-        corridorScroll.querySelectorAll('.cor-img').forEach((img) => {
-            const setRatio = () => {
-                if (!img.naturalWidth) return;
-                const item = img.closest('.cor-item');
-                const before = item.offsetWidth;
-                const isLeft = item.offsetLeft < corridorScroll.scrollLeft;
-                item.style.setProperty('--r', (img.naturalWidth / img.naturalHeight).toFixed(4));
-                rememberRatio(dataByDate[item.dataset.date]?.filename, img);
+        // 同一帧就绪的缩略图一起定尺寸，只校正一次视野中的锚点。
+        const pending = new Set();
+        let frame = 0;
+        const flush = () => {
+            frame = 0;
+            const fixedWidth = isMobileLayout();
+            const anchor = fixedWidth || rangeHeld ? null : corridorItems[corridorIndexAt(corridorScroll.scrollLeft)];
+            const before = anchor?.offsetLeft;
+            for (const img of pending) {
+                const card = img.closest('.cor-item');
+                const file = dataByDate[card.dataset.date].filename;
+                rememberRatio(file, img);
+                card.style.setProperty('--r', knownRatio(file));
                 img.classList.add('is-loaded');
-                const delta = item.offsetWidth - before;
-                if (isLeft && delta) corridorScroll.scrollLeft += delta;
-            };
-            if (img.complete) setRatio();
-            else img.addEventListener('load', () => {
-                setRatio();
-                scheduleCorridorMarks();
-            }, { once: true });
+            }
+            pending.clear();
+            if (anchor) corridorScroll.scrollLeft += anchor.offsetLeft - before;
+            // 手机每封占固定宽度。缩略图只改变画框高度，进度标记仍在原处。
+            if (!fixedWidth) scheduleCorridorMarks();
+            scheduleSharpArt();
+        };
+        const ready = img => {
+            if (!img.naturalWidth) return;
+            pending.add(img);
+            if (!frame) frame = requestAnimationFrame(flush);
+        };
+        const intersection = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+            for (const entry of entries) {
+                if (entry.isIntersecting) visibleCards.add(entry.target);
+                else visibleCards.delete(entry.target);
+            }
+            scheduleSharpArt();
+        }, { root: corridorScroll }) : null;
+        corridorItems.forEach(card => {
+            const img = card.querySelector('img');
+            img.addEventListener('load', () => ready(img));
+            if (img.complete) ready(img);
+            intersection?.observe(card);
         });
 
         activeMonth = null;
@@ -865,24 +901,49 @@
         scheduleCorridorMarks();
         syncCorridor();
 
-        // 第一次走进长廊：前几幅依次浮上来
-        if (!reduceMotion()) {
-            [...corridorScroll.children].slice(0, 8).forEach((el, k) => el.style.setProperty('--k', String(k)));
-            corridorScroll.classList.add('is-entering');
-            setTimeout(() => corridorScroll.classList.remove('is-entering'), 1900);
-        }
+    }
+
+    // 拖过的画只需缩略图。停下后给实际可见且分辨率不足的画换上原图。
+    const visibleCards = new Set();
+    let sharpTimer = 0;
+    let rangeHeld = false;
+    function scheduleSharpArt() {
+        clearTimeout(sharpTimer);
+        if (rangeHeld || currentView !== 'corridor') return;
+        sharpTimer = setTimeout(() => {
+            if (currentView !== 'corridor' || rangeHeld || document.hidden) return;
+            for (const card of visibleCards) {
+                const img = card.querySelector('img');
+                if (!img.dataset.full || !img.naturalWidth || img.clientWidth * devicePixelRatio <= img.naturalWidth * 1.15) continue;
+                const src = img.dataset.full;
+                img.removeAttribute('data-full');
+                const full = new Image();
+                full.onload = () => { if (visibleCards.has(card)) img.src = src; else img.dataset.full = src; };
+                full.onerror = () => { img.dataset.full = src; };
+                full.src = src;
+            }
+        }, 140);
     }
 
     const corridorMax = () => Math.max(0, corridorScroll.scrollWidth - corridorScroll.clientWidth);
+    function corridorIndexAt(point) {
+        let lo = 0;
+        let hi = corridorItems.length - 1;
+        while (lo < hi) {
+            const mid = (lo + hi) >>> 1;
+            const el = corridorItems[mid];
+            if (el.offsetLeft + el.offsetWidth <= point) lo = mid + 1;
+            else hi = mid;
+        }
+        return lo;
+    }
 
     // 走到某一幅时长廊该滚到哪：桌面靠左对齐，手机居中
     function corridorTarget(el) {
         if (isMobileLayout()) return el.offsetLeft - (corridorScroll.clientWidth - el.offsetWidth) / 2;
         return el.offsetLeft - (parseFloat(getComputedStyle(corridorScroll).paddingLeft) || 0);
     }
-    // 近处平滑走过去；远处（隔着一屏半以上）暗一下直接到，
-    // 免得一路经过的画全被加载、宽度一变就停错位置
-    let jumpTimer = null;
+    // 近处平滑滚动，远处立即定位，避免中途加载经过的每一幅。
     function scrollCorridorTo(el, smooth = true) {
         if (!el) return;
         const left = clamp(corridorTarget(el), 0, corridorMax());
@@ -895,12 +956,8 @@
             corridorScroll.scrollTo({ left, behavior: 'smooth' });
             return;
         }
-        clearTimeout(jumpTimer);
-        corridorScroll.classList.add('is-jumping');
-        jumpTimer = setTimeout(() => {
-            corridorScroll.scrollLeft = clamp(corridorTarget(el), 0, corridorMax());
-            requestAnimationFrame(() => corridorScroll.classList.remove('is-jumping'));
-        }, 180);
+        corridorScroll.scrollTo({ left, behavior: 'instant' });
+        enter(corridorScroll);
     }
 
     // 进度条上方的小标记：生日、纪念日；点一下走到那一天
@@ -912,9 +969,8 @@
             return;
         }
         const marks = [];
-        corridorScroll.querySelectorAll('.cor-item').forEach((el) => {
+        corridorLandmarks.forEach((el) => {
             const special = specialFor(el.dataset.date);
-            if (!special || special.short === '第一封') return;
             const pct = clamp(corridorTarget(el) / max, 0, 1) * 100;
             marks.push(`<button type="button" tabindex="-1" class="corridor-mark${special.love ? ' is-love' : ''}" data-date="${el.dataset.date}" style="left:${pct.toFixed(2)}%">${escapeHtml(special.short)}</button>`);
         });
@@ -960,8 +1016,9 @@
         corridorRange.value = max ? String(Math.round((left / max) * 1000)) : '0';
         // 当前走到了哪个月：看视野左边三分之一处是哪一幅（手机上竖排月份是隐藏的，所以按画算）
         const probe = left + corridorScroll.clientWidth * (isMobileLayout() ? 0.5 : 0.35);
-        const here = corridorItems.find((el) => el.offsetLeft + el.offsetWidth > probe) || corridorItems[corridorItems.length - 1];
+        const here = corridorItems[corridorIndexAt(probe)];
         const active = here ? here.dataset.date.slice(0, 7) : null;
+        if (here) corridorRange.setAttribute('aria-valuetext', here.dataset.date);
         if (active === activeMonth) return;
         activeMonth = active;
         corridorMonths.querySelectorAll('.month-chip').forEach((chip) => {
@@ -974,7 +1031,7 @@
                 const from = chip.offsetLeft - corridorMonths.offsetLeft;
                 const view = corridorMonths.scrollLeft;
                 if (from < view || from + chip.offsetWidth > view + corridorMonths.clientWidth) {
-                    corridorMonths.scrollTo({ left: from - 12, behavior: reduceMotion() ? 'auto' : 'smooth' });
+                    corridorMonths.scrollTo({ left: from - 12, behavior: rangeHeld || reduceMotion() ? 'instant' : 'smooth' });
                 }
             }
         });
@@ -986,9 +1043,23 @@
         corridorRaf = requestAnimationFrame(() => {
             corridorRaf = 0;
             syncCorridor();
+            scheduleSharpArt();
         });
     }, { passive: true });
 
+    corridorRange.addEventListener('pointerdown', () => {
+        rangeHeld = true;
+        corridorScroll.classList.add('is-scrubbing');
+    });
+    const releaseRange = () => {
+        if (!rangeHeld) return;
+        rangeHeld = false;
+        corridorScroll.classList.remove('is-scrubbing');
+        scheduleSharpArt();
+    };
+    window.addEventListener('pointerup', releaseRange);
+    window.addEventListener('pointercancel', releaseRange);
+    window.addEventListener('blur', releaseRange);
     corridorRange.addEventListener('input', () => {
         corridorScroll.scrollLeft = (Number(corridorRange.value) / 1000) * corridorMax();
     });
@@ -1009,13 +1080,6 @@
         const btn = e.target.closest('.cor-item');
         if (btn) openItem(dataByDate[btn.dataset.date], btn.querySelector('.cor-img.is-loaded'));
     });
-    corridorScroll.addEventListener('mouseover', (e) => {
-        if (e.target.closest('.cor-item')) setTorchMode(true);
-    });
-    corridorScroll.addEventListener('mouseout', (e) => {
-        if (e.target.closest('.cor-item') && !e.relatedTarget?.closest?.('.cor-item')) setTorchMode(false);
-    });
-
     corridorMonths.addEventListener('click', (e) => {
         const chip = e.target.closest('.month-chip');
         if (!chip) return;
@@ -1030,8 +1094,6 @@
     // ============================================================
     let calMonth = new Date(getToday().getFullYear(), getToday().getMonth(), 1);
     let calBuilt = false;
-    let calDirection = 1; // 翻月方向：圆窗亮起来的波从哪一边起
-    let calFlipTimer = null;
 
     const firstLetterMonth = () => {
         const first = sortedDates.length ? parseISO(sortedDates[0]) : getToday();
@@ -1083,13 +1145,7 @@
         calPrev.setAttribute('aria-label', `上个月：${prev.getFullYear()}年${prev.getMonth() + 1}月`);
         calNext.setAttribute('aria-label', `下个月：${next.getFullYear()}年${next.getMonth() + 1}月`);
 
-        // 圆窗：翻月时按对角线一扇扇亮起来（往后翻从左上起，往前翻从右上起）
         const cells = [];
-        const wave = (day) => {
-            const i = firstDow + day - 1;
-            const col = i % 7;
-            return Math.floor(i / 7) + (calDirection < 0 ? 6 - col : col);
-        };
         for (let i = 0; i < firstDow; i++) cells.push('<span class="cal-day is-blank" aria-hidden="true"></span>');
         for (let day = 1; day <= daysIn; day++) {
             const iso = `${monthPrefix}-${pad2(day)}`;
@@ -1113,7 +1169,7 @@
             if (future) bits.push('还没到');
             else if (!item) bits.push('这天没有画信');
             cells.push(
-                `<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${escapeHtml(bits.join('，'))}" style="--w:${wave(day)}">` +
+                `<button type="button" class="${cls.join(' ')}" data-date="${iso}" aria-label="${escapeHtml(bits.join('，'))}">` +
                 '<span class="cal-win" aria-hidden="true"><span class="cal-win-edge"></span>' +
                 `<span class="cal-win-art">${art}</span></span>` +
                 `<span class="cal-num">${day}</span>` +
@@ -1122,17 +1178,6 @@
             );
         }
         calGrid.innerHTML = cells.join('');
-        if (!reduceMotion()) {
-            const side = document.querySelector('.cal-side');
-            [calGrid, side].forEach((el) => {
-                el.classList.remove('is-flipping');
-                void el.offsetWidth; // 连续翻月时重新播放
-                el.classList.add('is-flipping');
-            });
-            clearTimeout(calFlipTimer);
-            calFlipTimer = setTimeout(() => [calGrid, side].forEach((el) => el.classList.remove('is-flipping')), 1500);
-        }
-
         // 这个月的特别日子：生日、纪念日、满月
         const specials = [];
         for (let day = 1; day <= daysIn; day++) {
@@ -1168,15 +1213,15 @@
         const next = new Date(calMonth.getFullYear(), calMonth.getMonth() + offset, 1);
         if (monthKey(next) < monthKey(firstLetterMonth()) || monthKey(next) > monthKey(thisMonth())) return;
         calMonth = next;
-        calDirection = offset;
         renderCalendar();
-        calDirection = 1;
+        enter(calGrid, offset * 8);
+        enter($('cal-month'), offset * 4);
+        enter($('cal-count'));
     }
 
     calPrev.addEventListener('click', () => shiftCalendar(-1));
     calNext.addEventListener('click', () => shiftCalendar(1));
 
-    const EMPTY_DAY_PHRASES = ['这一天还在路上', '这一天的花还含苞', '这一天等你点亮', '这一天慢慢靠近', '这一天先留白'];
     calGrid.addEventListener('click', (e) => {
         const cell = e.target.closest('.cal-day');
         if (!cell || cell.classList.contains('is-blank')) return;
@@ -1187,7 +1232,7 @@
         }
         const d = parseISO(cell.dataset.date);
         const phrase = cell.classList.contains('is-future')
-            ? EMPTY_DAY_PHRASES[Math.floor(Math.random() * EMPTY_DAY_PHRASES.length)]
+            ? '这一天还没到'
             : '这一天没有画信';
         showToast(unit(`${d.getMonth() + 1}月${d.getDate()}日`) + SEP + unit(phrase));
     });
@@ -1241,32 +1286,23 @@
                     syncCorridor();
                 }
             }
-            if (view === 'calendar') renderCalendar();
+            if (view === 'calendar') {
+                if (!calBuilt) renderCalendar();
+                else document.title = `Love Minnie · 画历 · ${calMonth.getFullYear()}年${calMonth.getMonth() + 1}月`;
+            }
         }
-        if (scroll) window.scrollTo(0, 0);
-    }
-
-    // 切视图时旧的淡出、新的浮上来（View Transition；不支持或减少动态效果时直接换）
-    function withViewTransition(update) {
-        if (!document.startViewTransition || reduceMotion() || document.hidden) {
-            update();
-            return;
-        }
-        const root = document.documentElement;
-        root.classList.add('vt-view');
-        const transition = document.startViewTransition(update);
-        transition.finished.finally(() => root.classList.remove('vt-view'));
+        if (scroll) window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     window.addEventListener('hashchange', () => {
+        cancelMorph();
         if (detailModal.classList.contains('open')) closeDetail({ restoreFocus: false, animate: false });
         closeSeasonSheet();
         const next = viewFromHash();
-        if (next === currentView) {
-            setView(next);
-            return;
-        }
-        withViewTransition(() => setView(next));
+        if (next === currentView) return;
+        const direction = Math.sign(VIEWS.indexOf(next) - VIEWS.indexOf(currentView));
+        setView(next);
+        enter($(`view-${next}`), direction * 6);
     });
 
     // ============================================================
@@ -1274,7 +1310,7 @@
     // ============================================================
 
     function renderTimeline() {
-        if (isMobileLayout() || timelineContainer.childElementCount) return;
+        if (hiddenTimeline.matches || timelineContainer.childElementCount) return;
         // 只放已经收到的画信；还没到的日子不占位（原来末尾有 5 个虚线空框，像没加载出来的图）
         const allItems = [...galleryData].reverse();
         const selectedKey = formatDateISO(selectedDate);
@@ -1298,7 +1334,7 @@
             img.dataset.full = fullSrc(item);
             img.alt = '';
             img.decoding = 'async';
-            img.loading = Math.abs(index - selectedIndex) <= 24 ? 'eager' : 'lazy';
+            img.loading = Math.abs(index - selectedIndex) <= 3 ? 'eager' : 'lazy';
             img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
             img.src = thumbSrc(item);
             const frame = document.createElement('span');
@@ -1324,8 +1360,8 @@
         timelineContainer.scrollTo({ left: Math.max(0, left), behavior: smooth && !reduceMotion() ? 'smooth' : 'auto' });
     }
 
-    $('timeline-prev').addEventListener('click', () => timelineContainer.scrollBy({ left: -200, behavior: 'smooth' }));
-    $('timeline-next').addEventListener('click', () => timelineContainer.scrollBy({ left: 200, behavior: 'smooth' }));
+    $('timeline-prev').addEventListener('click', () => timelineContainer.scrollBy({ left: -200, behavior: reduceMotion() ? 'auto' : 'smooth' }));
+    $('timeline-next').addEventListener('click', () => timelineContainer.scrollBy({ left: 200, behavior: reduceMotion() ? 'auto' : 'smooth' }));
 
     function selectDate(date) {
         selectedDate = new Date(date);
@@ -1334,7 +1370,6 @@
         const thumb = timelineContainer.querySelector(`.timeline-thumb[data-date="${dateStr}"]`);
         if (thumb) {
             thumb.classList.add('selected');
-            if (detailModal.classList.contains('open')) centerTimeline(true);
         }
         const item = dataByDate[dateStr];
         if (item) applyImageTone(item.filename);
@@ -1379,17 +1414,20 @@
     function getDetailFocusable() {
         return [...detailModal.querySelectorAll(
             'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )].filter((el) => el.getAttribute('aria-hidden') !== 'true');
+        )].filter(el => el.getClientRects().length && el.getAttribute('aria-hidden') !== 'true');
     }
 
     function setBackgroundInert(isInert) {
-        [...document.body.children].forEach((el) => {
-            if (el === detailModal) return;
-            // 影院模式仍允许底栏胶卷条点选换画
-            if (el.classList.contains('timeline-strip')) return;
-            if (isInert) el.setAttribute('inert', '');
-            else el.removeAttribute('inert');
-        });
+        for (const el of document.body.children) {
+            if (el === detailModal || el.classList.contains('timeline-strip')) continue;
+            if (isInert && !el.inert) {
+                el.inert = true;
+                el.dataset.detailInert = '';
+            } else if (!isInert && el.hasAttribute('data-detail-inert')) {
+                el.inert = false;
+                delete el.dataset.detailInert;
+            }
+        }
     }
 
     function trapDetailFocus(e) {
@@ -1420,6 +1458,7 @@
     function openDetail(item) {
         if (!item || !detailModal) return;
 
+        detailImage.dataset.date = item.date;
         const detailDialog = detailModal.querySelector('.detail-dialog');
         const updateDetailOrientation = () => {
             if (!detailDialog || !detailImage.naturalWidth) return;
@@ -1434,11 +1473,14 @@
         detailDialog?.classList.toggle('is-portrait', hinted > 0 && hinted < 1 / 1.05);
         detailDialog?.classList.toggle('is-landscape', hinted >= 1 / 1.05);
         detailImage.onload = () => {
+            if (!pendingDate) setLoading(false);
+            detailImage.setAttribute('aria-busy', 'false');
             rememberRatio(item.filename, detailImage);
             updateDetailOrientation();
         };
         imageRetry(detailImage, $('detail-retry'), fullSrc(item));
         detailImage.src = fullSrc(item);
+        setLoading(!detailImage.complete);
         detailImage.alt = getArtworkLabel(item);
         // 看画的同图氛围底：铺满整个屏幕
         detailModal.style.setProperty('--detail-bg', `url("${detailImage.src}")`);
@@ -1466,18 +1508,22 @@
             ? TS.html(description)
             : '';
 
+        detailModal.querySelector('.detail-body').scrollTop = 0;
         updatePager(item);
         const wasOpen = detailModal.classList.contains('open');
+        detailModal.inert = false;
         detailModal.classList.add('open');
         detailModal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
         if (!lastDetailFocus) lastDetailFocus = document.activeElement;
-        setBackgroundInert(true);
-        if (!wasOpen) detailClose?.focus({ preventScroll: true });
+        if (!wasOpen) {
+            detailClose?.focus({ preventScroll: true });
+            setBackgroundInert(true);
+        }
         if (detailImage.complete) updateDetailOrientation();
         else fitDetailTitle();
-        // 手机上不显示胶卷条，就不去加载它的图
-        if (!isMobileLayout()) {
+        // 窄屏和手机横屏都不显示胶卷条，避免加载屏幕上看不到的图片。
+        if (!hiddenTimeline.matches) {
             renderTimeline();
             centerTimeline(wasOpen);
         }
@@ -1507,7 +1553,7 @@
     const pagerPrev = $('detail-prev');
     const pagerNext = $('detail-next');
     function updatePager(item) {
-        const index = sortedDates.indexOf(item.date);
+        const index = (chronoIndex.get(item.date) || 0) - 1;
         // 和长廊、画历一样写成两位数的 MM.DD，各处的日期对得齐
         const label = (iso) => (iso ? `${iso.slice(5, 7)}.${iso.slice(8, 10)}` : '');
         [[pagerPrev, sortedDates[index - 1], '前一封'], [pagerNext, sortedDates[index + 1], '后一封']].forEach(([btn, iso, word]) => {
@@ -1550,84 +1596,167 @@
     function closeDetail({ restoreFocus = true, animate = true } = {}) {
         if (!detailModal.classList.contains('open')) return;
         const item = dataByDate[formatDateISO(selectedDate)];
+        let landing;
         const finish = () => {
+            detailModal.inert = true;
             detailModal.classList.remove('open');
-            detailModal.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('modal-open');
             setBackgroundInert(false);
             const restore = lastDetailFocus;
             lastDetailFocus = null;
-            if (restoreFocus && restore && typeof restore.focus === 'function' && document.contains(restore)) {
-                restore.focus({ preventScroll: true });
+            if (restoreFocus || animate) landing = landingFor(item);
+            if (restoreFocus) {
+                const fallback = document.querySelector(isMobileLayout() ? '.nav-item.active' : '.lm-tab.is-active');
+                const original = restore?.isConnected && restore !== document.body ? restore : null;
+                (landing?.closest('button') || original || fallback)?.focus({ preventScroll: true });
             }
+            detailModal.setAttribute('aria-hidden', 'true');
         };
-        if (animate) morphArt('vt-detail', detailImage, finish, () => landingFor(item));
+        discardSwap();
+        resetDrag();
+        if (animate) morphArt(detailImage, finish, () => landing);
         else finish();
     }
 
     detailClose?.addEventListener('click', () => closeDetail());
-    detailModal.addEventListener('click', (e) => {
-        if (e.target === detailModal) closeDetail();
+    let pressedBackdrop = false;
+    detailModal.addEventListener('click', e => {
+        if (pressedBackdrop && e.target === detailModal) closeDetail();
+        pressedBackdrop = false;
     });
 
-    // 看画里换一封：画框从这一幅的尺寸变成下一幅的，展签交叉淡化
-    function swapLetter(item) {
-        if (!item) return;
-        morphArt('vt-swap', detailImage, () => openItem(item), () => detailImage);
-    }
-
-    // 前一封 / 后一封（按日期，左早右晚）
+    // 日期意图立即更新，画和展签在下一张准备好时一起替换。旧请求无法覆盖新选择。
     const detailMediaEl = detailModal.querySelector('.detail-media');
-    function navigateLetter(offset, { animate = false } = {}) {
-        const index = sortedDates.indexOf(formatDateISO(selectedDate));
-        if (index === -1) return;
-        const target = sortedDates[index + offset];
-        if (!target) {
-            // 到头了：轻轻顶一下
-            if (detailMediaEl) {
-                detailMediaEl.style.transform = offset > 0 ? 'translateX(-10px)' : 'translateX(10px)';
-                setTimeout(() => {
-                    detailMediaEl.style.transform = '';
-                }, 150);
-            }
-            return;
-        }
-        const item = dataByDate[target];
-        if (!animate || !detailMediaEl || reduceMotion()) {
-            swapLetter(item);
-            return;
-        }
-        detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
-        detailMediaEl.style.transform = `translateX(${offset > 0 ? '-100%' : '100%'})`;
-        detailMediaEl.style.opacity = '0';
-        setTimeout(() => {
+    const neighbour = $('detail-neighbour');
+    let pendingDate = null;
+    let swapRevision = 0;
+    let loadingTimer = 0;
+    function setLoading(busy) {
+        clearTimeout(loadingTimer);
+        detailMediaEl.setAttribute('aria-busy', String(busy));
+        if (busy) loadingTimer = setTimeout(() => { $('detail-loading').hidden = false; }, 160);
+        else $('detail-loading').hidden = true;
+    }
+    function discardSwap() {
+        swapRevision++;
+        pendingDate = null;
+        setLoading(false);
+    }
+    function swapLetter(item, direction, remainingX) {
+        if (!item || !detailModal.classList.contains('open')) return;
+        cancelMorph();
+        if (remainingX === undefined) resetDrag();
+        const displayed = detailImage.dataset.date;
+        discardSwap();
+        if (item.date === displayed) { resetDrag(); updatePager(item); return; }
+        pendingDate = item.date;
+        const revision = swapRevision;
+        updatePager(item);
+        setLoading(true);
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = fullSrc(item);
+        const commit = () => {
+            if (revision !== swapRevision || !detailModal.classList.contains('open')) return;
+            discardSwap();
             openItem(item);
-            detailMediaEl.style.transition = 'none';
-            detailMediaEl.style.transform = `translateX(${offset > 0 ? '100%' : '-100%'})`;
-            requestAnimationFrame(() => {
-                detailMediaEl.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
-                detailMediaEl.style.transform = 'translateX(0)';
-                detailMediaEl.style.opacity = '1';
-            });
-        }, 200);
+            if (!swipe && remainingX !== undefined && !reduceMotion()) {
+                // 新画接在手指放开时邻幅已到的位置，再走完余下的距离。
+                detailMediaEl.classList.add('is-dragging');
+                detailMediaEl.style.transform = `translateX(${remainingX}px)`;
+                getComputedStyle(detailMediaEl).transform;
+                resetDrag();
+            } else if (!swipe) {
+                resetDrag();
+                enter(detailImage, (direction ?? Math.sign(item.date.localeCompare(displayed))) * 10);
+            }
+            enter($('detail-date'));
+            enter(detailTitle, 0, 3);
+        };
+        if (img.decode) img.decode().then(commit, commit);
+        else if (img.complete) commit();
+        else img.onload = img.onerror = commit;
     }
 
-    // 手机：左右滑换画
-    let touchStartX = 0;
-    let touchStartY = 0;
-    detailModal.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
-    }, { passive: true });
-    detailModal.addEventListener('touchend', (e) => {
-        const deltaX = e.changedTouches[0].screenX - touchStartX;
-        const deltaY = e.changedTouches[0].screenY - touchStartY;
-        if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 100) {
-            navigateLetter(deltaX > 0 ? -1 : 1, { animate: true });
+    function navigateLetter(offset) {
+        const current = pendingDate || detailImage.dataset.date;
+        const target = sortedDates[(chronoIndex.get(current) || 0) - 1 + offset];
+        if (target) swapLetter(dataByDate[target], offset);
+    }
+
+    // 手指移动时只动当前画面。竖向滚动和双指缩放由浏览器处理。
+    let swipe = null;
+    function resetDrag() {
+        swipe = null;
+        neighbour.hidden = true;
+        detailMediaEl.classList.remove('is-dragging');
+        detailMediaEl.style.removeProperty('transform');
+    }
+    detailModal.addEventListener('pointerdown', e => {
+        pressedBackdrop = e.target === detailModal;
+        if (!e.isPrimary) { resetDrag(); return; }
+        if (e.button !== 0 || e.pointerType === 'mouse' || e.target.closest('button,a')) return;
+        const transform = getComputedStyle(detailMediaEl).transform;
+        const startOffset = transform === 'none' ? 0 : new DOMMatrix(transform).m41;
+        const index = (chronoIndex.get(pendingDate || detailImage.dataset.date) || 0) - 1;
+        swipe = { id: e.pointerId, x: e.clientX, y: e.clientY, index, step: innerWidth, startOffset, horizontal: false };
+    });
+    detailModal.addEventListener('pointermove', e => {
+        if (swipe?.id !== e.pointerId) return;
+        const dx = e.clientX - swipe.x;
+        const dy = e.clientY - swipe.y;
+        if (!swipe.horizontal) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) < 5) return;
+            if (Math.abs(dx) < Math.abs(dy) * 1.2) { resetDrag(); return; }
+            swipe.horizontal = true;
+            detailModal.setPointerCapture(e.pointerId);
+            detailMediaEl.classList.add('is-dragging');
         }
-    }, { passive: true });
+        if (reduceMotion()) return;
+        const direction = dx > 0 ? -1 : 1;
+        const adjacent = dataByDate[sortedDates[swipe.index + direction]];
+        const moved = clamp(swipe.startOffset + dx * (adjacent ? 1 : .18), -swipe.step, swipe.step);
+        detailMediaEl.style.transform = `translateX(${moved}px)`;
+        neighbour.hidden = !adjacent;
+        if (adjacent) {
+            if (neighbour.dataset.date !== adjacent.date) {
+                neighbour.dataset.date = adjacent.date;
+                neighbour.classList.remove('is-loaded');
+                neighbour.onload = () => neighbour.classList.add('is-loaded');
+                neighbour.src = fullSrc(adjacent);
+            }
+            neighbour.style.setProperty('--neighbour-x', `${direction * swipe.step}px`);
+        }
+    });
+    detailModal.addEventListener('pointerup', e => {
+        if (swipe?.id !== e.pointerId) return;
+        const dx = e.clientX - swipe.x;
+        const direction = dx > 0 ? -1 : 1;
+        const target = dataByDate[sortedDates[swipe.index + direction]];
+        if (!target || !swipe.horizontal || Math.abs(dx) < Math.min(56, innerWidth * .12)) {
+            resetDrag();
+            return;
+        }
+        const remaining = direction * swipe.step + clamp(swipe.startOffset + dx, -swipe.step, swipe.step);
+        swipe = null;
+        if (reduceMotion()) resetDrag();
+        swapLetter(target, direction, remaining);
+    });
+    detailModal.addEventListener('pointercancel', resetDrag);
+    detailModal.addEventListener('lostpointercapture', e => {
+        if (e.target === detailModal && swipe?.id === e.pointerId) resetDrag();
+    });
+    preference.addEventListener('change', () => {
+        resetDrag();
+        if (preference.matches) cancelMorph(true);
+    });
 
     document.addEventListener('keydown', (e) => {
+        if (document.body.classList.contains('d6k-active')) return;
+        if (morph && !detailModal.classList.contains('open') && e.key === 'Escape') {
+            cancelMorph();
+            return;
+        }
         if (detailModal.classList.contains('open')) {
             if (e.key === 'Tab') {
                 trapDetailFocus(e);
@@ -1660,6 +1789,7 @@
     function showToast(html) {
         const toast = $('lm-toast');
         if (!toast) return;
+        if (toast.classList.contains('show') && toast.innerHTML !== html) enter(toast);
         toast.innerHTML = html;
         toast.classList.add('show');
         clearTimeout(toastTimer);
@@ -1669,23 +1799,24 @@
     // ============================================================
     // 尺寸变化
     // ============================================================
-    let resizeTimer = null;
+    let resizeFrame = 0;
     window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
+        if (resizeFrame) return;
+        resizeFrame = requestAnimationFrame(() => {
+            resizeFrame = 0;
             if (currentView === 'today') layoutHero();
             if (currentView === 'corridor') {
-                placeCorridorMarks();
+                scheduleCorridorMarks();
                 syncCorridor();
             }
             if (detailModal.classList.contains('open')) {
                 fitDetailTitle();
-                if (!isMobileLayout()) {
+                if (!hiddenTimeline.matches) {
                     renderTimeline();
                     centerTimeline(false);
                 }
             }
-        }, 150);
+        });
     });
 
     // ============================================================
@@ -1709,9 +1840,18 @@
     setView(viewFromHash(), { scroll: false });
 
     function loadLetters() {
-        $('catalog-error').hidden = true;
+        const notice = $('catalog-error');
+        const retry = $('catalog-retry');
+        const loading = setTimeout(() => {
+            $('catalog-message').textContent = '正在翻开画信…';
+            retry.hidden = true;
+            notice.hidden = false;
+        }, 160);
+        notice.hidden = true;
         return loadGalleryData()
             .then((data) => {
+                clearTimeout(loading);
+                notice.hidden = true;
                 const todayStr = formatDateISO(getToday());
                 galleryData = data
                     .filter((item) => item && /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.filename && item.date <= todayStr)
@@ -1738,8 +1878,11 @@
             })
             .catch((err) => {
                 console.error('Error loading data:', err);
+                clearTimeout(loading);
                 dataReady = false;
-                $('catalog-error').hidden = false;
+                $('catalog-message').textContent = '画信目录暂时没打开。';
+                retry.hidden = false;
+                notice.hidden = false;
             });
     }
     $('catalog-retry').addEventListener('click', loadLetters);

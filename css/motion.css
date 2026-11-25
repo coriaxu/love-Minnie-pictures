@@ -1,0 +1,71 @@
+/* 同一种变化用同一种节奏。按下最快，只有同一幅画在两处之间移动时才给更长时间。 */
+:root {
+    --lm-press: 90ms;
+    --lm-feedback: 160ms;
+    --lm-enter: 220ms;
+    --lm-travel: 340ms;
+    --lm-ease: cubic-bezier(.2, .72, .24, 1);
+    --lm-in-out: cubic-bezier(.4, 0, .2, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto; }
+
+    :where(button:enabled, a[href]):active {
+        scale: .975;
+        transition-duration: var(--lm-press);
+    }
+    :where(.hero-art, .cor-item, .home-moon):active { scale: 1; }
+}
+
+::view-transition { pointer-events: none; }
+::view-transition-old(root) { animation: lm-leave var(--lm-feedback) ease-out both; }
+::view-transition-new(root) { animation: lm-appear var(--lm-enter) var(--lm-ease) both; }
+
+::view-transition-group(lm-art) {
+    animation-duration: var(--lm-travel);
+    animation-timing-function: var(--lm-in-out);
+    overflow: clip;
+}
+
+::view-transition-old(lm-art),
+::view-transition-new(lm-art) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: plus-lighter;
+}
+
+::view-transition-old(lm-art) { animation: lm-leave var(--lm-travel) var(--lm-in-out) both; }
+::view-transition-new(lm-art) { animation: lm-appear var(--lm-travel) var(--lm-in-out) both; }
+
+::view-transition-group(lm-letter) { z-index: 2; }
+::view-transition-new(lm-letter) { animation: lm-appear var(--lm-enter) var(--lm-ease) both; }
+html.vt-arrive:has(.gallery-page)::view-transition-image-pair(lm-art) {
+    animation: lm-open-window var(--lm-travel) var(--lm-in-out) both;
+}
+html.vt-arrive:has(.home-page)::view-transition-image-pair(lm-art) {
+    animation: lm-open-window var(--lm-travel) var(--lm-in-out) reverse both;
+}
+@keyframes lm-open-window {
+    from { clip-path: inset(0 round 50%); }
+    to { clip-path: inset(0 round 2px); }
+}
+
+@keyframes lm-leave { to { opacity: 0; } }
+@keyframes lm-appear { from { opacity: 0; } }
+
+/* 保留每段动画的最终姿态。逐行显字的纪念页也需要这个终态。 */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+        scroll-behavior: auto !important;
+    }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+        animation-duration: .01ms !important;
+    }
+}

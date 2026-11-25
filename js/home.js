@@ -35,7 +35,7 @@
     };
 
     const params = new URLSearchParams(window.location.search);
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const { preference, enter } = window.LoveMotion;
 
     const today = (() => {
         const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(params.get('date') || '');
@@ -73,7 +73,6 @@
     const disc = document.getElementById('home-disc');
     const ringEl = document.getElementById('home-ring');
     const moon = document.getElementById('home-moon');
-    const reveal = document.getElementById('home-reveal');
     const status = document.getElementById('home-status');
     const meta = document.getElementById('home-meta');
     const cta = document.getElementById('home-cta');
@@ -87,7 +86,7 @@
     const moonPhaseEl = document.getElementById('home-moon-phase');
     const moonNameEl = document.getElementById('home-moon-name');
 
-    if (reduceMotion) body.classList.add('is-reduced');
+    body.classList.toggle('is-reduced', preference.matches);
 
     document.querySelectorAll('[data-gallery-link]').forEach((link) => {
         link.href = withPreview(link.getAttribute('href'));
@@ -152,7 +151,10 @@
         });
 
     const entryFor = (d) => byDate?.[isoOf(d)] || null;
-    const letterNo = (d) => letterDates.filter((key) => key <= isoOf(d)).length;
+    const letterNo = (d) => {
+        const day = isoOf(d);
+        return letterDates.filter(key => key <= day).length;
+    };
 
     // ------------------------------------------------------------
     // 月相：按月龄估算，够画一个小月亮和取名字
@@ -236,33 +238,43 @@
 
     let artToken = 0;
     let artSrc = null;
-    let artRatio = 0; // 窗里那幅画的宽高比；拆开到底时铺满屏幕的画要按它对齐
+    const artLayers = [...moon.querySelectorAll('.home-moon-art')];
+    let front = 0;
+
     function showArt(src) {
         if (src === artSrc) return;
         artSrc = src;
         failedCaption.hidden = true;
         retry.hidden = true;
         const token = ++artToken;
+        delete moon.dataset.date;
+        moon.setAttribute('aria-busy', String(!!src));
         if (!src) {
-            artRatio = 0;
             moon.classList.remove('has-art', 'is-swapping');
             return;
         }
-        if (moon.classList.contains('has-art')) moon.classList.add('is-swapping');
+        moon.classList.toggle('is-swapping', moon.classList.contains('has-art'));
         const img = new Image();
         img.decoding = 'async';
         img.onload = () => {
             if (token !== artToken) return;
-            artRatio = img.naturalWidth / img.naturalHeight;
-            rememberRatio(src.split('/').pop(), artRatio);
-            moon.style.setProperty('--art', `url("${img.src}")`);
+            rememberRatio(src.split('/').pop(), img.naturalWidth / img.naturalHeight);
+            const art = `url("${img.src}")`;
+            const next = 1 - front;
+            artLayers[next].style.backgroundImage = art;
+            artLayers[next].classList.add('is-current');
+            artLayers[front].classList.remove('is-current');
+            front = next;
+            moon.style.setProperty('--art', art);
+            moon.dataset.date = isoOf(addDays(today, -offset));
             moon.classList.add('has-art');
             moon.classList.remove('is-swapping');
+            moon.setAttribute('aria-busy', 'false');
         };
         img.onerror = () => {
             if (token !== artToken) return;
-            artRatio = 0;
             moon.classList.remove('has-art', 'is-swapping');
+            moon.setAttribute('aria-busy', 'false');
             failedCaption.textContent = entryFor(addDays(today, -offset))?.loveLetter || '';
             failedCaption.hidden = !failedCaption.textContent;
             retry.textContent = '重新加载图片';
@@ -279,8 +291,8 @@
     const sep = '<span class="ts-sep"> · </span><wbr>';
 
     const STATUS = {
-        arrived: { line: '今天的画信到了。', cta: '拆开今天的画信', label: '拆开今天的画信' },
-        waiting: { line: '今天这封还在路上。', cta: '先看看昨天的', label: '今天这封还在路上，先看看昨天的' }
+        arrived: { line: '今天的画信到了。', cta: '拆开今天的画信' },
+        waiting: { line: '今天这封还在路上。' }
     };
 
     let currentHref = withPreview('gallery.html');
@@ -292,31 +304,28 @@
         const str = String(n);
         const cells = dayNumEl.querySelectorAll('.hd-in');
         if (cells.length !== str.length) {
-            dayNumEl.innerHTML = `<span class="home-sr">${str}</span>` + [...str].map((ch, k) =>
-                `<span class="hd" aria-hidden="true" style="--d:${k}"><span class="hd-in">${ch}</span></span>`).join('');
+            dayNumEl.innerHTML = `<span class="home-sr">${str}</span>` + [...str].map(ch =>
+                `<span class="hd" aria-hidden="true"><span class="hd-in">${ch}</span></span>`).join('');
         } else if (n !== shownDays) {
-            const dir = n < shownDays ? 'is-back' : 'is-fwd';
+            const direction = n < shownDays ? -1 : 1;
             dayNumEl.querySelector('.home-sr').textContent = str;
             cells.forEach((cell, k) => {
                 if (cell.textContent === str[k]) return;
                 cell.textContent = str[k];
-                if (reduceMotion) return;
-                cell.classList.remove('is-back', 'is-fwd');
-                void cell.offsetWidth; // 连着转时让动画从头再来
-                cell.classList.add(dir);
+                if (!body.classList.contains('is-turning')) enter(cell, 0, direction * 6);
             });
         }
         shownDays = n;
     }
 
-    function render() {
+    function render(ringChanged = true) {
         const d = addDays(today, -offset);
         const md = `${d.getMonth() + 1}月${d.getDate()}日`;
         const n = Math.max(1, daysBetween(START, d) + 1);
         const isToday = offset === 0;
         const entry = entryFor(d);
         const kind = entry ? 'arrived' : 'waiting';
-        refreshRing();
+        if (ringChanged !== false) refreshRing();
         showArt(entry ? `images/${entry.filename}` : null);
         if (catalogState === 'error') {
             status.textContent = '画信目录暂时没打开。';
@@ -348,8 +357,10 @@
             moon.setAttribute('aria-label', '去画廊看看');
         } else if (isToday) {
             currentHref = withPreview('gallery.html');
-            ctaLabel.textContent = STATUS[kind].cta;
-            moon.setAttribute('aria-label', STATUS[kind].label);
+            const last = letterDates[no - 1];
+            const fallback = !last ? '去画廊看看' : last === isoOf(addDays(d, -1)) ? '先看看昨天的' : '先读最近一封';
+            ctaLabel.textContent = entry ? STATUS.arrived.cta : fallback;
+            moon.setAttribute('aria-label', ctaLabel.textContent);
         } else if (entry) {
             currentHref = withPreview(`gallery.html?day=${isoOf(d)}`);
             ctaLabel.textContent = '拆开这一封';
@@ -371,9 +382,11 @@
 
     function select(k, { haptic = false } = {}) {
         const next = Math.max(0, Math.min(RING_DAYS - 1, k));
-        if (next === offset || body.classList.contains('is-opening')) return;
+        if (next === offset) return;
+        ringDots[offset].classList.remove('is-selected');
+        ringDots[next].classList.add('is-selected');
         offset = next;
-        render();
+        render(false);
         if (haptic && navigator.vibrate) navigator.vibrate(4);
     }
 
@@ -383,7 +396,7 @@
 
     document.addEventListener('keydown', (event) => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
-        if (body.classList.contains('d6k-active') || body.classList.contains('is-opening')) return;
+        if (body.classList.contains('d6k-active')) return;
         if (event.key === 'ArrowLeft') {
             event.preventDefault();
             select(offset + 1);
@@ -424,7 +437,7 @@
     };
 
     disc.addEventListener('pointerdown', (event) => {
-        if (event.button !== 0 || moon.contains(event.target) || body.classList.contains('is-opening')) return;
+        if (!event.isPrimary || event.button !== 0 || moon.contains(event.target)) return;
         const r = disc.getBoundingClientRect();
         const dist = Math.hypot(event.clientX - (r.left + r.width / 2), event.clientY - (r.top + r.height / 2));
         if (dist > r.width * 0.54) return; // 星盘外的角落不算
@@ -443,6 +456,7 @@
     };
     disc.addEventListener('pointerup', endDrag);
     disc.addEventListener('pointercancel', endDrag);
+    disc.addEventListener('lostpointercapture', endDrag);
 
     // ------------------------------------------------------------
     // 星盘
@@ -520,27 +534,6 @@
             }
             dots[k] = { x: c + Math.cos(angle) * radius, y: c + Math.sin(angle) * radius, size: dotSize, color };
         }
-        placeGlints(size);
-    }
-
-    // 纪念日（金）和她的生日（玫瑰）那几颗星：在画好的点上再叠一层会闪的光，跟着花盘一起转
-    const glintsEl = document.getElementById('home-glints');
-    function placeGlints(size) {
-        if (!glintsEl || reduceMotion) return;
-        const rand = mulberry32(922);
-        const html = [];
-        for (let k = 1; k < dots.length; k++) {
-            const kind = dayKinds[k];
-            if (kind !== 2 && kind !== 3) continue;
-            const p = dots[k];
-            const glow = kind === 2 ? '240, 207, 138' : '245, 179, 195';
-            html.push(
-                `<span class="home-glint" style="left:${(p.x / size * 100).toFixed(2)}%;top:${(p.y / size * 100).toFixed(2)}%;` +
-                `--s:${Math.max(3, p.size * 2.6).toFixed(1)}px;--c:${glow};` +
-                `--dur:${(3.2 + rand() * 3.6).toFixed(2)}s;--delay:${(-rand() * 6).toFixed(2)}s"></span>`
-            );
-        }
-        glintsEl.innerHTML = html.join('');
     }
 
     // 背景零星的星：避开星盘和外环所在的位置
@@ -556,7 +549,6 @@
         const cy = d.top + d.height / 2;
         const rand = mulberry32(5141);
         const count = Math.round((w * h) / 9000);
-        const twinkles = [];
         for (let i = 0; i < count; i++) {
             const x = rand() * w;
             const y = rand() * h;
@@ -567,42 +559,8 @@
             skyCtx.beginPath();
             skyCtx.arc(x, y, size, 0, Math.PI * 2);
             skyCtx.fill();
-            // 亮一些的星里挑几颗会闪
-            if (alpha > 0.4 && size > 0.75 && twinkles.length < 16) twinkles.push({ x, y });
         }
-        placeTwinkles(twinkles);
     }
-
-    const nightEl = document.getElementById('home-night');
-    function placeTwinkles(points) {
-        if (!nightEl || reduceMotion) return;
-        const rand = mulberry32(1210);
-        nightEl.querySelectorAll('.home-twinkle').forEach((el) => el.remove());
-        nightEl.insertAdjacentHTML('beforeend', points.map((p) =>
-            `<span class="home-twinkle" style="left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;` +
-            `--dur:${(2.6 + rand() * 4).toFixed(2)}s;--delay:${(-rand() * 5).toFixed(2)}s"></span>`
-        ).join(''));
-    }
-
-    // 流星：每隔二三十秒从夜空上半部划过一颗（页面在后台、正在拆开时不放）
-    function scheduleMeteor() {
-        if (!nightEl || reduceMotion) return;
-        setTimeout(() => {
-            if (!document.hidden && !body.classList.contains('is-opening')) {
-                const w = window.innerWidth;
-                const h = window.innerHeight;
-                const meteor = document.createElement('span');
-                meteor.className = 'home-meteor';
-                meteor.style.left = `${(w * (0.3 + Math.random() * 0.65)).toFixed(0)}px`;
-                meteor.style.top = `${(h * (0.04 + Math.random() * 0.3)).toFixed(0)}px`;
-                meteor.style.setProperty('--len', `${Math.round(Math.min(w, h) * (0.16 + Math.random() * 0.12))}px`);
-                meteor.addEventListener('animationend', () => meteor.remove(), { once: true });
-                nightEl.appendChild(meteor);
-            }
-            scheduleMeteor();
-        }, 12000 + Math.random() * 22000);
-    }
-    setTimeout(scheduleMeteor, 2500);
 
     // 下标越大越早：从 hi 画到 lo（含两端，lo ≥ 1）
     function drawRange(hi, lo) {
@@ -621,13 +579,11 @@
         drawRange(dots.length - 1, 1);
     }
 
-    const showRing = () => body.classList.add('ring-ready');
-
-    // 入场：从最早那一天一路汇向今天，最后月轮亮起
+    // 星点从最早那一天汇向今天。月轮从第一帧就能转动。
     function animateDisc() {
         animating = true;
         discCtx.clearRect(0, 0, discCanvas.width, discCanvas.height);
-        const duration = 1500;
+        const duration = 360;
         const start = performance.now();
         let next = dots.length - 1;
         const step = (now) => {
@@ -645,7 +601,6 @@
             }
             if (next >= 1) drawRange(next, 1);
             animating = false;
-            showRing();
         };
         requestAnimationFrame(step);
     }
@@ -656,7 +611,6 @@
         drawSky();
         if (disc.clientWidth !== lastSize) {
             lastSize = disc.clientWidth;
-            if (animating) showRing();
             animating = false;
             layoutDisc();
             drawDisc();
@@ -669,106 +623,27 @@
     });
 
     // ------------------------------------------------------------
-    // 入场节奏：等字体到位再显字（最多等 1.2 秒）
-    // ------------------------------------------------------------
-    const fontsReady = document.fonts
-        ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1200))])
-        : Promise.resolve();
-
+    // 画信和月轮立即可用，字体就绪后只校正星空的位置。
     lastSize = disc.clientWidth;
     layoutDisc();
     drawSky();
-    if (reduceMotion) {
-        drawDisc();
-        showRing();
-    } else {
-        animateDisc();
-    }
-    fontsReady.then(() => {
-        // 字体换上后版面可能挪动几像素，背景星重新避让一次
-        drawSky();
-        requestAnimationFrame(() => body.classList.add('is-ready'));
-    });
+    if (preference.matches) drawDisc();
+    else animateDisc();
+    requestAnimationFrame(() => body.classList.add('is-ready'));
+    document.fonts?.ready.then(drawSky);
 
-    // ------------------------------------------------------------
-    // 景深：桌面上鼠标挪动时，星盘和远处的星空朝相反方向轻轻错开几像素
-    // ------------------------------------------------------------
-    if (!reduceMotion && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-        let tx = 0;
-        let ty = 0;
-        let px = 0;
-        let py = 0;
-        let raf = 0;
-        const step = () => {
-            px += (tx - px) * 0.07;
-            py += (ty - py) * 0.07;
-            body.style.setProperty('--px', px.toFixed(4));
-            body.style.setProperty('--py', py.toFixed(4));
-            raf = Math.abs(tx - px) + Math.abs(ty - py) > 0.001 ? requestAnimationFrame(step) : 0;
-        };
-        window.addEventListener('pointermove', (event) => {
-            if (event.pointerType !== 'mouse' || body.classList.contains('is-opening') || body.classList.contains('is-turning')) return;
-            tx = (event.clientX / window.innerWidth) * 2 - 1;
-            ty = (event.clientY / window.innerHeight) * 2 - 1;
-            if (!raf) raf = requestAnimationFrame(step);
-        }, { passive: true });
-    }
-
-    // ------------------------------------------------------------
-    // 拆开：月洞窗放大铺满屏幕，画面变清晰，然后进入画廊
-    // ------------------------------------------------------------
     function openLetter(event) {
-        if (event && (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1)) return;
+        if (event && (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.button === 1)) return;
         if (event) event.preventDefault();
-        if (body.classList.contains('is-opening')) return;
-        const href = currentHref;
-        if (reduceMotion) {
-            window.location.href = href;
-            return;
-        }
-        const r = moon.getBoundingClientRect();
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        const far = Math.max(Math.hypot(cx, cy), Math.hypot(w - cx, cy), Math.hypot(cx, h - cy), Math.hypot(w - cx, h - cy));
-        const scale = (far * 2) / r.width;
-        body.classList.add('is-opening');
-        moon.style.transform = `translate(-50%, -50%) scale(${scale.toFixed(3)})`;
-        // 放大到底时，换上一张同样位置、同样大小的整屏画（窗里的画是 inset -8% 的 cover），
-        // 它带着 view-transition-name 换页，在画廊里落进今天那幅画的画框
-        if (artRatio && moon.classList.contains('has-art')) {
-            const side = r.width * 1.16 * scale;
-            const bw = artRatio >= 1 ? side * artRatio : side;
-            const bh = artRatio >= 1 ? side : side / artRatio;
-            reveal.style.backgroundImage = moon.style.getPropertyValue('--art');
-            reveal.style.backgroundSize = `${bw.toFixed(1)}px ${bh.toFixed(1)}px`;
-            reveal.style.backgroundPosition = `${(cx - bw / 2).toFixed(1)}px ${(cy - bh / 2).toFixed(1)}px`;
-            reveal.style.viewTransitionName = 'lm-art';
-            // 画廊据此让同一幅画从这个位置连续缩进画框（见 gallery.html 头部的 pagereveal）
+        const to = new URL(currentHref, location.href).href;
+        if (byDate && Date.now() - catalogReadAt < 30000) {
             try {
-                // 同一标签页的这次拆信可直接排好首帧。久未刷新的首页交给画廊重新取目录。
-                if (byDate && Date.now() - catalogReadAt < 30000) {
-                    sessionStorage.setItem('lm-catalog-transfer', JSON.stringify({
-                        at: Date.now(), to: new URL(href, location.href).href, rows: Object.values(byDate)
-                    }));
-                }
-                sessionStorage.setItem('lm-reveal', JSON.stringify({
-                    bx: cx - bw / 2, by: cy - bh / 2, bw, bh, vw: w, vh: h, t: Date.now()
+                sessionStorage.setItem('lm-catalog-transfer', JSON.stringify({
+                    at: Date.now(), to, rows: Object.values(byDate)
                 }));
-            } catch (err) {
-                // 存不下就退回普通的淡入淡出
-            }
+            } catch { /* 无法暂存时画廊自行读取目录。 */ }
         }
-        setTimeout(() => {
-            // 放大到底的这一刻换上整屏画（和月洞窗分毫不差，看不出换了），再藏起底下的月洞窗：
-            // 换页拍快照时四周只剩夜色，画独自落进画框
-            if (reveal.style.viewTransitionName) {
-                reveal.classList.add('is-on');
-                moon.style.visibility = 'hidden';
-            }
-            window.location.href = href;
-        }, 680);
+        location.assign(to);
     }
 
     // ------------------------------------------------------------
@@ -780,11 +655,10 @@
     const setHold = (p) => disc.style.setProperty('--hold', p.toFixed(3));
 
     moon.addEventListener('pointerdown', (event) => {
-        if (reduceMotion || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
-        if (body.classList.contains('is-opening')) return;
+        if (preference.matches || !event.isPrimary || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
         event.stopPropagation(); // 不让星盘把它当成转月轮
         suppressClick = false;
-        hold = { start: performance.now(), raf: 0 };
+        hold = { pointer: event.pointerId, start: performance.now(), raf: 0 };
         try { moon.setPointerCapture(event.pointerId); } catch (err) { /* 老浏览器没有也能用 */ }
         body.classList.add('is-holding');
         const tick = (now) => {
@@ -793,6 +667,7 @@
             setHold(p);
             if (p >= 1) {
                 hold = null;
+                suppressClick = true;
                 openLetter();
                 return;
             }
@@ -801,8 +676,8 @@
         hold.raf = requestAnimationFrame(tick);
     });
 
-    const endHold = () => {
-        if (!hold) return;
+    const endHold = (event) => {
+        if (!hold || (event && hold.pointer !== event.pointerId)) return;
         cancelAnimationFrame(hold.raf);
         const held = performance.now() - hold.start;
         hold = null;
@@ -826,15 +701,21 @@
     });
     cta.addEventListener('click', openLetter);
 
-    // 从画廊返回时（浏览器可能直接还原页面），把放大的窗收回去
-    window.addEventListener('pageshow', (event) => {
-        if (!event.persisted) return;
-        body.classList.remove('is-opening', 'is-holding', 'is-turning');
-        moon.style.transform = '';
-        moon.style.visibility = '';
-        reveal.classList.remove('is-on');
-        reveal.style.viewTransitionName = '';
+    function resetGesture() {
+        endHold();
+        drag = null;
+        suppressClick = false;
+        body.classList.remove('is-holding', 'is-turning');
         setHold(0);
+    }
+    window.addEventListener('pagehide', resetGesture);
+    preference.addEventListener('change', () => {
+        body.classList.toggle('is-reduced', preference.matches);
+        resetGesture();
+        if (preference.matches && animating) {
+            animating = false;
+            drawDisc();
+        }
     });
 
     // ------------------------------------------------------------
@@ -845,10 +726,7 @@
             btn.hidden = false;
             btn.addEventListener('click', () => {
                 if (window.Day6000 && typeof window.Day6000.start === 'function') {
-                    window.Day6000.cleanup?.();
-                    setTimeout(() => {
-                        window.Day6000.start({ id: 'day-6000', name: '6000 天纪念日', type: 'C', effect: 'day-6000' });
-                    }, 80);
+                    window.Day6000.start({ id: 'day-6000', name: '6000 天纪念日', type: 'C', effect: 'day-6000' });
                     return;
                 }
                 window.location.href = 'index.html?d6k=1';
